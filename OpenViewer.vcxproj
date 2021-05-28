@@ -158,6 +158,7 @@
       </OpenMPSupport>
       <AdditionalOptions>-openmp:experimental %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Full</Optimization>
+      <OmitFramePointers>true</OmitFramePointers>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

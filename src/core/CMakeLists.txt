@@ -5,4 +5,4 @@ file(GLOB_RECURSE h_files *.h)
 
 add_library(core ${src_files} ${h_files})
 
-target_link_libraries(core ${OPENIMAGEIO_LIBRARIES})
+target_link_libraries(core OpenImageIO::OpenImageIO)

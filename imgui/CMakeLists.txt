@@ -1,24 +1,9 @@
 # IMGUI #
 
-set(imgui_files
-	gl3w.c
-	imconfig.h
-	imgui.h
-	imgui.cpp
-	imgui_demo.cpp
-	imgui_impl_glfw.h
-	imgui_impl_glfw.cpp
-	imgui_impl_opengl3.h
-	imgui_impl_opengl3.cpp
-	imgui_internal.h
-	imgui_tables.cpp
-	imgui_widgets.cpp
-	imstb_rectpack.h
-	imstb_textedit.h
-	imstb_truetype.h
-)
+file(GLOB_RECURSE imgui_src *.c *.cpp)
+file(GLOB_RECURSE imgui_h *.h)
 
-add_library(imgui ${imgui_files})
+add_library(imgui ${imgui_h} ${imgui_src})
 
 # link against glfw library for both x86 and x64, and linux
 if(WIN32)
