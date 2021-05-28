@@ -43,7 +43,8 @@ void Loader::initialize(const char* fp, uint64_t _cache_size)
 	last_cached.push_back(0);
 
 	single_image = (float*)_aligned_malloc(cache_stride, 16);
-	memcpy(single_image, memory_arena, cache_stride);
+	// memcpy(single_image, memory_arena, cache_stride);
+	memmove(single_image, memory_arena, cache_stride);
 
 	last_cached.reserve(cache_size_count);
 }
@@ -115,7 +116,7 @@ void Loader::load_sequence()
 #pragma omp parallel for
 	for (int i = 1; i < (cache_size_count - 1); i++)
 	{
-		mtx.lock();
+		// mtx.lock();
 //#pragma omp critical
 		{
 			images[i].load(&memory_arena[(cache_stride * i) % cache_size_count]);
@@ -123,7 +124,7 @@ void Loader::load_sequence()
 			last_cached.push_back(i);
 			cached_amount += images[i].size;
 		}
-		mtx.unlock();
+		// mtx.unlock();
 	}
 
 	cached_size += cached_amount;
@@ -136,10 +137,10 @@ void Loader::load_player()
 {
 	while (true)
 	{
-		if (is_playing == 1 && cached[frame + 10] < 1)
+		if (is_playing == 1 && cached[frame + 5] < 1)
 		{
-			load_images(frame + 10, 10);
-			unload_images(10);
+			load_images(frame + 5, 5);
+			unload_images(5);
 		}
 
 		else std::this_thread::sleep_for(std::chrono::milliseconds(16));
