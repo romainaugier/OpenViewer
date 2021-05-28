@@ -128,9 +128,9 @@ int application(int argc, char** argv)
 
     Loader loader;
 
-    const char* path = "D:/Projects/Demoreel/Tank/comp";
+    const char* path = "D:/test/wip";
 
-    loader.initialize(path, 2000000000);
+    loader.initialize(path, 1000000000);
     //  loader.sequence("D:/Projects/Demoreel/Renders/Boat/export");
 
     //  loader.launch_sequence_worker();

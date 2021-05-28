@@ -134,5 +134,8 @@
   <ItemGroup>
     <None Include=".gitignore" />
     <None Include="README.md" />
+    <None Include="build_windows.bat">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
