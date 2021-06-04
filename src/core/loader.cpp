@@ -21,7 +21,7 @@ void Loader::initialize(const char* fp, uint64_t _cache_size)
 	cache_size = _cache_size;
 
 	// allocate the cache
-	memory_arena = (float*)_aligned_malloc(cache_size, 16);
+	memory_arena = (float*)aligned_alloc(cache_size, 16);
 
 	for (auto p : std::filesystem::directory_iterator(fp))
 	{
@@ -42,9 +42,9 @@ void Loader::initialize(const char* fp, uint64_t _cache_size)
 	cache_size_count = round(cache_size / images[0].size);
 	last_cached.push_back(0);
 
-	single_image = (float*)_aligned_malloc(cache_stride, 16);
-	// memcpy(single_image, memory_arena, cache_stride);
-	memmove(single_image, memory_arena, cache_stride);
+	single_image = (float*)aligned_alloc(cache_stride, 16);
+	memcpy(single_image, memory_arena, cache_stride);
+	
 
 	last_cached.reserve(cache_size_count);
 }
@@ -188,8 +188,8 @@ void Loader::join_worker()
 // release all the images and paths in case of reload
 void Loader::release()
 {
-	_aligned_free(memory_arena);
-	_aligned_free(single_image);
+	free(memory_arena);
+	free(single_image);
 	workers.clear();
 	cached.clear();
 	images.clear();

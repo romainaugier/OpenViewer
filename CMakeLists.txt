@@ -3,7 +3,12 @@
 cmake_minimum_required(VERSION 3.15)
 
 # Vcpkg
-set(CMAKE_TOOLCHAIN_FILE "D:/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE FILEPATH "CMAKE Toolchain" FORCE)
+set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE FILEPATH "CMAKE Toolchain" FORCE)
+
+# Linux std lib
+if(UNIX)
+	set(CMAKE_CXX_STANDARD_LIBRARIES "-ldl")
+endif()
 
 if(WIN32)
 	if("${CMAKE_SIZEOF_VOID_P}" EQUAL 4)
@@ -12,7 +17,11 @@ if(WIN32)
 		set(VCPKG_TARGET_TRIPLET "x64-windows" CACHE STRING "VCPKG Triplet" FORCE)
 	endif()
 elseif(UNIX)
-	message("Linux is not supported yet")
+	if("${CMAKE_SIZEOF_VOID_P}" EQUAL 4)
+		set(VCPKG_TARGET_TRIPLET "x86-linux" CACHE STRING "VCPKG Triplet" FORCE)
+	elseif("${CMAKE_SIZEOF_VOID_P}" EQUAL 8)
+		set(VCPKG_TARGET_TRIPLET "x64-linux" CACHE STRING "VCPKG Triplet" FORCE)
+	endif()
 endif()
 
 # Project
@@ -26,7 +35,10 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	set(MSVC_COMPILER_FLAGS "/openmp:experimental /fp:fast /Ox /Oy /GT /GL /Oi /arch:AVX2 /Zi /Gm- /Zc:inline")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" "${MSVC_COMPILER_FLAGS}")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+	#set(GNU_COMPILER_FLAGS "-fopenmp -O3 -avx -unroll-loops -inline -omit-frame-pointers")
+	#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" "${GNU_COMPILER_FLAGS}")
+	add_compile_options(-fopenmp -O3 -mavx -unroll-loops -Winline -omit-frame-pointers)
+	add_link_options(-fopenmp)
 else()
 	message(FATAL_ERROR "Your compiler is not supported yet, CMake will exit.")
 endif()
@@ -36,9 +48,16 @@ include_directories(dependencies/glfw/include)
 
 # OpenImageIO
 find_package(OpenImageIO REQUIRED)
-include_directories(${OPENIMAGEIO_INCLUDES})
 
-message(${OPENIMAGEIO_INCLUDES})
+# As openimageio include variable works on window and not on linux, we need to use a hack to find
+# the vcpkg include directory
+if(WIN32)
+	include_directories(${OPENIMAGEIO_INCLUDES})
+elseif(UNIX)
+	# Vcpkg include dir
+	find_path(VCPKG_INCLUDE_DIR zlib.h)
+	include_directories(${VCPKG_INCLUDE_DIR})
+endif()
 
 include_directories(imgui)
 add_subdirectory(imgui)

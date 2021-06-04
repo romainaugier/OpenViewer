@@ -2,4 +2,6 @@ x64
 Debug
 Release
 .vs
-.build
+.vscode
+build
+vcpkg
