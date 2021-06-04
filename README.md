@@ -22,6 +22,11 @@ cd vcpkg
 ./vcpkg install OpenImageIO
 ```
 
+If you have an issue while building OpenColorIO with vcpkg, look at the log but it might be possible that it requires libraries from the system that are not installed. To solve this issue, open a terminal and run the following command:
+```bash
+sudo apt-get install libxi-dev libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev libxrandr-dev libxxf86vm-dev
+```
+
 ### Windows
 ```bash
 git clone https://github.com/romainaugier/OpenViewer.git
