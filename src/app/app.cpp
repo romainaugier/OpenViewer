@@ -128,12 +128,12 @@ int application(int argc, char** argv)
 
     Loader loader;
 
-    const char* path = "D:/test/wip";
+    std::string path = "/home/donromano/Downloads/export";
 
     loader.initialize(path, 1000000000);
     //  loader.sequence("D:/Projects/Demoreel/Renders/Boat/export");
 
-    //  loader.launch_sequence_worker();
+    //loader.launch_sequence_worker();
     //  load.join();
 
     // Windows declarations
@@ -143,6 +143,7 @@ int application(int argc, char** argv)
     Menubar menubar;
     Display display;
 
+    
     GLuint tex;
 
     glGenTextures(1, &tex);
@@ -156,17 +157,25 @@ int application(int argc, char** argv)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, loader.images[0].xres, loader.images[0].yres, 0, GL_RGB, GL_FLOAT, loader.memory_arena);
 
     glBindTexture(GL_TEXTURE_2D, 0);
+    
 
     // Main loop
     while (!glfwWindowShouldClose(window))
     {
+        
         loader.frame = playbar.playbar_frame;
         uint16_t frame_index = playbar.playbar_frame;
 
         uint16_t xres = loader.images[frame_index].xres;
         uint16_t yres = loader.images[frame_index].yres;
 
+        loader.load_image(frame_index);
+            
+        glBindTexture(GL_TEXTURE_2D, tex);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, xres, yres, GL_RGB, GL_FLOAT, loader.single_image);
+        glBindTexture(GL_TEXTURE_2D, 0);
 
+        /*
         if (!playbar.play)
         {
             loader.is_playing = 0;
@@ -192,6 +201,7 @@ int application(int argc, char** argv)
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, xres, yres, GL_RGB, GL_FLOAT, &loader.memory_arena[loader.cache_stride * frame_index]);
             glBindTexture(GL_TEXTURE_2D, 0);
         }
+        */
 
         glfwPollEvents();
 

@@ -1,4 +1,4 @@
-#include "OpenImageIO/imagebuf.h"
+#include "OpenImageIO/imagecache.h"
 
 #include <thread>
 #include <string>
@@ -8,12 +8,12 @@
 
 struct Image
 {
-	float* buffer;
 	std::string path;
 	uint64_t size;
 	uint32_t xres;
 	uint32_t yres;
 	uint32_t channels;
+	int16_t cache_index = -1;
 
 	Image() {}
 
@@ -68,7 +68,7 @@ struct Loader
 	{
 	}
 
-	void initialize(const char* fp, uint64_t _cache_size);
+	void initialize(std::string& fp, uint64_t _cache_size);
 	void load_sequence();
 	void load_player();
 	void load_images(uint16_t idx, uint8_t number);

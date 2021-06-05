@@ -3,25 +3,25 @@
 // releases an image data
 void Image::release()
 {
-	//_aligned_free(buffer);
+	cache_index = -1;
 }
 
 // loads an image
 void Image::load(float* allocated_space)
 {
-	//this->buffer = (float*)_aligned_malloc(size, 16);
 	auto in = OIIO::ImageInput::open(path);
-	in->read_image(OIIO::TypeDesc::FLOAT, &allocated_space[0]);
+	in->threads(1);
+	in->read_image(0, -1, OIIO::TypeDesc::FLOAT, &allocated_space[0]);
 	in->close();
 }
 
 // initializes the loader with the different paths, the item count and the first frame
-void Loader::initialize(const char* fp, uint64_t _cache_size)
+void Loader::initialize(std::string& fp, uint64_t _cache_size)
 {
 	cache_size = _cache_size;
 
 	// allocate the cache
-	memory_arena = (float*)aligned_alloc(cache_size, 16);
+	memory_arena = new float[cache_size];
 
 	for (auto p : std::filesystem::directory_iterator(fp))
 	{
@@ -42,9 +42,9 @@ void Loader::initialize(const char* fp, uint64_t _cache_size)
 	cache_size_count = round(cache_size / images[0].size);
 	last_cached.push_back(0);
 
-	single_image = (float*)aligned_alloc(cache_stride, 16);
+	single_image = new float[cached_size];
 	memcpy(single_image, memory_arena, cache_stride);
-	
+	// memmove(single_image, memory_arena, cache_stride * sizeof(float));
 
 	last_cached.reserve(cache_size_count);
 }
@@ -78,7 +78,7 @@ void Loader::load_images(uint16_t idx, uint8_t number)
 {
 	last_cached.reserve(number);
 
-#pragma omp parallel for
+// #pragma omp parallel for
 	for (int i = idx; i < (idx + number); i++)
 	{
 		uint16_t index = i % (count - 1);
@@ -113,13 +113,13 @@ void Loader::load_sequence()
 
 	uint64_t cached_amount = 0;
 
-#pragma omp parallel for
+//#pragma omp parallel for
 	for (int i = 1; i < (cache_size_count - 1); i++)
 	{
 		// mtx.lock();
 //#pragma omp critical
 		{
-			images[i].load(&memory_arena[(cache_stride * i) % cache_size_count]);
+			images[i].load(&memory_arena[(cache_stride * i)]);
 			cached[i] = 1;
 			last_cached.push_back(i);
 			cached_amount += images[i].size;
@@ -188,8 +188,8 @@ void Loader::join_worker()
 // release all the images and paths in case of reload
 void Loader::release()
 {
-	free(memory_arena);
-	free(single_image);
+	delete[] memory_arena;
+	delete[] single_image;
 	workers.clear();
 	cached.clear();
 	images.clear();
