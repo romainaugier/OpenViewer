@@ -5,7 +5,8 @@ Release
 .vscode
 build
 vcpkg
-.OpenViewer.sln
-.OpenViewer.vcxproj
-.OpenViewer.vcxproj.filters
-.OpenViewer.vcxproj.user
+OpenViewer.sln
+OpenViewer.vcxproj
+OpenViewer.vcxproj.filters
+OpenViewer.vcxproj.user
+imgui.ini

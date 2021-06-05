@@ -10,7 +10,7 @@ void Image::release()
 void Image::load(float* allocated_space)
 {
 	auto in = OIIO::ImageInput::open(path);
-	in->threads(1);
+	in->threads(4);
 	in->read_image(0, -1, OIIO::TypeDesc::FLOAT, &allocated_space[0]);
 	in->close();
 }
