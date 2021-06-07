@@ -35,7 +35,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	set(MSVC_COMPILER_FLAGS "/openmp:experimental /fp:fast /Ox /Oy /GT /GL /Oi /arch:AVX2 /Zi /Gm- /Zc:inline")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" "${MSVC_COMPILER_FLAGS}")
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-	add_compile_options(-fopenmp -O3 -msse -unroll-loops -Winline -omit-frame-pointers)
+	add_compile_options(-fopenmp -O3 -msse)
 	add_link_options(-fopenmp)
 else()
 	message(FATAL_ERROR "Your compiler is not supported yet, CMake will exit.")
@@ -59,6 +59,8 @@ endif()
 
 # OpenColorIO
 find_package(OpenColorIO REQUIRED)
+
+add_subdirectory(dependencies)
 
 include_directories(imgui)
 add_subdirectory(imgui)

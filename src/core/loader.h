@@ -1,10 +1,30 @@
 #include "OpenImageIO/imagecache.h"
+#include "GL/gl3w.h"
 
 #include <thread>
 #include <string>
 #include <vector>
 #include <stdlib.h>
 #include <filesystem>
+
+#include "utils/string_utils.h"
+
+enum FileType_
+{
+	FileType_Exr   = 0x1,
+	FileType_Png   = 0x2,
+	FileType_Jpg   = 0x4,
+	FileType_Mov   = 0x8,
+	FileType_Mp4   = 0x10,
+	FileType_Other = 0x20
+};
+
+enum Format_
+{
+	Format_Float = 0x1 | GL_FLOAT,
+	Format_U32   = 0x2 | GL_UNSIGNED_INT,
+	Format_U8    = 0x4 | GL_UNSIGNED_BYTE
+};
 
 struct Image
 {
@@ -14,12 +34,36 @@ struct Image
 	uint32_t yres;
 	uint32_t channels;
 	int16_t cache_index = -1;
+	FileType_ type;
+	Format_ format;
 
 	Image() {}
 
 	Image(std::string& fp)
 	{
 		path = fp;
+
+		if(endsWith(fp, ".exr"))
+		{
+			type = FileType_Exr;
+			format = Format_Float;
+		}
+		else if(endsWith(fp, ".png"))
+		{
+			type = FileType_Png;
+			format = Format_U8;
+		}
+		else if(endsWith(fp, "jpg") || endsWith(fp, "jpeg"))
+		{
+			type = FileType_Jpg;
+			format = Format_U8;
+		}
+		else
+		{
+			type = FileType_Other;
+			format = Format_Float;
+		}
+
 		auto in = OIIO::ImageInput::open(fp);
 		const OIIO::ImageSpec& spec = in->spec();
 
@@ -33,13 +77,17 @@ struct Image
 	}
 
 	void release();
-	void load(float* allocated_space);
+	void load(void* allocated_space);
+	void load_exr(float* allocated_space);
+	void load_png(uint8_t* allocated_space);
+	void load_jpg(uint8_t* allocated_space);
+	void load_other(float* allocated_space);
 };
 
 struct Loader
 {
-	float* memory_arena;
-	float* single_image;
+	void* memory_arena;
+	void* single_image;
 	std::vector<Image> images;
 	std::vector<std::thread> workers;
 	std::vector<uint16_t> last_cached;

@@ -7,11 +7,28 @@ void Image::release()
 }
 
 // loads an image
-void Image::load(float* allocated_space)
+void Image::load_exr(float* allocated_space)
+{
+	uint16_t temp_width, temp_height;
+	const char* err = nullptr;
+	bool succes = LoadEXR(&allocated_space, &temp_width, &temp_height, path, &err);
+}
+
+void Image::load_png(uint8_t* allocated_space)
+{
+
+}
+
+void Image::load_jpg(uint8_t* allocated_space)
+{
+
+}
+
+void Image::load_other(float* allocated_space)
 {
 	auto in = OIIO::ImageInput::open(path);
-	in->threads(4);
-	in->read_image(0, -1, OIIO::TypeDesc::FLOAT, &allocated_space[0]);
+	in->threads(1);
+	in->read_image(0, -1, OIIO::TypeDesc::FLOAT, (float*)allocated_space);
 	in->close();
 }
 
