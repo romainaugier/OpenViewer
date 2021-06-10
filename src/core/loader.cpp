@@ -1,5 +1,8 @@
 #include "loader.h"
 
+#define TINYEXR_IMPLEMENTATION
+#include "tinyexr/tinyexr.h"
+
 // releases an image data
 void Image::release()
 {
@@ -9,9 +12,12 @@ void Image::release()
 // loads an image
 void Image::load_exr(float* allocated_space)
 {
-	uint16_t temp_width, temp_height;
+	int temp_width, temp_height;
 	const char* err = nullptr;
-	bool succes = LoadEXR(&allocated_space, &temp_width, &temp_height, path, &err);
+	float* out;
+	bool success = LoadEXR(&out, &temp_width, &temp_height, path.c_str(), &err);
+	memcpy(allocated_space, out, size * sizeof(float));
+	free(out);
 }
 
 void Image::load_png(uint8_t* allocated_space)
@@ -30,6 +36,11 @@ void Image::load_other(float* allocated_space)
 	in->threads(1);
 	in->read_image(0, -1, OIIO::TypeDesc::FLOAT, (float*)allocated_space);
 	in->close();
+}
+
+void Image::load(void* allocated_space)
+{
+	if (endsWith(path, ".exr")) load_exr((float*)allocated_space);	
 }
 
 // initializes the loader with the different paths, the item count and the first frame
@@ -99,7 +110,7 @@ void Loader::load_images(uint16_t idx, uint8_t number)
 	for (int i = idx; i < (idx + number); i++)
 	{
 		uint16_t index = i % (count - 1);
-		images[index].load(&memory_arena[(cache_stride * i) % cache_size_count]);
+		//images[index].load(&memory_arena[(cache_stride * i) % cache_size_count]);
 		cached_size += images[index].size;
 		cached[index] = 1;
 		last_cached.push_back(index);
@@ -136,7 +147,7 @@ void Loader::load_sequence()
 		// mtx.lock();
 //#pragma omp critical
 		{
-			images[i].load(&memory_arena[(cache_stride * i)]);
+			//images[i].load(&memory_arena[(cache_stride * i)]);
 			cached[i] = 1;
 			last_cached.push_back(i);
 			cached_amount += images[i].size;

@@ -129,7 +129,7 @@ int application(int argc, char** argv)
     Loader loader;
 
     //std::string path = "D:/Projects/Demoreel/Renders/Boat/export";
-    std::string path = "D:/Projects/Demoreel/Renders/Boat/export";
+    std::string path = "/home/donromano/Downloads/export";
 
     loader.initialize(path, 1000000000);
     //  loader.sequence("D:/Projects/Demoreel/Renders/Boat/export");

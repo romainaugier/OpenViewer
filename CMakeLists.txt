@@ -61,6 +61,7 @@ endif()
 find_package(OpenColorIO REQUIRED)
 
 add_subdirectory(dependencies)
+include_directories(dependencies)
 
 include_directories(imgui)
 add_subdirectory(imgui)
