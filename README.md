@@ -3,7 +3,7 @@ OpenViewer is an open source, tiny and powerful image viewer made for profession
 
 ## Dependencies
 
-OpenViewer uses [OpenImageIO](https://github.com/OpenImageIO/oiio) for image reading, [OpenColorIO](https://github.com/AcademySoftwareFoundation/OpenColorIO) to manage colorspaces and [Dear ImGui](https://github.com/ocornut/imgui) for the interface.
+OpenViewer uses [OpenImageIO](https://github.com/OpenImageIO/oiio), [OpenEXR](https://github.com/AcademySoftwareFoundation/openexr) and [Wuffs](https://github.com/google/wuffs) for image reading, [OpenColorIO](https://github.com/AcademySoftwareFoundation/OpenColorIO) to manage colorspaces and [Dear ImGui](https://github.com/ocornut/imgui) for the interface.
 
 ---
 ## Installation
