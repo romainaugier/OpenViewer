@@ -45,127 +45,63 @@ int application(int argc, char** argv)
     // style
     ImGuiStyle* style = &ImGui::GetStyle();
 
-    /*
-    // config
-    style->WindowBorderSize = 0.0f;
-    style->FrameBorderSize = 0.0f;
-    style->ChildBorderSize = 0.0f;
-    style->PopupBorderSize = 0.0f;
-    style->TabBorderSize = 0.0f;
-    style->WindowPadding = ImVec2(8, 8);
-    style->WindowRounding = 0.0f;
-    style->FramePadding = ImVec2(0, 0);
-    style->FrameRounding = 0.0f;
-    style->ItemSpacing = ImVec2(12, 8);
-    style->ItemInnerSpacing = ImVec2(8, 6);
-    style->IndentSpacing = 25.0f;
-    style->ScrollbarSize = 15.0f;
-    style->ScrollbarRounding = 0.0f;
-    style->GrabMinSize = 5.0f;
-    style->GrabRounding = 0.0f;
-    style->ChildRounding = 0.0f;
-    style->TabRounding = 0.0f;
-    style->PopupRounding = 0.0f;
-    style->GrabRounding = 0.0f;
-    style->LogSliderDeadzone = 0.0f;
-    style->ScrollbarRounding = 0.0f;
-    style->DisplaySafeAreaPadding = ImVec2(0.0f, 0.0f);
-    style->WindowMenuButtonPosition = ImGuiDir_None;
-
-    // colors
-    style->Colors[ImGuiCol_Text] = ImVec4(0.80f, 0.80f, 0.83f, 1.00f);
-    style->Colors[ImGuiCol_TextDisabled] = ImVec4(0.24f, 0.23f, 0.29f, 1.00f);
-    style->Colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.05f, 0.07f, 1.00f);
-    style->Colors[ImGuiCol_ChildBg] = ImVec4(0.07f, 0.07f, 0.09f, 1.00f);
-    style->Colors[ImGuiCol_PopupBg] = ImVec4(0.07f, 0.07f, 0.09f, 1.00f);
-    style->Colors[ImGuiCol_Border] = ImVec4(0.80f, 0.80f, 0.83f, 0.88f);
-    style->Colors[ImGuiCol_BorderShadow] = ImVec4(0.92f, 0.91f, 0.88f, 0.00f);
-    style->Colors[ImGuiCol_FrameBg] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
-    style->Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.24f, 0.23f, 0.29f, 1.00f);
-    style->Colors[ImGuiCol_FrameBgActive] = ImVec4(0.56f, 0.56f, 0.58f, 1.00f);
-    style->Colors[ImGuiCol_TitleBg] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
-    style->Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(1.00f, 0.98f, 0.95f, 0.75f);
-    style->Colors[ImGuiCol_TitleBgActive] = ImVec4(0.07f, 0.07f, 0.09f, 1.00f);
-    style->Colors[ImGuiCol_MenuBarBg] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
-    style->Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
-    style->Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.80f, 0.80f, 0.83f, 0.31f);
-    style->Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.56f, 0.56f, 0.58f, 1.00f);
-    style->Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.06f, 0.05f, 0.07f, 1.00f);
-    style->Colors[ImGuiCol_CheckMark] = ImVec4(0.80f, 0.80f, 0.83f, 0.31f);
-    style->Colors[ImGuiCol_SliderGrab] = ImVec4(0.80f, 0.80f, 0.83f, 0.31f);
-    style->Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.06f, 0.05f, 0.07f, 1.00f);
-    style->Colors[ImGuiCol_Button] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
-    style->Colors[ImGuiCol_ButtonHovered] = ImVec4(0.24f, 0.23f, 0.29f, 1.00f);
-    style->Colors[ImGuiCol_ButtonActive] = ImVec4(0.56f, 0.56f, 0.58f, 1.00f);
-    style->Colors[ImGuiCol_Header] = ImVec4(0.10f, 0.09f, 0.12f, 1.00f);
-    style->Colors[ImGuiCol_HeaderHovered] = ImVec4(0.56f, 0.56f, 0.58f, 1.00f);
-    style->Colors[ImGuiCol_HeaderActive] = ImVec4(0.06f, 0.05f, 0.07f, 1.00f);
-    style->Colors[ImGuiCol_ResizeGrip] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-    style->Colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.56f, 0.56f, 0.58f, 1.00f);
-    style->Colors[ImGuiCol_ResizeGripActive] = ImVec4(0.06f, 0.05f, 0.07f, 1.00f);
-    style->Colors[ImGuiCol_PlotLines] = ImVec4(0.40f, 0.39f, 0.38f, 0.63f);
-    style->Colors[ImGuiCol_PlotLinesHovered] = ImVec4(0.25f, 1.00f, 0.00f, 1.00f);
-    style->Colors[ImGuiCol_PlotHistogram] = ImVec4(0.40f, 0.39f, 0.38f, 0.63f);
-    style->Colors[ImGuiCol_PlotHistogramHovered] = ImVec4(0.25f, 1.00f, 0.00f, 1.00f);
-    style->Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.25f, 1.00f, 0.00f, 0.43f);
-    style->Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(1.0f, 1.0f, 1.0f, 0.04f);
-    style->Colors[ImGuiCol_TabHovered] = ImVec4(0.718f, 0.718f, 0.718f, 0.6f);
-    style->Colors[ImGuiCol_TabActive] = ImVec4(1.0f, 1.0f, 1.0f, 0.2f);
-    style->Colors[ImGuiCol_DockingPreview] = ImVec4(1.0f, 0.45f, 0.0f, 1.0f);
-    style->Colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
-    style->Colors[ImGuiCol_MenuBarBg] = ImVec4(0.07f, 0.07f, 0.09f, 1.00f);
-    */
-
     // Setup Platform/Renderer bindings
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
-
 
     // Our state
     bool show_demo_window = true;
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.06f, 0.05f, 0.07f, 1.00f);
 
+    // initialize ImFileDialog
+    ifd::FileDialog::Instance().CreateTexture = [](uint8_t* data, int w, int h, char fmt) -> void* {
+        GLuint tex;
+
+        glGenTextures(1, &tex);
+        glBindTexture(GL_TEXTURE_2D, tex);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, (fmt == 0) ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        return (void*)tex;
+    };
+
+    ifd::FileDialog::Instance().DeleteTexture = [](void* tex) {
+        GLuint texID = (GLuint)tex;
+        glDeleteTextures(1, &texID);
+    };
+
+    // initialize system
+    Parser parser(argc, argv);
+
     Loader loader;
 
-    //std::string path = "D:/Projects/Demoreel/Renders/Boat/export";
-    std::string path = "/home/donromano/Downloads/export";
+    bool initialize_display = false;
 
-    loader.initialize(path, 1000000000);
-    //  loader.sequence("D:/Projects/Demoreel/Renders/Boat/export");
+    if (parser.is_directory > 0)
+    {
+        loader.initialize(parser.path, 10000, true);
+        initialize_display = true;
+    }
+    else if (parser.is_file > 0)
+    {
+        loader.initialize(parser.path, 0, false);
+        initialize_display = true;
+    }
 
-    //loader.launch_sequence_worker();
-    //  load.join();
-
-    // Windows declarations
+    // initialize windows
     ImPlaybar playbar(ImVec2(0.0f, loader.count + 1.0f));
 
     Settings settings;
     Menubar menubar;
     Display display;
 
-    
-    GLuint tex;
-
-    glGenTextures(1, &tex);
-    glBindTexture(GL_TEXTURE_2D, tex);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
-    glTexImage2D(GL_TEXTURE_2D, 
-                0, 
-                loader.images[0].internal_format, 
-                loader.images[0].xres, 
-                loader.images[0].yres, 
-                0, 
-                loader.images[0].gl_format, 
-                loader.images[0].gl_type, 
-                loader.memory_arena);
-
-    glBindTexture(GL_TEXTURE_2D, 0);
+    if (initialize_display) display.init(loader);
     
 
     // Main loop
@@ -175,21 +111,9 @@ int application(int argc, char** argv)
         loader.frame = playbar.playbar_frame;
         uint16_t frame_index = playbar.playbar_frame;
 
-        uint16_t xres = loader.images[frame_index].xres;
-        uint16_t yres = loader.images[frame_index].yres;
-
-        loader.load_image(frame_index);
+        if(loader.has_been_initialized > 0) loader.load_image(frame_index);
             
-        glBindTexture(GL_TEXTURE_2D, tex);
-        glTexSubImage2D(GL_TEXTURE_2D, 
-                        0, 0, 0, 
-                        xres, 
-                        yres, 
-                        loader.images[frame_index].gl_format, 
-                        loader.images[frame_index].gl_type, 
-                        loader.single_image);
-                        
-        glBindTexture(GL_TEXTURE_2D, 0);
+        display.update(loader, frame_index);
 
         /*
         if (!playbar.play)
@@ -232,7 +156,7 @@ int application(int argc, char** argv)
         if (show_demo_window) ImGui::ShowDemoWindow(&show_demo_window);
 
         // display
-        display.draw(tex, ImVec2(xres, yres));
+        display.draw(loader, frame_index);
 
         // settings windows
         settings.draw(playbar);
@@ -242,7 +166,7 @@ int application(int argc, char** argv)
         playbar.draw(loader.cached);
 
         // menubar
-        menubar.draw(settings);
+        menubar.draw(settings, loader, display);
 
         // Rendering
         ImGui::Render();

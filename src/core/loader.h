@@ -1,3 +1,5 @@
+#pragma once
+
 #include "OpenImageIO/imagecache.h"
 #include "GL/gl3w.h"
 
@@ -76,6 +78,9 @@ struct Image
 		{
 			type = FileType_Other;
 			format = Format_RGB_FLOAT;
+			internal_format = GL_RGB;
+			gl_format = GL_RGB;
+			gl_type = GL_FLOAT;
 		}
 
 		auto in = OIIO::ImageInput::open(fp);
@@ -83,7 +88,7 @@ struct Image
 
 		xres = spec.width;
 		yres = spec.height;
-		channels = spec.nchannels;
+		channels = spec.nchannels == 3 ? spec.nchannels + 1 : spec.nchannels;
 
 		size = xres * yres * channels; // *sizeof(float);
 
@@ -91,17 +96,16 @@ struct Image
 	}
 
 	void release();
-	void load(void* allocated_space);
-	void load_exr(half* allocated_space);
-	void load_png(uint8_t* allocated_space);
-	void load_jpg(uint8_t* allocated_space);
-	void load_other(float* allocated_space);
+	void load(void* __restrict buffer) noexcept;
+	void load_exr(half* __restrict buffer) noexcept;
+	void load_png(uint8_t* __restrict buffer) noexcept;
+	void load_jpg(uint8_t* __restrict buffer) noexcept;
+	void load_other(float* __restrict allocated_space) noexcept;
 };
 
 struct Loader
 {
 	void* memory_arena;
-	void* single_image;
 	std::vector<Image> images;
 	std::vector<std::thread> workers;
 	std::vector<uint16_t> last_cached;
@@ -113,6 +117,8 @@ struct Loader
 	uint16_t count = 0;
 	uint16_t frame = 0;
 	uint16_t cache_size_count = 0;
+	unsigned int has_been_initialized : 1;
+	unsigned int use_cache : 1;
 	unsigned int is_playing : 1;
 	unsigned int has_finished : 1;
 	unsigned int is_working : 1;
@@ -120,6 +126,8 @@ struct Loader
 
 	Loader() 
 	{
+		has_been_initialized = 0;
+		use_cache = 0;
 		cached_size = 0;
 		has_finished = 0;
 		is_working = 0;
@@ -130,7 +138,7 @@ struct Loader
 	{
 	}
 
-	void initialize(std::string& fp, uint64_t _cache_size);
+	void initialize(std::string fp, uint64_t _cache_size, bool isdirectory);
 	void load_sequence();
 	void load_player();
 	void load_images(uint16_t idx, uint8_t number);

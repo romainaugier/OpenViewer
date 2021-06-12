@@ -17,11 +17,14 @@ static void glfw_error_callback(int error, const char* description)
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
+
+
 #include <thread>
 
 #include "menubar.h"
 #include "display.h"
 #include "core/loader.h"
+#include "core/parser.h"
 
 typedef struct { GLfloat R, G, B; } color_t;
 

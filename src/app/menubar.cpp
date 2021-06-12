@@ -1,6 +1,6 @@
 #include "menubar.h"
 
-void Menubar::draw(Settings& current_settings)
+void Menubar::draw(Settings& current_settings, Loader& loader, Display& display)
 {
 	ImGui::SetNextWindowBgAlpha(current_settings.interface_windows_bg_alpha);
 
@@ -10,20 +10,57 @@ void Menubar::draw(Settings& current_settings)
 		{
 			if (ImGui::MenuItem("Open Single File"))
 			{
-				printf("Open file\n");
-			}
-
-			if (ImGui::MenuItem("Open Image Sequence"))
-			{
-				printf("Open image sequence\n");
+				ifd::FileDialog::Instance().Open("SingleFileOpenDialog", "Select an image file", "Image File (*.exr,*.png;*.jpg;*.jpeg;*.bmp;*.tga){.exr,.png,.jpg,.jpeg,.bmp,.tga},.*");
 			}
 
 			if (ImGui::MenuItem("Open Folder"))
 			{
-				printf("Open folder\n");
+				ifd::FileDialog::Instance().Open("FolderOpenDialog", "Open a directory", "");
 			}
 
 			ImGui::EndMenu();
+		}
+
+		if (ifd::FileDialog::Instance().IsDone("SingleFileOpenDialog"))
+		{
+			if (ifd::FileDialog::Instance().HasResult())
+			{
+				const auto& res = ifd::FileDialog::Instance().GetResults();
+
+				std::string fp = res[0].u8string();
+
+				// std::replace(fp.begin(), fp.end(), "\\", "/");
+
+				if (loader.has_been_initialized > 0)
+				{
+					loader.release();
+				}
+
+				loader.initialize(fp, 0, false);
+				display.init(loader);
+			}
+		}
+
+		if (ifd::FileDialog::Instance().IsDone("FolderOpenDialog"))
+		{
+			if (ifd::FileDialog::Instance().HasResult())
+			{
+				const auto& res = ifd::FileDialog::Instance().GetResult();
+
+				printf("%s\n", res.u8string().c_str());
+
+				if (loader.has_been_initialized > 0)
+				{
+					loader.release();
+				}
+
+				std::string fp = res.u8string();
+
+				// std::replace(fp.begin(), fp.end(), "\\", "/");
+
+				loader.initialize(fp, 1000000, true);
+				display.init(loader);
+			}
 		}
 
 		if (ImGui::BeginMenu("Plot"))

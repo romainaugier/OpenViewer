@@ -64,6 +64,8 @@ find_package(OpenColorIO REQUIRED)
 find_package(IlmBase CONFIG REQUIRED)
 
 find_package(OpenEXR CONFIG REQUIRED)
+
+# imf has some <> include that requires this to be found
 include_directories(${VCPKG_INCLUDE_DIR}/OpenEXR)
 
 add_subdirectory(dependencies)

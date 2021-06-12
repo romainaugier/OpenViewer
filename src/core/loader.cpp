@@ -1,8 +1,5 @@
 #include "loader.h"
 
-#define TINYEXR_IMPLEMENTATION
-#include "tinyexr/tinyexr.h"
-
 // releases an image data
 void Image::release()
 {
@@ -10,9 +7,9 @@ void Image::release()
 }
 
 // loads an image
-void Image::load_exr(half* buffer)
+void Image::load_exr(half* __restrict buffer) noexcept
 {
-	Imf::RgbaInputFile in(path.c_str(), 2);
+	Imf::RgbaInputFile in(path.c_str());
 	
 	Imath::Box2i win = in.dataWindow();
 	Imath::V2i dim(win.max.x - win.min.x + 1, win.max.y - win.max.y + 1);
@@ -24,61 +21,106 @@ void Image::load_exr(half* buffer)
 	in.readPixels(win.min.y, win.max.y);
 }
 
-void Image::load_png(uint8_t* buffer)
+void Image::load_png(uint8_t* __restrict buffer) noexcept
 {
 
 }
 
-void Image::load_jpg(uint8_t* buffer)
+void Image::load_jpg(uint8_t* __restrict buffer) noexcept
 {
 
 }
 
-void Image::load_other(float* buffer)
+void Image::load_other(float* __restrict buffer) noexcept
 {
 	auto in = OIIO::ImageInput::open(path);
-	in->threads(1);
 	in->read_image(0, -1, OIIO::TypeDesc::FLOAT, (float*)buffer);
 	in->close();
 }
 
-void Image::load(void* buffer)
+void Image::load(void* __restrict buffer) noexcept
 {
-	if (endsWith(path, ".exr")) load_exr((half*)buffer);	
+	if (type & FileType_Exr) load_exr((half*)buffer);
+	else if (type & FileType_Other) load_other((float*)buffer);
 }
 
 // initializes the loader with the different paths, the item count and the first frame
-void Loader::initialize(std::string& fp, uint64_t _cache_size)
+void Loader::initialize(std::string fp, uint64_t _cache_size, bool isdirectory)
 {
-	cache_size = _cache_size;
+	has_been_initialized = 1;
 
-	// allocate the cache
-	memory_arena = new float[cache_size];
-
-	for (auto p : std::filesystem::directory_iterator(fp))
+	if (isdirectory)
 	{
-		count++;
-		std::string t = p.path().u8string();
-		images.emplace_back(t);
+		cache_size = _cache_size;
+
+		// allocate the cache
+		if (_cache_size > 0 && use_cache > 0)
+		{
+			memory_arena = _aligned_malloc(cache_size, 16);
+			use_cache = 1;
+		}
+
+		for (auto p : std::filesystem::directory_iterator(fp))
+		{
+			count++;
+			std::string t = p.path().u8string();
+			images.emplace_back(t);
+		}
+
+		cached_size += images[0].size;
+
+		// get the image file format to set the different buffers we need
+		if (images[0].type & FileType_Exr)
+		{
+			if (use_cache < 1) memory_arena = _aligned_malloc(images[0].size * sizeof(half), 16);
+			cache_stride = cached_size * sizeof(half);
+		}
+
+		else if (images[0].type & FileType_Png)
+		{
+			if (use_cache < 1) memory_arena = _aligned_malloc(images[0].size * sizeof(uint8_t), 16);
+			cache_stride = cached_size * sizeof(uint8_t);
+		}
+
+		// TODO : implement other file types
+
+		// reserve the memory for the cache indices vector and set all to zero
+		cached.resize(count);
+		std::fill(cached.begin(), cached.end(), 0);
+
+		// load the first frame to have something to show
+		images[0].load(memory_arena);
+		cached[0] = 1;
+		cache_size_count = round(cache_size / cached_size);
+		last_cached.push_back(0);
+
+		last_cached.reserve(cache_size_count);
 	}
+	else
+	{
+		if (std::filesystem::exists(fp))
+		{
+			images.emplace_back(fp);
 
-	// reserve the memory for the cache indices vector and set all to zero
-	cached.resize(count);
-	std::fill(cached.begin(), cached.end(), 0);
+			cached_size += images[0].size;
 
-	// load the first frame to have something to show
-	images[0].load(memory_arena);
-	cached[0] = 1;
-	cached_size += images[0].size;
-	cache_stride = cached_size * sizeof(float);
-	cache_size_count = round(cache_size / images[0].size);
-	last_cached.push_back(0);
+			if (images[0].type & FileType_Exr) memory_arena = _aligned_malloc(images[0].size * sizeof(half), 16);
+			if (images[0].type & FileType_Png) memory_arena = _aligned_malloc(cached_size * sizeof(uint8_t), 16);
+			if (images[0].type & FileType_Other) memory_arena = _aligned_malloc(cached_size * sizeof(float), 16);
 
-	single_image = new float[cached_size];
-	memcpy(single_image, memory_arena, cache_stride);
-	// memmove(single_image, memory_arena, cache_stride * sizeof(float));
+			// TODO : implement other file types
 
-	last_cached.reserve(cache_size_count);
+			count = 1;
+			images[0].load(memory_arena);
+			cached.resize(1);
+			cached[0] = 1;
+			last_cached.push_back(0);
+		}
+		else
+		{
+			// TODO : handle file does not exist
+		}
+	}
 }
 
 // loads a single image
@@ -86,7 +128,7 @@ void Loader::load_image(uint16_t idx)
 {
 	if (cached[idx] == 0)
 	{
-		images[idx].load(single_image);
+		images[idx].load(memory_arena);
 		cached_size += images[idx].size;
 		cached[idx] = 1;
 		last_cached.push_back(idx);
@@ -220,9 +262,10 @@ void Loader::join_worker()
 // release all the images and paths in case of reload
 void Loader::release()
 {
-	delete[] memory_arena;
-	delete[] single_image;
+	_aligned_free(memory_arena);
+	memory_arena = nullptr;
 	workers.clear();
 	cached.clear();
+	last_cached.clear();
 	images.clear();
 }
