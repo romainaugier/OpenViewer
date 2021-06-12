@@ -60,6 +60,12 @@ endif()
 # OpenColorIO
 find_package(OpenColorIO REQUIRED)
 
+# OpenEXR
+find_package(IlmBase CONFIG REQUIRED)
+
+find_package(OpenEXR CONFIG REQUIRED)
+include_directories(${VCPKG_INCLUDE_DIR}/OpenEXR)
+
 add_subdirectory(dependencies)
 include_directories(dependencies)
 

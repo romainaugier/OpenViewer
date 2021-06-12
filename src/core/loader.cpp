@@ -10,37 +10,41 @@ void Image::release()
 }
 
 // loads an image
-void Image::load_exr(float* allocated_space)
+void Image::load_exr(half* buffer)
 {
-	int temp_width, temp_height;
-	const char* err = nullptr;
-	float* out;
-	bool success = LoadEXR(&out, &temp_width, &temp_height, path.c_str(), &err);
-	memcpy(allocated_space, out, size * sizeof(float));
-	free(out);
+	Imf::RgbaInputFile in(path.c_str(), 2);
+	
+	Imath::Box2i win = in.dataWindow();
+	Imath::V2i dim(win.max.x - win.min.x + 1, win.max.y - win.max.y + 1);
+
+	int dx = win.min.x;
+	int dy = win.min.y;
+
+	in.setFrameBuffer((Imf::Rgba*)buffer - dx - dy * dim.x, 1, dim.x);
+	in.readPixels(win.min.y, win.max.y);
 }
 
-void Image::load_png(uint8_t* allocated_space)
+void Image::load_png(uint8_t* buffer)
 {
 
 }
 
-void Image::load_jpg(uint8_t* allocated_space)
+void Image::load_jpg(uint8_t* buffer)
 {
 
 }
 
-void Image::load_other(float* allocated_space)
+void Image::load_other(float* buffer)
 {
 	auto in = OIIO::ImageInput::open(path);
 	in->threads(1);
-	in->read_image(0, -1, OIIO::TypeDesc::FLOAT, (float*)allocated_space);
+	in->read_image(0, -1, OIIO::TypeDesc::FLOAT, (float*)buffer);
 	in->close();
 }
 
-void Image::load(void* allocated_space)
+void Image::load(void* buffer)
 {
-	if (endsWith(path, ".exr")) load_exr((float*)allocated_space);	
+	if (endsWith(path, ".exr")) load_exr((half*)buffer);	
 }
 
 // initializes the loader with the different paths, the item count and the first frame

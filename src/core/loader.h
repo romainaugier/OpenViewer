@@ -1,6 +1,9 @@
 #include "OpenImageIO/imagecache.h"
 #include "GL/gl3w.h"
 
+#include "OpenEXR/ImfImage.h"
+#include "OpenEXR/ImfRgbaFile.h"
+
 #include <thread>
 #include <string>
 #include <vector>
@@ -21,9 +24,14 @@ enum FileType_
 
 enum Format_
 {
-	Format_Float = 0x1 | GL_FLOAT,
-	Format_U32   = 0x2 | GL_UNSIGNED_INT,
-	Format_U8    = 0x4 | GL_UNSIGNED_BYTE
+	Format_RGBA_FLOAT = 0x1,
+	Format_RGB_FLOAT  = 0x2,
+	Format_RGBA_U8    = 0x4,
+	Format_RGB_U8     = 0x8,
+	Format_RGBA_U32   = 0x10,
+	Format_RGB_U32    = 0x20,
+	Format_RGBA_HALF  = 0x40,
+	Format_RGB_HALF   = 0x80
 };
 
 struct Image
@@ -36,6 +44,9 @@ struct Image
 	int16_t cache_index = -1;
 	FileType_ type;
 	Format_ format;
+	GLint internal_format;
+	GLenum gl_format;
+	GLenum gl_type;
 
 	Image() {}
 
@@ -46,22 +57,25 @@ struct Image
 		if(endsWith(fp, ".exr"))
 		{
 			type = FileType_Exr;
-			format = Format_Float;
+			format = Format_RGBA_HALF;
+			internal_format = GL_RGBA16F;
+			gl_format = GL_RGBA;
+			gl_type = GL_HALF_FLOAT;
 		}
 		else if(endsWith(fp, ".png"))
 		{
 			type = FileType_Png;
-			format = Format_U8;
+			format = Format_RGB_U8;
 		}
 		else if(endsWith(fp, "jpg") || endsWith(fp, "jpeg"))
 		{
 			type = FileType_Jpg;
-			format = Format_U8;
+			format = Format_RGB_U8;
 		}
 		else
 		{
 			type = FileType_Other;
-			format = Format_Float;
+			format = Format_RGB_FLOAT;
 		}
 
 		auto in = OIIO::ImageInput::open(fp);
@@ -78,7 +92,7 @@ struct Image
 
 	void release();
 	void load(void* allocated_space);
-	void load_exr(float* allocated_space);
+	void load_exr(half* allocated_space);
 	void load_png(uint8_t* allocated_space);
 	void load_jpg(uint8_t* allocated_space);
 	void load_other(float* allocated_space);

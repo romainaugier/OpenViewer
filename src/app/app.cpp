@@ -155,7 +155,15 @@ int application(int argc, char** argv)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, loader.images[0].xres, loader.images[0].yres, 0, GL_RGB, GL_FLOAT, loader.memory_arena);
+    glTexImage2D(GL_TEXTURE_2D, 
+                0, 
+                loader.images[0].internal_format, 
+                loader.images[0].xres, 
+                loader.images[0].yres, 
+                0, 
+                loader.images[0].gl_format, 
+                loader.images[0].gl_type, 
+                loader.memory_arena);
 
     glBindTexture(GL_TEXTURE_2D, 0);
     
@@ -173,7 +181,14 @@ int application(int argc, char** argv)
         loader.load_image(frame_index);
             
         glBindTexture(GL_TEXTURE_2D, tex);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, xres, yres, GL_RGB, GL_FLOAT, loader.single_image);
+        glTexSubImage2D(GL_TEXTURE_2D, 
+                        0, 0, 0, 
+                        xres, 
+                        yres, 
+                        loader.images[frame_index].gl_format, 
+                        loader.images[frame_index].gl_type, 
+                        loader.single_image);
+                        
         glBindTexture(GL_TEXTURE_2D, 0);
 
         /*
