@@ -93,7 +93,7 @@ cd OpenViewer
     - :x: Drawing annotations
     - :x: Onion peel through frame sequence annotations
 
-- Plot :
+- Data Plot :
   - :x: Histogram
   - :x: Waveform
   - :x: Vector Scope
