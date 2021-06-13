@@ -117,7 +117,7 @@ All rights reserved.
 
 ## Third Party Softwares :
 
-This software is based in part on the works of (in alphabetical order):
+This software is based in part on the works of :
 
 - [CMake](https://cmake.org/), Copyright © 2000-2021 Kitware, Inc. and Contributors, All rights reserved
 - [GLFW](https://www.glfw.org/), Copyright © 2002-2006 Marcus Geelnard, Copyright © 2006-2019 Camilla Löwy
