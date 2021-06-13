@@ -77,10 +77,10 @@ struct Image
 		else
 		{
 			type = FileType_Other;
-			format = Format_RGB_FLOAT;
-			internal_format = GL_RGB;
+			format = Format_RGB_HALF;
+			internal_format = GL_RGB16F;
 			gl_format = GL_RGB;
-			gl_type = GL_FLOAT;
+			gl_type = GL_HALF_FLOAT;
 		}
 
 		auto in = OIIO::ImageInput::open(fp);
@@ -100,7 +100,7 @@ struct Image
 	void load_exr(half* __restrict buffer) noexcept;
 	void load_png(uint8_t* __restrict buffer) noexcept;
 	void load_jpg(uint8_t* __restrict buffer) noexcept;
-	void load_other(float* __restrict allocated_space) noexcept;
+	void load_other(half* __restrict allocated_space) noexcept;
 };
 
 struct Loader

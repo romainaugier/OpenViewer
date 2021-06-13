@@ -3,7 +3,20 @@
 cmake_minimum_required(VERSION 3.15)
 
 # Vcpkg
-set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE FILEPATH "CMAKE Toolchain" FORCE)
+if(DEFINED CMAKE_TOOLCHAIN_FILE)
+	if(EXISTS "${CMAKE_TOOLCHAIN_FILE}")
+		message("-- Vcpkg has been found")
+	else()
+		message(FATAL_ERROR "Vcpkg can't be found, CMake will exit")
+	endif()
+else()
+	if(EXISTS "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
+		message("-- Vcpkg has been found")	
+		set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE FILEPATH "CMAKE Toolchain" FORCE)
+	else()
+		message(FATAL_ERROR "Vcpkg can't be found, CMake will exit")
+	endif()
+endif()
 
 # Linux std lib
 if(UNIX)
@@ -66,7 +79,11 @@ find_package(IlmBase CONFIG REQUIRED)
 find_package(OpenEXR CONFIG REQUIRED)
 
 # imf has some <> include that requires this to be found
-include_directories(${VCPKG_INCLUDE_DIR}/OpenEXR)
+if(WIN32)
+	include_directories(${OPENIMAGEIO_INCLUDES}/OpenEXR)
+elseif(UNIX)
+	include_directories(${VCPKG_INCLUDE_DIR}/OpenEXR)
+endif()
 
 add_subdirectory(dependencies)
 include_directories(dependencies)

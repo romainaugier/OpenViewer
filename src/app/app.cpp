@@ -166,7 +166,7 @@ int application(int argc, char** argv)
         playbar.draw(loader.cached);
 
         // menubar
-        menubar.draw(settings, loader, display);
+        menubar.draw(settings, loader, display, playbar);
 
         // Rendering
         ImGui::Render();

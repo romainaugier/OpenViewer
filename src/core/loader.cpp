@@ -31,17 +31,17 @@ void Image::load_jpg(uint8_t* __restrict buffer) noexcept
 
 }
 
-void Image::load_other(float* __restrict buffer) noexcept
+void Image::load_other(half* __restrict buffer) noexcept
 {
 	auto in = OIIO::ImageInput::open(path);
-	in->read_image(0, -1, OIIO::TypeDesc::FLOAT, (float*)buffer);
+	in->read_image(0, -1, OIIO::TypeDesc::HALF, (half*)buffer);
 	in->close();
 }
 
 void Image::load(void* __restrict buffer) noexcept
 {
 	if (type & FileType_Exr) load_exr((half*)buffer);
-	else if (type & FileType_Other) load_other((float*)buffer);
+	else if (type & FileType_Other) load_other((half*)buffer);
 }
 
 // initializes the loader with the different paths, the item count and the first frame
@@ -106,7 +106,7 @@ void Loader::initialize(std::string fp, uint64_t _cache_size, bool isdirectory)
 
 			if (images[0].type & FileType_Exr) memory_arena = _aligned_malloc(images[0].size * sizeof(half), 16);
 			if (images[0].type & FileType_Png) memory_arena = _aligned_malloc(cached_size * sizeof(uint8_t), 16);
-			if (images[0].type & FileType_Other) memory_arena = _aligned_malloc(cached_size * sizeof(float), 16);
+			if (images[0].type & FileType_Other) memory_arena = _aligned_malloc(cached_size * sizeof(half), 16);
 
 			// TODO : implement other file types
 
@@ -268,4 +268,6 @@ void Loader::release()
 	cached.clear();
 	last_cached.clear();
 	images.clear();
+
+	count = 0;
 }

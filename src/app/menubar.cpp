@@ -1,6 +1,6 @@
 #include "menubar.h"
 
-void Menubar::draw(Settings& current_settings, Loader& loader, Display& display)
+void Menubar::draw(Settings& current_settings, Loader& loader, Display& display, ImPlaybar& playbar)
 {
 	ImGui::SetNextWindowBgAlpha(current_settings.interface_windows_bg_alpha);
 
@@ -29,8 +29,6 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display)
 
 				std::string fp = res[0].u8string();
 
-				// std::replace(fp.begin(), fp.end(), "\\", "/");
-
 				if (loader.has_been_initialized > 0)
 				{
 					loader.release();
@@ -38,7 +36,12 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display)
 
 				loader.initialize(fp, 0, false);
 				display.init(loader);
+
+				playbar.playbar_range = ImVec2(0.0f, loader.count + 1.0f);
+				playbar.playbar_frame = 0;
 			}
+
+			ifd::FileDialog::Instance().Close();
 		}
 
 		if (ifd::FileDialog::Instance().IsDone("FolderOpenDialog"))
@@ -47,8 +50,6 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display)
 			{
 				const auto& res = ifd::FileDialog::Instance().GetResult();
 
-				printf("%s\n", res.u8string().c_str());
-
 				if (loader.has_been_initialized > 0)
 				{
 					loader.release();
@@ -56,11 +57,15 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display)
 
 				std::string fp = res.u8string();
 
-				// std::replace(fp.begin(), fp.end(), "\\", "/");
-
 				loader.initialize(fp, 1000000, true);
 				display.init(loader);
+
+				playbar.playbar_range = ImVec2(0.0f, loader.count + 1.0f);
+
+				playbar.playbar_frame = 0;
 			}
+
+			ifd::FileDialog::Instance().Close();
 		}
 
 		if (ImGui::BeginMenu("Plot"))
