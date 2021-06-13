@@ -75,7 +75,6 @@ find_package(OpenColorIO REQUIRED)
 
 # OpenEXR
 find_package(IlmBase CONFIG REQUIRED)
-
 find_package(OpenEXR CONFIG REQUIRED)
 
 # imf has some <> include that requires this to be found

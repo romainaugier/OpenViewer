@@ -1,3 +1,10 @@
+// SPDX-License-Identifier: BSD-3-Clause
+// Copyright (c) 2021 Romain Augier
+// All rights reserved.
+
+
+#pragma once
+
 #ifdef _MSC_VER
 #include <string_view>
 #elif __GNUC__
