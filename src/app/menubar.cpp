@@ -5,7 +5,7 @@
 
 #include "menubar.h"
 
-void Menubar::draw(Settings& current_settings, Loader& loader, Display& display, ImPlaybar& playbar)
+void Menubar::draw(Settings& current_settings, Loader& loader, Display& display, ImPlaybar& playbar, Ocio& ocio)
 {
 	ImGui::SetNextWindowBgAlpha(current_settings.interface_windows_bg_alpha);
 
@@ -32,15 +32,15 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 			{
 				const auto& res = ifd::FileDialog::Instance().GetResults();
 
-				std::string fp = res[0].u8string();
+				const std::string fp = res[0].u8string();
 
 				if (loader.has_been_initialized > 0)
 				{
-					loader.release();
+					loader.Release();
 				}
 
-				loader.initialize(fp, 0, false);
-				display.init(loader);
+				loader.Initialize(fp, 0, false);
+				display.Initialize(loader, ocio);
 
 				playbar.playbar_range = ImVec2(0.0f, loader.count + 1.0f);
 				playbar.playbar_frame = 0;
@@ -57,13 +57,13 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 
 				if (loader.has_been_initialized > 0)
 				{
-					loader.release();
+					loader.Release();
 				}
 
-				std::string fp = res.u8string();
+				const std::string fp = res.u8string();
 
-				loader.initialize(fp, 1000000, true);
-				display.init(loader);
+				loader.Initialize(fp, 1000000, true);
+				display.Initialize(loader, ocio);
 
 				playbar.playbar_range = ImVec2(0.0f, loader.count + 1.0f);
 
@@ -93,6 +93,17 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 
 			ImGui::EndMenu();
 		}
+
+		const ImVec2 avail_width = ImGui::GetContentRegionAvail();
+
+		static int item_current = 0;
+
+		ImGui::Dummy(ImVec2(avail_width.x - 200.0f, avail_width.y));
+
+		ImGui::SetNextItemWidth(100.0f);
+		ImGui::Combo("", &item_current, &ocio.active_views[0], ocio.active_views.size());
+
+		ocio.current_view = ocio.active_views[item_current];
 	}
 
 	ImGui::EndMainMenuBar();

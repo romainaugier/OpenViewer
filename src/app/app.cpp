@@ -84,18 +84,21 @@ int application(int argc, char** argv)
     // initialize system
     Parser parser(argc, argv);
 
+    Ocio ocio;
+    ocio.Initialize();
+
     Loader loader;
 
     bool initialize_display = false;
 
     if (parser.is_directory > 0)
     {
-        loader.initialize(parser.path, 10000, true);
+        loader.Initialize(parser.path, 10000, true);
         initialize_display = true;
     }
     else if (parser.is_file > 0)
     {
-        loader.initialize(parser.path, 0, false);
+        loader.Initialize(parser.path, 0, false);
         initialize_display = true;
     }
 
@@ -106,27 +109,28 @@ int application(int argc, char** argv)
     Menubar menubar;
     Display display;
 
-    if (initialize_display) display.init(loader);
+    if (initialize_display) display.Initialize(loader, ocio);
     
 
     // Main loop
     while (!glfwWindowShouldClose(window))
     {
-        
         loader.frame = playbar.playbar_frame;
         uint16_t frame_index = playbar.playbar_frame;
 
-        if(loader.has_been_initialized > 0) loader.load_image(frame_index);
-            
-        display.update(loader, frame_index);
+        if (loader.has_been_initialized > 0 && playbar.update > 0)
+        {
+            loader.LoadImage(frame_index);
+            display.Update(loader, ocio, frame_index);
+        }
 
         /*
         if (!playbar.play)
         {
             loader.is_playing = 0;
-            loader.load_image(frame_index);
-            //if (loader.is_playloader_working == 1) loader.join_worker();
-            //if (loader.has_finished == 1) loader.join_worker();
+            loader.LoadImage(frame_index);
+            //if (loader.is_playloader_working == 1) loader.JoinWorker();
+            //if (loader.has_finished == 1) loader.JoinWorker();
 
             glBindTexture(GL_TEXTURE_2D, tex);
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, xres, yres, GL_RGB, GL_FLOAT, loader.single_image);
@@ -139,7 +143,7 @@ int application(int argc, char** argv)
             if (loader.cached[playbar.playbar_frame] < 1) playbar.playbar_frame++;
             if (loader.is_playloader_working == 0)
             {
-                loader.launch_player_worker();
+                loader.LaunchPlayerWorker();
             }
 
             glBindTexture(GL_TEXTURE_2D, tex);
@@ -161,7 +165,7 @@ int application(int argc, char** argv)
         if (show_demo_window) ImGui::ShowDemoWindow(&show_demo_window);
 
         // display
-        display.draw(loader, frame_index);
+        display.Draw(loader, frame_index);
 
         // settings windows
         settings.draw(playbar);
@@ -171,7 +175,7 @@ int application(int argc, char** argv)
         playbar.draw(loader.cached);
 
         // menubar
-        menubar.draw(settings, loader, display, playbar);
+        menubar.draw(settings, loader, display, playbar, ocio);
 
         // Rendering
         ImGui::Render();
@@ -197,8 +201,9 @@ int application(int argc, char** argv)
     }
 
     // make sure to join remaining thread if it has not been     
-    if(loader.has_finished > 0) loader.join_worker();
-    loader.release();
+    if(loader.has_finished > 0) loader.JoinWorker();
+    loader.Release();
+    display.Release();
 
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();

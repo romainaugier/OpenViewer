@@ -10,11 +10,12 @@
 #include "ImFileDialog.h"
 #include "display.h"
 #include "implaybar.h"
+#include "core/ocio.h"
 
 #include "stdio.h"
 #include <algorithm>
 
 struct Menubar
 {
-	void draw(Settings& current_settings, Loader& loader, Display& display, ImPlaybar& playbar);
+	void draw(Settings& current_settings, Loader& loader, Display& display, ImPlaybar& playbar, Ocio& ocio);
 };

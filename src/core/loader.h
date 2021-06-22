@@ -57,7 +57,7 @@ struct Image
 
 	Image() {}
 
-	Image(std::string& fp)
+	Image(const std::string& fp)
 	{
 		path = fp;
 
@@ -100,17 +100,17 @@ struct Image
 		in->close();
 	}
 
-	void release();
-	void load(void* __restrict buffer) noexcept;
-	void load_exr(half* __restrict buffer) noexcept;
-	void load_png(uint8_t* __restrict buffer) noexcept;
-	void load_jpg(uint8_t* __restrict buffer) noexcept;
-	void load_other(half* __restrict allocated_space) noexcept;
+	void Release() noexcept;
+	void Load(void* __restrict buffer) const noexcept;
+	void LoadExr(half* __restrict buffer) const noexcept;
+	void LoadPng(uint8_t* __restrict buffer) const noexcept;
+	void LoadJpg(uint8_t* __restrict buffer) const noexcept;
+	void LoadOther(half* __restrict allocated_space) const noexcept;
 };
 
 struct Loader
 {
-	void* memory_arena;
+	void* memory_arena = nullptr;
 	std::vector<Image> images;
 	std::vector<std::thread> workers;
 	std::vector<uint16_t> last_cached;
@@ -143,17 +143,17 @@ struct Loader
 	{
 	}
 
-	void initialize(std::string fp, uint64_t _cache_size, bool isdirectory);
-	void load_sequence();
-	void load_player();
-	void load_images(uint16_t idx, uint8_t number);
-	void load_image(uint16_t idx);
-	void unload_images(uint8_t number);
-	void unload_image();
-	void launch_sequence_worker();
-	void launch_cacheload_worker(uint16_t idx, uint16_t number);
-	void launch_player_worker();
-	void join_worker();
-	void release();
+	void Initialize(const std::string fp, const uint64_t _cache_size, bool isdirectory) noexcept;
+	void LoadSequence() noexcept;
+	void LoadPlayer() noexcept;
+	void LoadImages(const uint16_t idx, const uint8_t number) noexcept;
+	void LoadImage(const uint16_t idx) noexcept;
+	void UnloadImages(const uint8_t number) noexcept;
+	void UnloadImage() noexcept;
+	void LaunchSequenceWorker() noexcept;
+	void LaunchCacheLoadWorker(const uint16_t idx, const uint16_t number) noexcept;
+	void LaunchPlayerWorker() noexcept;
+	void JoinWorker() noexcept;
+	void Release() noexcept;
 };
 

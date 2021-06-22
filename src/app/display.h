@@ -13,21 +13,28 @@
 
 #include "GL/gl3w.h"
 #include "GLFW/glfw3.h"
+#include "half.h"
+#include <immintrin.h>
 
 #include "core/loader.h"
+#include "core/ocio.h"
 
 struct Display
 {
-	void* buffer;
+	float* buffer = nullptr;
 	GLuint display_tex;
 	unsigned int display : 1;
+	unsigned int use_buffer : 1;
 
 	Display()
 	{
 		display = 0;
+		use_buffer = 0;
 	}
 
-	void init(Loader& loader) noexcept;
-	void update(Loader& loader, uint16_t frame_idx) noexcept;
-	void draw(Loader& loader, uint16_t frame_idx) noexcept;
+	void Initialize(const Loader& loader, Ocio& ocio) noexcept;
+	void Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx) noexcept;
+	void Draw(Loader& loader, uint16_t frame_idx) const noexcept;
+	void __vectorcall ToFloat(const half* __restrict half_buffer, const int64_t size) noexcept;
+	void Release() noexcept;
 };

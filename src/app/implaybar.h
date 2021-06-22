@@ -20,12 +20,14 @@ struct ImPlaybar
 	ImVec2 playbar_range;
 	uint16_t playbar_frame = 0;
 	int playbar_framerate = 24;
-	bool play;
+	unsigned int play : 1;
+	unsigned int update : 1;
 
 	ImPlaybar(ImVec2 range) : 
 		playbar_range(range)
 	{
-		play = false;
+		play = 0;
+		update = 0;
 	}
 
 	void draw(std::vector<char>& cached);

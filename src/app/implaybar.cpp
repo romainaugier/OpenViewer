@@ -16,7 +16,7 @@ void ImPlaybar::draw(std::vector<char>& cached)
 									ImGuiWindowFlags_NoCollapse |
 									ImGuiWindowFlags_NoResize;
 
-	if (play)
+	if (play > 0)
 	{
 		uint32_t framecount = ImGui::GetFrameCount();
 		uint32_t fps = ImGui::GetIO().Framerate;
@@ -26,6 +26,11 @@ void ImPlaybar::draw(std::vector<char>& cached)
 		{
 			playbar_frame++;
 			playbar_frame = fmodf(playbar_frame, (playbar_range.y - 1.0f));
+			update = 1;
+		}
+		else
+		{
+			update = 0;
 		}
 	}
 

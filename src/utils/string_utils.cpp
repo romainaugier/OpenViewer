@@ -14,3 +14,17 @@ bool startsWith(std::string_view str, std::string_view prefix)
 {
     return str.size() >= prefix.size() && 0 == str.compare(0, prefix.size(), prefix);
 }
+
+void remove_spaces(char* s)
+{
+    char* cpy = s;
+    char* temp = s;
+
+    while (*cpy)
+    {
+        if (*cpy != ' ')
+            *temp++ = *cpy;
+        cpy++;
+    }
+    *temp = 0;
+}

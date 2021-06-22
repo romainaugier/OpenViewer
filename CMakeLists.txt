@@ -31,7 +31,7 @@ if(WIN32)
 	endif()
 elseif(UNIX)
 	if("${CMAKE_SIZEOF_VOID_P}" EQUAL 4)
-		message(FATAL_ERROR "VCPKG : linux:x86 triplet is not supported yet")
+		message(FATAL_ERROR "VCPKG : linux:x86 triplet is not supported yet, CMake will exit.")
 		# set(VCPKG_TARGET_TRIPLET "x86-linux" CACHE STRING "VCPKG Triplet" FORCE)
 	elseif("${CMAKE_SIZEOF_VOID_P}" EQUAL 8)
 		set(VCPKG_TARGET_TRIPLET "x64-linux" CACHE STRING "VCPKG Triplet" FORCE)
@@ -43,6 +43,9 @@ project(OpenViewer)
 
 # cpp
 set(CMAKE_CXX_STANDARD 17)
+
+# to correct the bug appearing in half.h
+add_definitions(-DOPENEXR_DLL)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	set(MSVC_COMPILER_FLAGS "/openmp:experimental /fp:fast /Ox /Oy /GT /GL /Oi /arch:AVX2 /Zi /Gm- /Zc:inline")
@@ -77,7 +80,7 @@ find_package(OpenColorIO REQUIRED)
 find_package(IlmBase CONFIG REQUIRED)
 find_package(OpenEXR CONFIG REQUIRED)
 
-# imf has some <> include that requires this to be found
+# imf headers have some <> include that requires this OpenEXR include to be found
 if(WIN32)
 	include_directories(${OPENIMAGEIO_INCLUDES}/OpenEXR)
 elseif(UNIX)
