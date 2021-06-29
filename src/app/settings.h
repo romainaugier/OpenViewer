@@ -7,6 +7,7 @@
 
 #include "imgui.h"
 #include "implaybar.h"
+#include "utils/profiler.h"
 
 struct Settings
 {
@@ -19,5 +20,5 @@ struct Settings
 	bool p_open_performance_window = false;
 
 
-	void draw(ImPlaybar& playbar);
+	void draw(ImPlaybar& playbar, Profiler& prof);
 };

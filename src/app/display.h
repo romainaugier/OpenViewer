@@ -18,6 +18,7 @@
 
 #include "core/loader.h"
 #include "core/ocio.h"
+#include "utils/profiler.h"
 
 struct Display
 {
@@ -32,8 +33,8 @@ struct Display
 		use_buffer = 0;
 	}
 
-	void Initialize(const Loader& loader, Ocio& ocio) noexcept;
-	void Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx) noexcept;
+	void Initialize(const Loader& loader, Ocio& ocio, Profiler& prof) noexcept;
+	void Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx, Profiler& prof) noexcept;
 	void Draw(Loader& loader, uint16_t frame_idx) const noexcept;
 	void __vectorcall ToFloat(const half* __restrict half_buffer, const int64_t size) noexcept;
 	void Release() noexcept;

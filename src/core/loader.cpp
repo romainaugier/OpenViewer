@@ -43,14 +43,17 @@ void Image::LoadOther(half* __restrict buffer) const noexcept
 	in->close();
 }
 
-void Image::Load(void* __restrict buffer) const noexcept
+void Image::Load(void* __restrict buffer, Profiler& prof) const noexcept
 {
+	auto load_start = prof.Start();
 	if (type & FileType_Exr) LoadExr((half*)buffer);
 	else if (type & FileType_Other) LoadOther((half*)buffer);
+	auto load_end = prof.End();
+	prof.Load(load_start, load_end);
 }
 
 // initializes the loader with the different paths, the item count and the first frame
-void Loader::Initialize(const std::string fp, const uint64_t _cache_size, bool isdirectory) noexcept
+void Loader::Initialize(const std::string fp, const uint64_t _cache_size, bool isdirectory, Profiler& prof) noexcept
 {
 	has_been_initialized = 1;
 
@@ -94,7 +97,7 @@ void Loader::Initialize(const std::string fp, const uint64_t _cache_size, bool i
 		std::fill(cached.begin(), cached.end(), 0);
 
 		// load the first frame to have something to show
-		images[0].Load(memory_arena);
+		images[0].Load(memory_arena, prof);
 		cached[0] = 1;
 		cache_size_count = round(cache_size / cached_size);
 		last_cached.push_back(0);
@@ -116,7 +119,7 @@ void Loader::Initialize(const std::string fp, const uint64_t _cache_size, bool i
 			// TODO : implement other file types
 
 			count = 1;
-			images[0].Load(memory_arena);
+			images[0].Load(memory_arena, prof);
 			cached.resize(1);
 			cached[0] = 1;
 			last_cached.push_back(0);
@@ -129,11 +132,11 @@ void Loader::Initialize(const std::string fp, const uint64_t _cache_size, bool i
 }
 
 // loads a single image
-void Loader::LoadImage(const uint16_t idx) noexcept
+void Loader::LoadImage(const uint16_t idx, Profiler& prof) noexcept
 {
 	if (cached[idx] == 0)
 	{
-		images[idx].Load(memory_arena);
+		images[idx].Load(memory_arena, prof);
 		cached_size += images[idx].size;
 		cached[idx] = 1;
 		last_cached.push_back(idx);

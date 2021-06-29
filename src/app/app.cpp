@@ -11,7 +11,10 @@ int application(int argc, char** argv)
     // Setup window
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
+    {
+        printf("Failed to initialize GLFW");
         return 1;
+    }
 
 
     const char* glsl_version = "#version 130";
@@ -83,6 +86,7 @@ int application(int argc, char** argv)
 
     // initialize system
     Parser parser(argc, argv);
+    Profiler profiler;
 
     Ocio ocio;
     ocio.Initialize();
@@ -93,12 +97,12 @@ int application(int argc, char** argv)
 
     if (parser.is_directory > 0)
     {
-        loader.Initialize(parser.path, 10000, true);
+        loader.Initialize(parser.path, 10000, true, profiler);
         initialize_display = true;
     }
     else if (parser.is_file > 0)
     {
-        loader.Initialize(parser.path, 0, false);
+        loader.Initialize(parser.path, 0, false, profiler);
         initialize_display = true;
     }
 
@@ -109,19 +113,21 @@ int application(int argc, char** argv)
     Menubar menubar;
     Display display;
 
-    if (initialize_display) display.Initialize(loader, ocio);
+    if (initialize_display) display.Initialize(loader, ocio, profiler);
     
 
     // Main loop
     while (!glfwWindowShouldClose(window))
     {
+        auto frame_start = profiler.Start();
+
         loader.frame = playbar.playbar_frame;
         uint16_t frame_index = playbar.playbar_frame;
 
         if (loader.has_been_initialized > 0 && playbar.update > 0)
         {
-            loader.LoadImage(frame_index);
-            display.Update(loader, ocio, frame_index);
+            loader.LoadImage(frame_index, profiler);
+            display.Update(loader, ocio, frame_index, profiler);
         }
 
         /*
@@ -162,20 +168,20 @@ int application(int argc, char** argv)
 
 
         // demo window for ImGui
-        if (show_demo_window) ImGui::ShowDemoWindow(&show_demo_window);
+        // if (show_demo_window) ImGui::ShowDemoWindow(&show_demo_window);
 
         // display
         display.Draw(loader, frame_index);
 
         // settings windows
-        settings.draw(playbar);
+        settings.draw(playbar, profiler);
 
         // playbar 
         ImGui::SetNextWindowBgAlpha(settings.interface_windows_bg_alpha);
         playbar.draw(loader.cached);
 
         // menubar
-        menubar.draw(settings, loader, display, playbar, ocio);
+        menubar.draw(settings, loader, display, playbar, ocio, profiler);
 
         // Rendering
         ImGui::Render();
@@ -198,6 +204,9 @@ int application(int argc, char** argv)
         }
 
         glfwSwapBuffers(window);
+
+        auto frame_end = profiler.End();
+        profiler.Frame(frame_start, frame_end);
     }
 
     // make sure to join remaining thread if it has not been     

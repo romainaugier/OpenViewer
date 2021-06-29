@@ -17,7 +17,7 @@ void __vectorcall Display::ToFloat(const half* __restrict half_buffer, const int
 }
 
 // Initializes the gl texture that will display the images
-void Display::Initialize(const Loader& loader, Ocio& ocio) noexcept
+void Display::Initialize(const Loader& loader, Ocio& ocio, Profiler& prof) noexcept
 {
 	display = 1;
 
@@ -31,9 +31,16 @@ void Display::Initialize(const Loader& loader, Ocio& ocio) noexcept
 
 		buffer = (float*)_aligned_malloc(size * sizeof(float), 32);
 
+		auto plot_start = prof.Start();
 		ToFloat((half*)loader.memory_arena, size);
+		auto plot_end = prof.End();
+		prof.Plot(plot_start, plot_end);
 
+		auto ocio_start = prof.Start();
+		ocio.UpdateProcessor();
 		ocio.Process(buffer, xres, yres); 
+		auto ocio_end = prof.End();
+		prof.Ocio(ocio_start, ocio_end);
 
 		glGenTextures(1, &display_tex);
 		glBindTexture(GL_TEXTURE_2D, display_tex);
@@ -81,7 +88,7 @@ void Display::Initialize(const Loader& loader, Ocio& ocio) noexcept
 }
 
 // Updates the gl texture that displays the images
-void Display::Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx) noexcept
+void Display::Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx, Profiler& prof) noexcept
 {
 	if (display > 0)
 	{
@@ -92,9 +99,15 @@ void Display::Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx)
 		{
 			const int64_t size = loader.images[frame_idx].size;
 
+			auto plot_start = prof.Start();
 			ToFloat((half*)loader.memory_arena, size);
+			auto plot_end = prof.End();
+			prof.Plot(plot_start, plot_end);
 
+			auto ocio_start = prof.Start();
 			ocio.Process(buffer, xres, yres);
+			auto ocio_end = prof.End();
+			prof.Ocio(ocio_start, ocio_end);
 
 			glBindTexture(GL_TEXTURE_2D, display_tex);
 			glTexSubImage2D(GL_TEXTURE_2D,

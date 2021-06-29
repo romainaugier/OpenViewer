@@ -18,6 +18,9 @@
 #include <filesystem>
 
 #include "utils/string_utils.h"
+#include "utils/profiler.h"
+
+#undef LoadImage
 
 enum FileType_
 {
@@ -101,7 +104,7 @@ struct Image
 	}
 
 	void Release() noexcept;
-	void Load(void* __restrict buffer) const noexcept;
+	void Load(void* __restrict buffer, Profiler& prof) const noexcept;
 	void LoadExr(half* __restrict buffer) const noexcept;
 	void LoadPng(uint8_t* __restrict buffer) const noexcept;
 	void LoadJpg(uint8_t* __restrict buffer) const noexcept;
@@ -143,11 +146,11 @@ struct Loader
 	{
 	}
 
-	void Initialize(const std::string fp, const uint64_t _cache_size, bool isdirectory) noexcept;
+	void Initialize(const std::string fp, const uint64_t _cache_size, bool isdirectory, Profiler& prof) noexcept;
 	void LoadSequence() noexcept;
 	void LoadPlayer() noexcept;
 	void LoadImages(const uint16_t idx, const uint8_t number) noexcept;
-	void LoadImage(const uint16_t idx) noexcept;
+	void LoadImage(const uint16_t idx, Profiler& prof) noexcept;
 	void UnloadImages(const uint8_t number) noexcept;
 	void UnloadImage() noexcept;
 	void LaunchSequenceWorker() noexcept;

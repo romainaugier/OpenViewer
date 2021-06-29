@@ -55,29 +55,37 @@ void Ocio::ChangeConfig(const char* config_path)
     
 }
 
+void Ocio::UpdateProcessor() noexcept
+{
+    OCIO::ConstProcessorRcPtr processor = config->getProcessor(OCIO::ROLE_SCENE_LINEAR, current_display, current_view, OCIO::TRANSFORM_DIR_FORWARD);
+    cpu = processor->getOptimizedCPUProcessor(OCIO::OPTIMIZATION_ALL);
+}
+
 void Ocio::Process(float* __restrict buffer, const uint16_t width, const uint16_t height)
 {
     try
     {
         // apply the ocio view transform
 
+        
         // CPU
-        OCIO::ConstProcessorRcPtr processor = config->getProcessor(OCIO::ROLE_SCENE_LINEAR, current_display, current_view, OCIO::TRANSFORM_DIR_FORWARD);
-        OCIO::ConstCPUProcessorRcPtr cpu = processor->getOptimizedCPUProcessor(OCIO::OPTIMIZATION_ALL);
-
+        /*
         OCIO::PackedImageDesc img(buffer, width, height, 4);
         cpu->apply(img);
-        
+        */
+
         // GPU
-        /*
-        const char* display = config->getDefaultDisplay();
-        const char* view = config->getDefaultView(display);
-        const char* look = config->getDisplayViewLooks(display, view);
+        ogl_app = OCIO::OglApp::CreateOglApp("convert", (int)width, (int) height);
+
+        ogl_app->initImage(width, height, OCIO::OglApp::COMPONENTS_RGBA, buffer);
+        ogl_app->createGLBuffers();
+        
+        const char* look = config->getDisplayViewLooks(current_display, current_view);
 
         OCIO::DisplayViewTransformRcPtr transform = OCIO::DisplayViewTransform::Create();
         transform->setSrc(OCIO::ROLE_SCENE_LINEAR);
-        transform->setDisplay(display);
-        transform->setView(view);
+        transform->setDisplay(current_display);
+        transform->setView(current_view);
 
         OCIO::LegacyViewingPipelineRcPtr vpt = OCIO::LegacyViewingPipeline::Create();
         vpt->setDisplayViewTransform(transform);
@@ -94,12 +102,9 @@ void Ocio::Process(float* __restrict buffer, const uint16_t width, const uint16_
 
         gpu->extractGpuShaderInfo(shaderDesc);
 
-        OCIO::OglAppRcPtr oglApp = std::make_shared<OCIO::ScreenApp>("ociodisplay", 512, 512);
-        oglApp->initImage(width, height, OCIO::OglApp::COMPONENTS_RGBA, buffer);
-        oglApp->setShader(shaderDesc);
-
-        //oglApp->redisplay();
-        */
+        ogl_app->setShader(shaderDesc);
+        ogl_app->redisplay();
+        ogl_app->readImage(buffer);
     }
     catch (OCIO::Exception& exception)
     {

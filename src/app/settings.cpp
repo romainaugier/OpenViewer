@@ -5,13 +5,13 @@
 
 #include "settings.h"
 
-void Settings::draw(ImPlaybar& playbar)
+void Settings::draw(ImPlaybar& playbar, Profiler& prof)
 {	
 	if (p_open_playback_window)
 	{
 		ImGui::SetNextWindowBgAlpha(interface_windows_bg_alpha);
 
-		ImGui::Begin("Playback Settings");
+		ImGui::Begin("Playback Settings", &p_open_playback_window);
 		{
 			ImGui::InputInt("FPS", &playbar.playbar_framerate);
 		}
@@ -22,7 +22,7 @@ void Settings::draw(ImPlaybar& playbar)
 	{
 		ImGui::SetNextWindowBgAlpha(interface_windows_bg_alpha);
 	
-		ImGui::Begin("OCIO Settings");
+		ImGui::Begin("OCIO Settings", &p_open_ocio_window);
 		{
 
 		}
@@ -33,7 +33,7 @@ void Settings::draw(ImPlaybar& playbar)
 	{
 		ImGui::SetNextWindowBgAlpha(interface_windows_bg_alpha);
 		
-		ImGui::Begin("Interface Settings");
+		ImGui::Begin("Interface Settings", &p_open_interface_window);
 		{
 			ImGui::InputFloat("Background Alpha", &interface_windows_bg_alpha);
 		}
@@ -44,10 +44,14 @@ void Settings::draw(ImPlaybar& playbar)
 	{
 		ImGui::SetNextWindowBgAlpha(interface_windows_bg_alpha);
 	
-		ImGui::Begin("Performance Settings");
+		ImGui::Begin("Performance Settings", &p_open_performance_window);
 		{
 			static int cache_size = 16;
 			ImGui::InputInt("Cache Size (GB)", &cache_size);
+			ImGui::Text("Frame Average Time : %0.3f ms", prof.avg_frame_time);
+			ImGui::Text("Image Load Average Time : %0.3f ms", prof.avg_load_time);
+			ImGui::Text("Ocio Transform Average Time : %0.3f ms", prof.avg_ocio_transform_time);
+			ImGui::Text("Plot Average Time : %0.3f ms", prof.avg_plot_calc_time);
 		}
 		ImGui::End();
 	}
