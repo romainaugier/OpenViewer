@@ -36,6 +36,9 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 
 				if (loader.has_been_initialized > 0)
 				{
+					loader.stop_playloader = 1;
+
+					loader.JoinWorker();
 					loader.Release();
 				}
 
@@ -57,12 +60,16 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 
 				if (loader.has_been_initialized > 0)
 				{
+					loader.stop_playloader = 1;
+
+					loader.JoinWorker();
 					loader.Release();
 				}
 
 				const std::string fp = res.u8string();
 
-				loader.Initialize(fp, 1000000, true, prof);
+				loader.Initialize(fp, 2000000000, true, prof);
+				loader.LaunchSequenceWorker();
 				display.Initialize(loader, ocio, prof);
 
 				playbar.playbar_range = ImVec2(0.0f, loader.count + 1.0f);
@@ -96,15 +103,21 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 
 		const ImVec2 avail_width = ImGui::GetContentRegionAvail();
 
-		static int item_current = 0;
+		static int current_view = 0;
+		static int current_display = 0;
 
-		ImGui::Dummy(ImVec2(avail_width.x - 200.0f, avail_width.y));
+		ImGui::Dummy(ImVec2(avail_width.x - 400.0f, avail_width.y));
 
 		ImGui::SetNextItemWidth(100.0f);
-		ImGui::Combo("", &item_current, &ocio.active_views[0], ocio.active_views.size());
+		ImGui::Combo("Display", &current_display, &ocio.active_displays[0], ocio.active_displays.size());
 
-		ocio.current_view = ocio.active_views[item_current];
+		ocio.current_display = ocio.active_displays[current_display];
+		if (ImGui::IsItemEdited()) ocio.UpdateProcessor();
 
+		ImGui::SetNextItemWidth(100.0f);
+		ImGui::Combo("View", &current_view, &ocio.active_views[0], ocio.active_views.size());
+
+		ocio.current_view = ocio.active_views[current_view];
 		if (ImGui::IsItemEdited()) ocio.UpdateProcessor();
 	}
 

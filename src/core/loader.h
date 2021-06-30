@@ -16,6 +16,7 @@
 #include <vector>
 #include <stdlib.h>
 #include <filesystem>
+#include <malloc.h>
 
 #include "utils/string_utils.h"
 #include "utils/profiler.h"
@@ -47,6 +48,7 @@ enum Format_
 struct Image
 {
 	std::string path;
+	void* cache_address = nullptr;
 	uint64_t size;
 	uint32_t xres;
 	uint32_t yres;
@@ -77,7 +79,7 @@ struct Image
 			type = FileType_Png;
 			format = Format_RGB_U8;
 		}
-		else if(endsWith(fp, "jpg") || endsWith(fp, "jpeg"))
+		else if(endsWith(fp, ".jpg") || endsWith(fp, ".jpeg"))
 		{
 			type = FileType_Jpg;
 			format = Format_RGB_U8;
@@ -104,7 +106,7 @@ struct Image
 	}
 
 	void Release() noexcept;
-	void Load(void* __restrict buffer, Profiler& prof) const noexcept;
+	void Load(void* __restrict buffer) const noexcept;
 	void LoadExr(half* __restrict buffer) const noexcept;
 	void LoadPng(uint8_t* __restrict buffer) const noexcept;
 	void LoadJpg(uint8_t* __restrict buffer) const noexcept;
@@ -131,15 +133,17 @@ struct Loader
 	unsigned int has_finished : 1;
 	unsigned int is_working : 1;
 	unsigned int is_playloader_working : 1;
+	unsigned int stop_playloader : 1;
 
 	Loader() 
 	{
 		has_been_initialized = 0;
-		use_cache = 0;
+		use_cache = 1;
 		cached_size = 0;
 		has_finished = 0;
 		is_working = 0;
 		is_playloader_working = 0;
+		stop_playloader = 0;
 	}
 
 	~Loader()

@@ -18,15 +18,17 @@ void Ocio::Initialize()
         // TODO implement config from file shipped with OpenViewer
     }
     
+    GetOcioActiveDisplays();
+    current_display = active_displays[0].c_str();
+
 	GetOcioActiveViews();
+    current_view = active_views[0].c_str();
 }
 
 void Ocio::GetOcioActiveViews() noexcept
 {
 	const char* views = config->getActiveViews();
-	const char* display = config->getActiveDisplays();
-    current_display = display;
-	const int views_count = config->getNumViews(display);
+	const int views_count = config->getNumViews(current_display);
 	const char s[2] = ",";
 	
 	active_views.reserve(views_count);
@@ -35,10 +37,35 @@ void Ocio::GetOcioActiveViews() noexcept
 
 	while (token != NULL)
 	{
-		remove_spaces(token);
+        //std::string str_token = token;
+        /*str_token.erase(0, 1);
+        str_token.erase(str_token.end() - 1);
+
+        char* new_token = (char*)str_token.c_str();
+
+        printf("%s\n", new_token);*/
+
 		active_views.push_back(token);
 		token = strtok(NULL, s);
 	}
+}
+
+void Ocio::GetOcioActiveDisplays() noexcept
+{
+    const char* displays = config->getActiveDisplays();
+    const int displays_count = config->getNumDisplays();
+    const char s[2] = ",";
+
+    active_displays.reserve(displays_count);
+
+    char* token = strtok((char*)displays, s);
+
+    while (token != NULL)
+    {
+        remove_spaces(token);
+        active_displays.push_back(token);
+        token = strtok(NULL, s);
+    }
 }
 
 void Ocio::ChangeConfig(const char* config_path)
@@ -61,22 +88,27 @@ void Ocio::UpdateProcessor() noexcept
     cpu = processor->getOptimizedCPUProcessor(OCIO::OPTIMIZATION_ALL);
 }
 
-void Ocio::Process(float* __restrict buffer, const uint16_t width, const uint16_t height)
+void Ocio::Process(float* const __restrict buffer, const uint16_t width, const uint16_t height)
 {
     try
     {
         // apply the ocio view transform
 
+        uint8_t numthreads = 8;
         
         // CPU
-        /*
-        OCIO::PackedImageDesc img(buffer, width, height, 4);
-        cpu->apply(img);
-        */
+#pragma omp parallel for num_threads(numthreads)
+        for (int8_t i = 0; i < numthreads; i++)
+        {
+            uint32_t index = i * ((width * height * 4) / numthreads);
+            OCIO::PackedImageDesc img(&buffer[index], width, height / numthreads, 4);
+            cpu->apply(img);
+        }
 
         // GPU
-        ogl_app = OCIO::OglApp::CreateOglApp("convert", (int)width, (int) height);
-
+        /*
+        ogl_app = OCIO::OglApp::CreateOglApp("convert", 1, 1);
+        ogl_app->printGLInfo();
         ogl_app->initImage(width, height, OCIO::OglApp::COMPONENTS_RGBA, buffer);
         ogl_app->createGLBuffers();
         
@@ -105,6 +137,7 @@ void Ocio::Process(float* __restrict buffer, const uint16_t width, const uint16_
         ogl_app->setShader(shaderDesc);
         ogl_app->redisplay();
         ogl_app->readImage(buffer);
+        */
     }
     catch (OCIO::Exception& exception)
     {

@@ -15,4 +15,4 @@ bool endsWith(std::string_view str, std::string_view suffix);
 
 bool startsWith(std::string_view str, std::string_view prefix);
 
-void remove_spaces(char* s);
+std::string remove_spaces(char* s);

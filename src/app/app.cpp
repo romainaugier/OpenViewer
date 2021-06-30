@@ -97,7 +97,8 @@ int application(int argc, char** argv)
 
     if (parser.is_directory > 0)
     {
-        loader.Initialize(parser.path, 10000, true, profiler);
+        loader.Initialize(parser.path, 2000000000, true, profiler);
+        loader.LaunchSequenceWorker();
         initialize_display = true;
     }
     else if (parser.is_file > 0)
@@ -119,44 +120,48 @@ int application(int argc, char** argv)
     // Main loop
     while (!glfwWindowShouldClose(window))
     {
-        auto frame_start = profiler.Start();
+        // if (loader.has_finished > 0 ) loader.JoinWorker();
 
         loader.frame = playbar.playbar_frame;
         uint16_t frame_index = playbar.playbar_frame;
 
+        
         if (loader.has_been_initialized > 0 && playbar.update > 0)
         {
-            loader.LoadImage(frame_index, profiler);
-            display.Update(loader, ocio, frame_index, profiler);
-        }
-
-        /*
-        if (!playbar.play)
-        {
-            loader.is_playing = 0;
-            loader.LoadImage(frame_index);
-            //if (loader.is_playloader_working == 1) loader.JoinWorker();
-            //if (loader.has_finished == 1) loader.JoinWorker();
-
-            glBindTexture(GL_TEXTURE_2D, tex);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, xres, yres, GL_RGB, GL_FLOAT, loader.single_image);
-            glBindTexture(GL_TEXTURE_2D, 0);
-        }
-        else
-        {
-            loader.is_playing = 1;
-
-            if (loader.cached[playbar.playbar_frame] < 1) playbar.playbar_frame++;
-            if (loader.is_playloader_working == 0)
+            if (!playbar.play)
             {
-                loader.LaunchPlayerWorker();
-            }
+                auto imgload_start = profiler.Start();
+                loader.is_playing = 0;
+                loader.LoadImage(frame_index, profiler);
+                //if (loader.is_playloader_working == 1) loader.JoinWorker();
+                //if (loader.has_finished == 1) loader.JoinWorker();
+                auto imgload_end = profiler.End();
 
-            glBindTexture(GL_TEXTURE_2D, tex);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, xres, yres, GL_RGB, GL_FLOAT, &loader.memory_arena[loader.cache_stride * frame_index]);
-            glBindTexture(GL_TEXTURE_2D, 0);
+                profiler.Load(imgload_start, imgload_end);
+                printf("%0.8f\n", profiler.avg_load_time);
+
+                display.Update(loader, ocio, frame_index, profiler);
+            }
+            else
+            {
+                auto imgload_start = profiler.Start();
+                loader.is_playing = 1;
+
+                if (loader.cached[playbar.playbar_frame] < 1) playbar.playbar_frame++;
+                if (loader.is_playloader_working == 0)
+                {
+                    loader.LaunchPlayerWorker();
+                }
+                auto imgload_end = profiler.End();
+
+                profiler.Load(imgload_start, imgload_end);
+
+                printf("%0.8f\n", profiler.avg_load_time);
+
+                display.Update(loader, ocio, frame_index, profiler);
+            }
         }
-        */
+        
 
         glfwPollEvents();
 
@@ -204,13 +209,13 @@ int application(int argc, char** argv)
         }
 
         glfwSwapBuffers(window);
-
-        auto frame_end = profiler.End();
-        profiler.Frame(frame_start, frame_end);
     }
 
     // make sure to join remaining thread if it has not been     
-    if(loader.has_finished > 0) loader.JoinWorker();
+    loader.stop_playloader = 1;
+
+    if(loader.has_finished > 0 || loader.is_playloader_working > 0) loader.JoinWorker();
+
     loader.Release();
     display.Release();
 

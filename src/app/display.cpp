@@ -8,11 +8,19 @@
 // Converts the half buffer to a float buffer, in order to be able to be processed by the OCIO processor
 void __vectorcall Display::ToFloat(const half* __restrict half_buffer, const int64_t size) noexcept
 {
-	for (int64_t i = 0; i < size; i += 8)
+	uint8_t numthreads = 8;
+	
+#pragma omp parallel for num_threads(numthreads)
+	for (int8_t t = 0; t < numthreads; t++)
 	{
-		__m128i arr = _mm_lddqu_si128((__m128i*)&half_buffer[i]);
-		__m256 floats = _mm256_cvtph_ps(arr);
-		_mm256_store_ps(&buffer[i], floats);
+		uint64_t index = size / numthreads * t;
+
+		for (int64_t i = 0; i < (size / numthreads); i += 8)
+		{
+			__m128i arr = _mm_lddqu_si128((__m128i*) & half_buffer[index + i]);
+			__m256 floats = _mm256_cvtph_ps(arr);
+			_mm256_store_ps(&buffer[index + i], floats);
+		}
 	}
 }
 
@@ -100,7 +108,7 @@ void Display::Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx,
 			const int64_t size = loader.images[frame_idx].size;
 
 			auto plot_start = prof.Start();
-			ToFloat((half*)loader.memory_arena, size);
+			ToFloat((half*)loader.images[frame_idx].cache_address, size);
 			auto plot_end = prof.End();
 			prof.Plot(plot_start, plot_end);
 
@@ -129,7 +137,7 @@ void Display::Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx,
 				yres,
 				loader.images[frame_idx].gl_format,
 				loader.images[frame_idx].gl_type,
-				loader.memory_arena);
+				loader.images[frame_idx].cache_address);
 
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
