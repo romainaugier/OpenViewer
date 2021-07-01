@@ -1,5 +1,9 @@
 # OpenViewer
+:warning: The project is under development and might not work/compile when you will clone it :warning:
+
 OpenViewer is an open source, tiny and powerful image viewer made for professionals and enthusiasts of the animation and vfx industry.
+
+The wiki (under development) is [here](https://github.com/romainaugier/OpenViewer/wiki), and the roadmap of the project is [here](https://github.com/romainaugier/OpenViewer/wiki/Roadmap).
 
 ## Dependencies
 
