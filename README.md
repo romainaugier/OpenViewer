@@ -53,60 +53,6 @@ cd OpenViewer
 ./build_windows
 ```
 
-## Roadmap
-
-- File types supported :
-  - :heavy_check_mark: OpenEXR
-    - :heavy_check_mark: fast loading (approx 10ms from SATA on ryzen 7 2700x) 
-    - :x: multi-part loading
-  - :heavy_check_mark: PNG
-    - :x: fast loading
-    - :x: alpha as a separate channel
-  - :heavy_check_mark: JPG
-    - :x: fast loading
-  - :heavy_check_mark: Other file formats
-    - :heavy_check_mark: TIFF, JPEG/JFIF, HDR/RGBE, ICO, BMP, Targa, JPEG-2000, RMan Zfile, FITS, DDS, Softimage PIC, PNM, DPX, Cineon, IFF, Field3D, OpenVDB, Ptex, Photoshop PSD, Wavefront RLA, SGI, WebP, GIF, DICOM, HEIF/HEIC/AVIF, many "RAW" digital camera formats
-    - :x: MP4, MOV
-
-- System :
-  - :heavy_check_mark: File loading
-  - :clock9: File cache
-  - :heavy_check_mark: Asynchronous loading
-  - :x: Command line interface
-    - :heavy_check_mark: Single image
-    - :heavy_check_mark: Folder
-    - :x: Python script
-  - :heavy_check_mark: Open file within the application
-  - :x: Persistent user settings (saved as a .json file)
-  - :x: Sound playing
-
-- Display :
-  - :clock9: OCIO Display Transform
-  - :x: Exposure modification
-  - :x: Multiple displays
-  - :x: OpenEXR multi layer display
-  - :x: OpenEXR multi layer contact sheet
-  - :x: Annotations : 
-    - :x: Text annotations on the image
-    - :x: Drawing annotations
-    - :x: Onion peel through frame sequence annotations
-
-- Data Plot :
-  - :x: Histogram
-  - :x: Waveform
-  - :x: Vector Scope
-  - :x: Custom plot
-
-- UI :
-  - :x: Playbar improvement (it's really ugly for now)
-  - :x: Display improvement (zoom and drag)
-  - :x: Settings windows
-
-- Python :
-  - :x: API Bindings
-  - :x: Console 
-  - :x: Multi line scripts execution
-
 ## Copyright
 
 Portions of this software are copyright :
@@ -119,11 +65,11 @@ All rights reserved.
 
 This software is based in part on the works of :
 
-- [CMake](https://cmake.org/), Copyright © 2000-2021 Kitware, Inc. and Contributors, All rights reserved
-- [GLFW](https://www.glfw.org/), Copyright © 2002-2006 Marcus Geelnard, Copyright © 2006-2019 Camilla Löwy
-- [Dear ImGui](https://github.com/ocornut/imgui), Copyright © 2014-2021 Omar Cornut
-- [OpenEXR](https://github.com/AcademySoftwareFoundation/openexr), Copyright © 2006, Industrial Light and Magic, a division of Lucasfilm Entertainment Company Ltd.
-- [OpenColorIO](https://github.com/AcademySoftwareFoundation/OpenColorIO), Copyright © 2020 OpenColorIO Contributors
-- [OpenImageIO](https://github.com/OpenImageIO/oiio), Copyright © 2008-2021 by Contributors to the OpenImageIO project. All Rights Reserved.
-- [Wuffs](https://github.com/google/wuffs), Copyright © 2021 Andrew Dassonville, Chris Palmer, Jimmy Casey, Leo Neat, Mike Kaufman, Muhammad Aldo Firmansyah, Nigel Tao
-- [Vcpkg](https://github.com/microsoft/vcpkg), Copyright © Microsoft Corporation
+- [CMake](https://cmake.org/), Copyright Â© 2000-2021 Kitware, Inc. and Contributors, All rights reserved
+- [GLFW](https://www.glfw.org/), Copyright Â© 2002-2006 Marcus Geelnard, Copyright Â© 2006-2019 Camilla LÃ¶wy
+- [Dear ImGui](https://github.com/ocornut/imgui), Copyright Â© 2014-2021 Omar Cornut
+- [OpenEXR](https://github.com/AcademySoftwareFoundation/openexr), Copyright Â© 2006, Industrial Light and Magic, a division of Lucasfilm Entertainment Company Ltd.
+- [OpenColorIO](https://github.com/AcademySoftwareFoundation/OpenColorIO), Copyright Â© 2020 OpenColorIO Contributors
+- [OpenImageIO](https://github.com/OpenImageIO/oiio), Copyright Â© 2008-2021 by Contributors to the OpenImageIO project. All Rights Reserved.
+- [Wuffs](https://github.com/google/wuffs), Copyright Â© 2021 Andrew Dassonville, Chris Palmer, Jimmy Casey, Leo Neat, Mike Kaufman, Muhammad Aldo Firmansyah, Nigel Tao
+- [Vcpkg](https://github.com/microsoft/vcpkg), Copyright Â© Microsoft Corporation
