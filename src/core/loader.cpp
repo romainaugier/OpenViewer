@@ -296,4 +296,5 @@ void Loader::Release() noexcept
 	images.clear();
 
 	count = 0;
+	cached_size = 0;
 }

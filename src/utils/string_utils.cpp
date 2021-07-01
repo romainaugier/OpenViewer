@@ -15,14 +15,16 @@ bool startsWith(std::string_view str, std::string_view prefix)
     return str.size() >= prefix.size() && 0 == str.compare(0, prefix.size(), prefix);
 }
 
-std::string remove_spaces(char* s)
+const char* remove_spaces(char* s)
 {
     std::string tmp = s;
 
-    tmp.erase(0, 1);
-    tmp.erase(tmp.size() - 1);
+    char space[2] = " ";
 
-    return tmp;
+    if ((char*)tmp[0] == space) tmp.erase(0, 1);
+    if ((char*)tmp[tmp.size() - 1] == space) tmp.erase(tmp.size() - 1);
+
+    return tmp.c_str();
 
     /*
     while (*cpy)

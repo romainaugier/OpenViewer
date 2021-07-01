@@ -73,9 +73,6 @@ elseif(UNIX)
 	include_directories(${VCPKG_INCLUDE_DIR})
 endif()
 
-# OpenColorIO
-find_package(OpenColorIO REQUIRED)
-
 # OpenEXR
 find_package(IlmBase CONFIG REQUIRED)
 find_package(OpenEXR CONFIG REQUIRED)

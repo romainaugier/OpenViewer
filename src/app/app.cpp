@@ -138,7 +138,6 @@ int application(int argc, char** argv)
                 auto imgload_end = profiler.End();
 
                 profiler.Load(imgload_start, imgload_end);
-                printf("%0.8f\n", profiler.avg_load_time);
 
                 display.Update(loader, ocio, frame_index, profiler);
             }
@@ -155,8 +154,6 @@ int application(int argc, char** argv)
                 auto imgload_end = profiler.End();
 
                 profiler.Load(imgload_start, imgload_end);
-
-                printf("%0.8f\n", profiler.avg_load_time);
 
                 display.Update(loader, ocio, frame_index, profiler);
             }
@@ -218,6 +215,7 @@ int application(int argc, char** argv)
 
     loader.Release();
     display.Release();
+    ocio.Release();
 
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();

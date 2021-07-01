@@ -103,22 +103,48 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 
 		const ImVec2 avail_width = ImGui::GetContentRegionAvail();
 
-		static int current_view = 0;
-		static int current_display = 0;
+		ImGui::Dummy(ImVec2(avail_width.x - 900.0f, avail_width.y));
 
-		ImGui::Dummy(ImVec2(avail_width.x - 400.0f, avail_width.y));
+		ImGui::Text("Role");
+		ImGui::PushID(0);
+		ImGui::SetNextItemWidth(200.0f);
+		ImGui::Combo("", &ocio.current_role_idx, &ocio.roles[0], ocio.roles.size());
+		ImGui::PopID();
 
-		ImGui::SetNextItemWidth(100.0f);
-		ImGui::Combo("Display", &current_display, &ocio.active_displays[0], ocio.active_displays.size());
+		if (ImGui::IsItemEdited())
+		{
+			ocio.current_role = ocio.roles[ocio.current_role_idx];
 
-		ocio.current_display = ocio.active_displays[current_display];
-		if (ImGui::IsItemEdited()) ocio.UpdateProcessor();
+			ocio.UpdateProcessor();
+		}
 
-		ImGui::SetNextItemWidth(100.0f);
-		ImGui::Combo("View", &current_view, &ocio.active_views[0], ocio.active_views.size());
+		ImGui::Text("Display");
 
-		ocio.current_view = ocio.active_views[current_view];
-		if (ImGui::IsItemEdited()) ocio.UpdateProcessor();
+		ImGui::PushID(1);
+		ImGui::SetNextItemWidth(200.0f);
+		ImGui::Combo("", &ocio.current_display_idx, &ocio.active_displays[0], ocio.active_displays.size());
+		ImGui::PopID();
+
+		if (ImGui::IsItemEdited())
+		{
+			ocio.current_display = ocio.active_displays[ocio.current_display_idx];
+
+			ocio.GetOcioDisplayViews();
+			ocio.UpdateProcessor();
+		}
+
+		ImGui::Text("View");
+
+		ImGui::PushID(2);
+		ImGui::SetNextItemWidth(200.0f);
+		ImGui::Combo("", &ocio.current_view_idx, &ocio.active_views[0], ocio.active_views.size());
+		ImGui::PopID();
+
+		if (ImGui::IsItemEdited())
+		{
+			ocio.current_view = ocio.active_views[ocio.current_view_idx]; 
+			ocio.UpdateProcessor();
+		}
 	}
 
 	ImGui::EndMainMenuBar();

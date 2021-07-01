@@ -7,7 +7,7 @@
 #include "vector"
 #include "stdio.h"
 #include "iostream"
-#include "OpenColorIO.h"
+#include "OpenColorIO/OpenColorIO.h"
 
 #include "utils/string_utils.h"
 
@@ -17,15 +17,23 @@ struct Ocio
 {
     OCIO::ConstConfigRcPtr config;
     OCIO::ConstCPUProcessorRcPtr cpu;
-    std::vector<std::string> active_views;
-    std::vector<std::string> active_displays;
+    std::vector<const char*> active_views;
+    std::vector<const char*> active_displays;
+    std::vector<const char*> roles;
     const char* current_view = nullptr;
+    int current_view_idx = 0;
     const char* current_display = nullptr;
+    int current_display_idx = 0;
+    const char* current_role = nullptr;
+    int current_role_idx = 0;
 
     void Initialize();
     void GetOcioActiveViews() noexcept;
+    void GetOcioDisplayViews() noexcept;
     void GetOcioActiveDisplays() noexcept;
+    void GetRoles() noexcept;
     void ChangeConfig(const char* config_path);
-    void UpdateProcessor() noexcept;
+    void UpdateProcessor();
     void Process(float* const __restrict buffer, const uint16_t width, const uint16_t height);
+    void Release() noexcept;
 };
