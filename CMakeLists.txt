@@ -49,7 +49,7 @@ add_definitions(-DOPENEXR_DLL)
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	add_compile_definitions(-D_CRT_SECURE_NO_WARNINGS -DOPENEXR_DLL)
-	set(MSVC_COMPILER_FLAGS "/openmp:experimental /fp:fast /Ox /Os /Oy /GT /GL /Oi /arch:AVX2 /Zi /Gm- /Zc:inline")
+	set(MSVC_COMPILER_FLAGS "/openmp:experimental /fp:fast /Ox /Os /Oy /GT /GL /Oi /arch:AVX2 /Zi /Gm- /Zc:inline /Qpar")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" "${MSVC_COMPILER_FLAGS}")
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 	add_compile_options(-fopenmp -O3 -msse)
@@ -67,6 +67,9 @@ include_directories(dependencies/ociov2/include)
 
 # OpenImageIO
 find_package(OpenImageIO REQUIRED)
+
+# OpenMP
+find_package(OpenMP REQUIRED)
 
 # As openimageio include variable works on window and not on linux, we need to use a hack to find
 # the vcpkg include directory

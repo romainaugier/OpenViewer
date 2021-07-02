@@ -1,3 +1,5 @@
+# OCIOV2 #
+
 set(ocio_gpu_helper_files
 	glsl.h
 	glsl.cpp
