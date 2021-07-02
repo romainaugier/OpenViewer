@@ -1,5 +1,5 @@
 @echo off
-rem build the project with CMake
+rem fresh build of the project
 
 if exist build\ (
 	rmdir build
