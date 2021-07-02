@@ -6,7 +6,7 @@
 
 #include <vector>
 
-#include <OpenColorIO/OpenColorIO.h>
+#include <OpenColorIOv2/OpenColorIO.h>
 
 
 namespace OCIO_NAMESPACE

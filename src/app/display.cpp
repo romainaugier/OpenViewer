@@ -147,12 +147,16 @@ void Display::Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx,
 // Main function that contains the window drawing 
 void Display::Draw(Loader& loader, uint16_t frame_idx) const noexcept
 {
-	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar |
+	/*ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar |
 		ImGuiWindowFlags_NoMove |
 		ImGuiWindowFlags_NoNav |
 		ImGuiWindowFlags_NoScrollbar |
 		ImGuiWindowFlags_NoCollapse |
-		ImGuiWindowFlags_NoResize;
+		ImGuiWindowFlags_NoResize;*/
+
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar |
+		ImGuiWindowFlags_NoScrollbar |
+		ImGuiWindowFlags_NoCollapse;
 
 	bool p_open = true;
 

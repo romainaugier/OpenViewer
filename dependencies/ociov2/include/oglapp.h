@@ -6,7 +6,7 @@
 #define INCLUDED_OCIO_OGLAPP_H
 
 
-#include <OpenColorIO/OpenColorIO.h>
+#include <OpenColorIOv2/OpenColorIO.h>
 
 #include "glsl.h"
 

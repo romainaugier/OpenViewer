@@ -60,6 +60,10 @@ endif()
 # OpenGL
 include_directories(dependencies/glfw/include)
 
+# OpenColorIO
+find_package(OpenColorIO REQUIRED)
+include_directories(dependencies/ociov2/include)
+
 # OpenImageIO
 find_package(OpenImageIO REQUIRED)
 
@@ -85,7 +89,6 @@ elseif(UNIX)
 endif()
 
 add_subdirectory(dependencies)
-include_directories(dependencies)
 
 include_directories(imgui)
 add_subdirectory(imgui)

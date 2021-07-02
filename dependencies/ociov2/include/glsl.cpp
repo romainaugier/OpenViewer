@@ -21,7 +21,7 @@
 #include <sstream>
 #include <iostream>
 
-#include <OpenColorIO/OpenColorIO.h>
+#include <OpenColorIOv2/OpenColorIO.h>
 
 #include "glsl.h"
 

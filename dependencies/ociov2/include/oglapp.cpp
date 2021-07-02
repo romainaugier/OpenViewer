@@ -25,7 +25,7 @@
 #endif
 
 
-#include <OpenColorIO/OpenColorIO.h>
+#include <OpenColorIOv2/OpenColorIO.h>
 
 #include "oglapp.h"
 

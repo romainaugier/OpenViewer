@@ -7,7 +7,7 @@
 #include "vector"
 #include "stdio.h"
 #include "iostream"
-#include "OpenColorIO/OpenColorIO.h"
+#include "OpenColorIOv2/OpenColorIO.h"
 
 #include "utils/string_utils.h"
 
