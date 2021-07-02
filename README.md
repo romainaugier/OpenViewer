@@ -22,8 +22,8 @@ cd OpenViewer
 git clone https://github.com/microsoft/vcpkg.git
 cd vcpkg
 ./vcpkg-bootstrap.sh
-./vcpkg install OpenImageIO:x64-windows
-./vcpkg install OpenColorIO:x64-windows
+./vcpkg install OpenImageIO:x64-linux
+./vcpkg install OpenColorIO:x64-linux
 ```
 
 ### Windows
