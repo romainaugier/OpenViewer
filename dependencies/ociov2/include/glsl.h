@@ -15,7 +15,6 @@ namespace OCIO_NAMESPACE
 class OpenGLBuilder;
 typedef OCIO_SHARED_PTR<OpenGLBuilder> OpenGLBuilderRcPtr;
 
-
 // This is a reference implementation showing how to do the texture upload & allocation,
 // and the program compilation for the GLSL shader language.
 
@@ -79,7 +78,7 @@ public:
 
     // Build the complete shader program which includes the OCIO shader program 
     // and the client shader program.
-    unsigned buildProgram(const std::string & clientShaderProgram);
+    unsigned buildProgram(const std::string& fragmentShader);
     void useProgram();
     unsigned getProgramHandle();
 
@@ -110,6 +109,7 @@ private:
     TextureIds m_textureIds;               // Texture ids of all needed textures
     Uniforms m_uniforms;                   // Vector of dynamic parameters
     unsigned m_fragShader;                 // Fragment shader identifier
+    unsigned m_vertShader;                 // Vertex shader identifier
     unsigned m_program;                    // Program identifier
     std::string m_shaderCacheID;           // Current shader program key
     bool m_verbose;                        // Print shader code to std::cout for debugging purposes

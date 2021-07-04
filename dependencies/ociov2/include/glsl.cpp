@@ -10,6 +10,11 @@
 #elif _WIN32
 
 #include <GL/glew.h>
+#include <GL/glut.h>
+#include "utils/gl_utils.h"
+
+#undef max
+#undef min
 
 #else
 
@@ -84,16 +89,18 @@ void AllocateTexture3D(unsigned index, unsigned & texId,
         throw Exception("Missing texture data");
     }
 
-    glGenTextures(1, &texId);
+    GL_CHECK(glGenTextures(1, &texId));
 
-    glActiveTexture(GL_TEXTURE0 + index);
+    edgelen = edgelen > GL_MAX_3D_TEXTURE_SIZE ? GL_MAX_3D_TEXTURE_SIZE : edgelen;
 
-    glBindTexture(GL_TEXTURE_3D, texId);
+    GL_CHECK(glActiveTexture(GL_TEXTURE0 + index));
 
-    SetTextureParameters(GL_TEXTURE_3D, interpolation);
+    GL_CHECK(glBindTexture(GL_TEXTURE_3D, texId));
 
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB32F_ARB,
-                    edgelen, edgelen, edgelen, 0, GL_RGB, GL_FLOAT, values);
+    GL_CHECK(SetTextureParameters(GL_TEXTURE_3D, interpolation));
+
+    GL_CHECK(glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB32F_ARB,
+                    edgelen, edgelen, edgelen, 0, GL_RGB, GL_FLOAT, values));
 }
 
 void AllocateTexture2D(unsigned index, unsigned & texId, 
@@ -105,6 +112,7 @@ void AllocateTexture2D(unsigned index, unsigned & texId,
     {
         throw Exception("Missing texture data.");
     }
+
 
     GLint internalformat = GL_RGB32F_ARB;
     GLenum format        = GL_RGB;
@@ -125,7 +133,7 @@ void AllocateTexture2D(unsigned index, unsigned & texId,
 
         SetTextureParameters(GL_TEXTURE_2D, interpolation);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, internalformat, width, height, 0, format, GL_FLOAT, values);
+        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, internalformat, width, height, 0, format, GL_FLOAT, values));
     }
     else
     {
@@ -133,14 +141,12 @@ void AllocateTexture2D(unsigned index, unsigned & texId,
 
         SetTextureParameters(GL_TEXTURE_1D, interpolation);
 
-        glTexImage1D(GL_TEXTURE_1D, 0, internalformat, width, 0, format, GL_FLOAT, values);
+        GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, internalformat, width, 0, format, GL_FLOAT, values));
     }
 }
 
 GLuint CompileShaderText(GLenum shaderType, const char * text)
 {
-    CheckStatus();
-
     if(!text || !*text)
     {
         throw Exception("Invalid fragment shader program");
@@ -149,10 +155,10 @@ GLuint CompileShaderText(GLenum shaderType, const char * text)
     GLuint shader;
     GLint stat;
 
-    shader = glCreateShader(shaderType);
-    glShaderSource(shader, 1, (const GLchar **) &text, NULL);
-    glCompileShader(shader);
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &stat);
+    GL_CHECK(shader = glCreateShader(shaderType));
+    GL_CHECK(glShaderSource(shader, 1, (const GLchar **) &text, NULL));
+    GL_CHECK(glCompileShader(shader));
+    GL_CHECK(glGetShaderiv(shader, GL_COMPILE_STATUS, &stat));
 
     if (!stat)
     {
@@ -181,13 +187,13 @@ void LinkShaders(GLuint program, GLuint fragShader)
     }
     else        
     {
-        glAttachShader(program, fragShader);
+        GL_CHECK(glAttachShader(program, fragShader));
     }
 
     glLinkProgram(program);
 
     GLint stat;
-    glGetProgramiv(program, GL_LINK_STATUS, &stat);
+    GL_CHECK(glGetProgramiv(program, GL_LINK_STATUS, &stat));
     if (!stat) 
     {
         GLchar log[1000];
@@ -388,7 +394,7 @@ void OpenGLBuilder::deleteAllTextures()
     for (size_t idx=0; idx<max; ++idx)
     {
         const TextureId & data = m_textureIds[idx];
-        glDeleteTextures(1, &data.m_uid);
+        GL_CHECK(glDeleteTextures(1, &data.m_uid));
     }
 
     m_textureIds.clear();
@@ -457,7 +463,7 @@ std::string OpenGLBuilder::getGLSLVersionString()
     return "#version 120";
 }
 
-unsigned OpenGLBuilder::buildProgram(const std::string & clientShaderProgram)
+unsigned OpenGLBuilder::buildProgram(const std::string& fragmentShader)
 {
     const std::string shaderCacheID = m_shaderDesc->getCacheID();
     if(shaderCacheID!=m_shaderCacheID)
@@ -468,21 +474,19 @@ unsigned OpenGLBuilder::buildProgram(const std::string & clientShaderProgram)
             glDeleteShader(m_fragShader);
         }
 
-        std::ostringstream os;
-        os  << getGLSLVersionString() << std::endl
+        std::ostringstream frag;
+        frag  << getGLSLVersionString() << std::endl
             << m_shaderDesc->getShaderText() << std::endl
-            << clientShaderProgram << std::endl;
+            << fragmentShader << std::endl;
 
-        if(m_verbose)
+        try
         {
-            std::cout << std::endl;
-            std::cout << "GPU Shader Program:" << std::endl;
-            std::cout << std::endl;
-            std::cout << os.str() << std::endl;
-            std::cout << std::endl;
+            m_fragShader = CompileShaderText(GL_FRAGMENT_SHADER, frag.str().c_str());
         }
-
-        m_fragShader = CompileShaderText(GL_FRAGMENT_SHADER, os.str().c_str());
+        catch (Exception& e)
+        {
+            std::cerr << e.what() << "\n";
+        }
 
         LinkShaders(m_program, m_fragShader);
         m_shaderCacheID = shaderCacheID;
@@ -516,7 +520,7 @@ unsigned OpenGLBuilder::GetTextureMaxWidth()
     while(w>1)
     {
         glTexImage2D(GL_PROXY_TEXTURE_2D, 0, 
-                     GL_RGB32F_ARB, 
+                     GL_RGB32F, 
                      w, h, 0, 
                      GL_RGB, GL_FLOAT, NULL);
 
@@ -543,10 +547,12 @@ unsigned OpenGLBuilder::GetTextureMaxWidth()
         if(texValid)
         {
             GLint format = 0;
+            /*
             glGetTexLevelParameteriv(GL_PROXY_TEXTURE_2D, 0,
                                      GL_TEXTURE_COMPONENTS, &format);
+            */
 
-            texValid = texValid && (GL_RGB32F_ARB==format);
+            texValid = texValid && (GL_RGB32F == format);
 
             while((glErr=glGetError()) != GL_NO_ERROR);
         }

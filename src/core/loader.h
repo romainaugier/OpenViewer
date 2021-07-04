@@ -6,7 +6,7 @@
 #pragma once
 
 #include "OpenImageIO/imagecache.h"
-#include "GL/gl3w.h"
+#include "GL/glew.h"
 
 #include "OpenEXR/ImfImage.h"
 #include "OpenEXR/ImfRgbaFile.h"

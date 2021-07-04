@@ -5,146 +5,300 @@
 
 #include "menubar.h"
 
-void Menubar::draw(Settings& current_settings, Loader& loader, Display& display, ImPlaybar& playbar, Ocio& ocio, Profiler& prof)
+void Menubar::draw(Settings& current_settings, Loader& loader, Display& display, ImPlaybar& playbar, Ocio& ocio, Profiler& prof, bool& change) noexcept
 {
 	ImGui::SetNextWindowBgAlpha(current_settings.interface_windows_bg_alpha);
 
 	ImGui::BeginMainMenuBar();
 	{
-		if (ImGui::BeginMenu("File"))
+		// Classic menu
+		if (bar_mode == 0)
 		{
-			if (ImGui::MenuItem("Open Single File"))
+			if (ImGui::BeginMenu("File"))
 			{
-				ifd::FileDialog::Instance().Open("SingleFileOpenDialog", "Select an image file", "Image File (*.exr,*.png;*.jpg;*.jpeg;*.bmp;*.tga){.exr,.png,.jpg,.jpeg,.bmp,.tga},.*");
-			}
-
-			if (ImGui::MenuItem("Open Folder"))
-			{
-				ifd::FileDialog::Instance().Open("FolderOpenDialog", "Open a directory", "");
-			}
-
-			ImGui::EndMenu();
-		}
-
-		if (ifd::FileDialog::Instance().IsDone("SingleFileOpenDialog"))
-		{
-			if (ifd::FileDialog::Instance().HasResult())
-			{
-				const auto& res = ifd::FileDialog::Instance().GetResults();
-
-				const std::string fp = res[0].u8string();
-
-				if (loader.has_been_initialized > 0)
+				if (ImGui::MenuItem("Open Single File"))
 				{
-					loader.stop_playloader = 1;
-
-					loader.JoinWorker();
-					loader.Release();
+					ifd::FileDialog::Instance().Open("SingleFileOpenDialog", "Select an image file", "Image File (*.exr,*.png;*.jpg;*.jpeg;*.bmp;*.tga){.exr,.png,.jpg,.jpeg,.bmp,.tga},.*");
 				}
 
-				loader.Initialize(fp, 0, false, prof);
-				display.Initialize(loader, ocio, prof);
-
-				playbar.playbar_range = ImVec2(0.0f, loader.count + 1.0f);
-				playbar.playbar_frame = 0;
-			}
-
-			ifd::FileDialog::Instance().Close();
-		}
-
-		if (ifd::FileDialog::Instance().IsDone("FolderOpenDialog"))
-		{
-			if (ifd::FileDialog::Instance().HasResult())
-			{
-				const auto& res = ifd::FileDialog::Instance().GetResult();
-
-				if (loader.has_been_initialized > 0)
+				if (ImGui::MenuItem("Open Folder"))
 				{
-					loader.stop_playloader = 1;
-
-					loader.JoinWorker();
-					loader.Release();
+					ifd::FileDialog::Instance().Open("FolderOpenDialog", "Open a directory", "");
 				}
 
-				const std::string fp = res.u8string();
-
-				loader.Initialize(fp, 2000000000, true, prof);
-				loader.LaunchSequenceWorker();
-				display.Initialize(loader, ocio, prof);
-
-				playbar.playbar_range = ImVec2(0.0f, loader.count + 1.0f);
-
-				playbar.playbar_frame = 0;
+				ImGui::EndMenu();
 			}
 
-			ifd::FileDialog::Instance().Close();
+			if (ifd::FileDialog::Instance().IsDone("SingleFileOpenDialog"))
+			{
+				if (ifd::FileDialog::Instance().HasResult())
+				{
+					const auto& res = ifd::FileDialog::Instance().GetResults();
+
+					const std::string fp = res[0].u8string();
+
+					if (loader.has_been_initialized > 0)
+					{
+						loader.stop_playloader = 1;
+
+						loader.JoinWorker();
+						loader.Release();
+					}
+
+					loader.Initialize(fp, 0, false, prof);
+					display.Initialize(loader, ocio, prof);
+
+					playbar.playbar_range = ImVec2(0.0f, loader.count + 1.0f);
+					playbar.playbar_frame = 0;
+				}
+
+				ifd::FileDialog::Instance().Close();
+			}
+
+			if (ifd::FileDialog::Instance().IsDone("FolderOpenDialog"))
+			{
+				if (ifd::FileDialog::Instance().HasResult())
+				{
+					const auto& res = ifd::FileDialog::Instance().GetResult();
+
+					if (loader.has_been_initialized > 0)
+					{
+						loader.stop_playloader = 1;
+
+						loader.JoinWorker();
+						loader.Release();
+					}
+
+					const std::string fp = res.u8string();
+
+					loader.Initialize(fp, 2000000000, true, prof);
+					loader.LaunchSequenceWorker();
+					display.Initialize(loader, ocio, prof);
+
+					playbar.playbar_range = ImVec2(0.0f, loader.count + 1.0f);
+
+					playbar.playbar_frame = 0;
+				}
+
+				ifd::FileDialog::Instance().Close();
+			}
+
+			if (ImGui::BeginMenu("Plot"))
+			{
+				if (ImGui::MenuItem("Histogram")) {}
+				if (ImGui::MenuItem("Waveform")) {}
+				if (ImGui::MenuItem("Vector Scope")) {}
+				if (ImGui::MenuItem("Custom")) {}
+
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Settings"))
+			{
+				if (ImGui::MenuItem("Playback")) { current_settings.p_open_playback_window = true; }
+				if (ImGui::MenuItem("OCIO")) { current_settings.p_open_ocio_window = true; }
+				if (ImGui::MenuItem("Interface")) { current_settings.p_open_interface_window = true; }
+				if (ImGui::MenuItem("Performance")) { current_settings.p_open_performance_window = true; }
+
+
+				ImGui::EndMenu();
+			}
 		}
 
-		if (ImGui::BeginMenu("Plot"))
+		// OCIO Menu
+		else if (bar_mode == 1)
 		{
-			if (ImGui::MenuItem("Histogram")) {}
-			if (ImGui::MenuItem("Waveform")) {}
-			if (ImGui::MenuItem("Vector Scope")) {}
-			if (ImGui::MenuItem("Custom")) {}
+			// Here we have the OCIO menus to select the role, display and view
+			// Each time we choose something, the item is updated, the ocio
+			// processor too, and we redisplay
 
-			ImGui::EndMenu();
+			const ImVec2 avail_width = ImGui::GetContentRegionAvail();
+
+			ImGui::Dummy(ImVec2(50.0f, avail_width.y));
+
+			// Channels
+			static const char* channels[] = {"RGB", "R", "G", "B", "A", "L"};
+
+			ImGui::Text("Channels");
+			ImGui::PushID(0);
+			ImGui::SetNextItemWidth(100.0f);
+			ImGui::Combo("", &ocio.current_channel_idx, &channels[0], IM_ARRAYSIZE(channels));
+			ImGui::PopID();
+
+			if (ImGui::IsItemEdited())
+			{
+				if (ocio.current_channel_idx == 0) // RGB
+				{
+					ocio.channel_hot[0] = 1;
+					ocio.channel_hot[1] = 1;
+					ocio.channel_hot[2] = 1;
+					ocio.channel_hot[3] = 1;
+				}
+				else if (ocio.current_channel_idx == 1) // R
+				{
+					ocio.channel_hot[0] = 1;
+					ocio.channel_hot[2] = 0;
+					ocio.channel_hot[3] = 0;
+					ocio.channel_hot[1] = 0;
+				}
+				else if (ocio.current_channel_idx == 2) // G
+				{
+					ocio.channel_hot[0] = 0;
+					ocio.channel_hot[1] = 1;
+					ocio.channel_hot[2] = 0;
+					ocio.channel_hot[3] = 0;
+				}						  
+				else if (ocio.current_channel_idx == 3) // B
+				{
+					ocio.channel_hot[0] = 0;
+					ocio.channel_hot[1] = 0;
+					ocio.channel_hot[2] = 1;
+					ocio.channel_hot[3] = 0;
+				}
+				else if (ocio.current_channel_idx == 4) // A
+				{
+					ocio.channel_hot[0] = 0;
+					ocio.channel_hot[1] = 0;
+					ocio.channel_hot[2] = 0;
+					ocio.channel_hot[3] = 1;
+				}
+				else if (ocio.current_channel_idx == 5) // Luminance
+				{
+					ocio.channel_hot[0] = 1;
+					ocio.channel_hot[1] = 1;
+					ocio.channel_hot[2] = 1;
+					ocio.channel_hot[3] = 0;
+				}
+
+				ocio.UpdateProcessor();
+
+				display.Update(loader, ocio, playbar.playbar_frame, prof);
+			}
+
+			ImGui::Dummy(ImVec2(50.0f, avail_width.y));
+
+			// Role
+			ImGui::Text("Role");
+			ImGui::PushID(1);
+			static const float width = ImGui::CalcTextSize(ocio.current_role).x;
+			ImGui::SetNextItemWidth(width);
+			ImGui::Combo("", &ocio.current_role_idx, &ocio.roles[0], ocio.roles.size());
+			ImGui::PopID();
+
+			if (ImGui::IsItemEdited())
+			{
+				ocio.current_role = ocio.roles[ocio.current_role_idx];
+
+				ocio.UpdateProcessor();
+
+				display.Update(loader, ocio, playbar.playbar_frame, prof);
+			}
+
+			// Display
+			ImGui::Text("Display");
+			ImGui::PushID(2);
+			ImGui::SetNextItemWidth(100.0f);
+			ImGui::Combo("", &ocio.current_display_idx, &ocio.displays[0], ocio.displays.size());
+			ImGui::PopID();
+
+			if (ImGui::IsItemEdited())
+			{
+				ocio.current_display = ocio.displays[ocio.current_display_idx];
+
+				ocio.GetOcioDisplayViews();
+				ocio.UpdateProcessor();
+
+				display.Update(loader, ocio, playbar.playbar_frame, prof);
+			}
+
+			// View
+			ImGui::Text("View");
+			ImGui::PushID(3);
+			ImGui::SetNextItemWidth(100.0f);
+			ImGui::Combo("", &ocio.current_view_idx, &ocio.views[0], ocio.views.size());
+			ImGui::PopID();
+
+			if (ImGui::IsItemEdited())
+			{
+				ocio.current_view = ocio.views[ocio.current_view_idx];
+				ocio.UpdateProcessor();
+
+				display.Update(loader, ocio, playbar.playbar_frame, prof);
+			}
+
+			// Look
+			ImGui::Text("Look");
+			ImGui::PushID(4);
+			ImGui::SetNextItemWidth(100.0f);
+			ImGui::Combo("", &ocio.current_look_idx, &ocio.looks[0], ocio.looks.size());
+			ImGui::PopID();
+
+			if (ImGui::IsItemEdited())
+			{
+				ocio.current_look = ocio.looks[ocio.current_look_idx];
+				ocio.UpdateProcessor();
+
+				display.Update(loader, ocio, playbar.playbar_frame, prof);
+			}
+
+			ImGui::Dummy(ImVec2(50.0f, avail_width.y));
+
+			// Exponent
+			ImGui::Text("Exp");
+			ImGui::PushID(5);
+			ImGui::SetNextItemWidth(150.0f);
+			ImGui::SliderFloat("", &ocio.exposure_stops, 0.0f, 10.0f);
+			ImGui::PopID();
+
+			if (ImGui::IsItemEdited())
+			{
+				ocio.UpdateProcessor();
+
+				display.Update(loader, ocio, playbar.playbar_frame, prof);
+			}
+
+			ImGui::Dummy(ImVec2(20.0f, avail_width.y));
+
+			// Gamma
+			ImGui::Text("Gamma");
+			ImGui::PushID(6);
+			ImGui::SetNextItemWidth(150.0f);
+			ImGui::SliderFloat("", &ocio.gamma, 0.0f, 4.0f);
+			ImGui::PopID();
+
+			if (ImGui::IsItemEdited())
+			{
+				ocio.UpdateProcessor();
+
+				display.Update(loader, ocio, playbar.playbar_frame, prof);
+			}
+
+			ImGui::Dummy(ImVec2(20.0f, avail_width.y));
+
+			// Reset button for Exponent/Gamma
+			if (ImGui::Button("Reset"))
+			{
+				ocio.exposure_stops = 0.0f;
+				ocio.gamma = 1.0f;
+
+				ocio.UpdateProcessor();
+
+				display.Update(loader, ocio, playbar.playbar_frame, prof);
+			}
 		}
 
-		if (ImGui::BeginMenu("Settings"))
-		{
-			if (ImGui::MenuItem("Playback")) { current_settings.p_open_playback_window = true; }
-			if (ImGui::MenuItem("OCIO")) { current_settings.p_open_ocio_window = true; }
-			if (ImGui::MenuItem("Interface")) { current_settings.p_open_interface_window = true; }
-			if (ImGui::MenuItem("Performance")) {current_settings.p_open_performance_window = true; }
-
-
-			ImGui::EndMenu();
-		}
+		// Combo to select the bar mode
 
 		const ImVec2 avail_width = ImGui::GetContentRegionAvail();
 
-		ImGui::Dummy(ImVec2(avail_width.x - 900.0f, avail_width.y));
+		ImGui::Dummy(ImVec2(avail_width.x - 100.0f, avail_width.y));
 
-		ImGui::Text("Role");
-		ImGui::PushID(0);
-		ImGui::SetNextItemWidth(200.0f);
-		ImGui::Combo("", &ocio.current_role_idx, &ocio.roles[0], ocio.roles.size());
+		static const char* modes[] = {"Menu", "Ocio"};
+
+		ImGui::PushID(99);
+		ImGui::SetNextItemWidth(100.0f);
+		ImGui::Combo("", &bar_mode, &modes[0], IM_ARRAYSIZE(modes));
 		ImGui::PopID();
-
-		if (ImGui::IsItemEdited())
-		{
-			ocio.current_role = ocio.roles[ocio.current_role_idx];
-
-			ocio.UpdateProcessor();
-		}
-
-		ImGui::Text("Display");
-
-		ImGui::PushID(1);
-		ImGui::SetNextItemWidth(200.0f);
-		ImGui::Combo("", &ocio.current_display_idx, &ocio.active_displays[0], ocio.active_displays.size());
-		ImGui::PopID();
-
-		if (ImGui::IsItemEdited())
-		{
-			ocio.current_display = ocio.active_displays[ocio.current_display_idx];
-
-			ocio.GetOcioDisplayViews();
-			ocio.UpdateProcessor();
-		}
-
-		ImGui::Text("View");
-
-		ImGui::PushID(2);
-		ImGui::SetNextItemWidth(200.0f);
-		ImGui::Combo("", &ocio.current_view_idx, &ocio.active_views[0], ocio.active_views.size());
-		ImGui::PopID();
-
-		if (ImGui::IsItemEdited())
-		{
-			ocio.current_view = ocio.active_views[ocio.current_view_idx]; 
-			ocio.UpdateProcessor();
-		}
 	}
 
 	ImGui::EndMainMenuBar();

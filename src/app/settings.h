@@ -20,5 +20,5 @@ struct Settings
 	bool p_open_performance_window = false;
 
 
-	void draw(ImPlaybar& playbar, Profiler& prof);
+	void draw(ImPlaybar& playbar, Profiler& prof) noexcept;
 };

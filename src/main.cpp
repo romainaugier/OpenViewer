@@ -7,7 +7,7 @@
 
 int main(int argc, char** argv)
 {
-	application(argc, argv);
+	int app = application(argc, argv);
 
-	return 0;
+	return app;
 }

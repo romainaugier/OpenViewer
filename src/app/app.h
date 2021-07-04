@@ -9,7 +9,7 @@
 #include "imgui_impl_opengl3.h"
 #include <stdio.h>
 
-#include <GL/gl3w.h>            // Initialize with gl3wInit()
+#include <GL/glew.h>            // Initialize with gl3wInit()
 
 #include <GLFW/glfw3.h>
 
@@ -32,7 +32,5 @@ static void glfw_error_callback(int error, const char* description)
 #include "display.h"
 #include "core/loader.h"
 #include "core/parser.h"
-
-typedef struct { GLfloat R, G, B; } color_t;
 
 int application(int argc, char** argv);

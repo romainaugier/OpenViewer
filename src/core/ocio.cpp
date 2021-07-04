@@ -9,7 +9,8 @@ void Ocio::Initialize()
 {
     try
     {
-        config = OCIO::Config::CreateFromFile("C:/Program Files/OCIO/dev/config-aces-reference.ocio");
+        // config = OCIO::Config::CreateFromFile("C:/Program Files/OCIO/aces_1.2/config_chrisb.ocio");
+        config = OCIO::Config::CreateFromEnv();
     }
     catch(const std::exception& e)
     {
@@ -19,26 +20,29 @@ void Ocio::Initialize()
     }
 
     GetOcioActiveDisplays();
-    current_display = active_displays[0];
+    current_display = displays[0];
 
 	GetOcioDisplayViews();
-    current_view = active_views[0];
+    current_view = views[0];
 
     GetRoles();
     current_role = roles[0];
+
+    GetLooks();
+    current_look = looks[0];
 }
 
 void Ocio::GetOcioActiveViews() noexcept
 {
-    active_views.clear();
+    views.clear();
 
-	const char* views = config->getActiveViews();
+	const char* active_views = config->getActiveViews();
 	const int views_count = config->getNumViews(current_display);
 	const char s[2] = ",";
 	
-	active_views.reserve(views_count);
+	views.reserve(views_count);
 
-	char* token = strtok((char*)views, s);
+	char* token = strtok((char*)active_views, s);
 
 	while (token != NULL)
 	{
@@ -50,7 +54,7 @@ void Ocio::GetOcioActiveViews() noexcept
         char* temp = new char[tmp.size() + 1];
         memcpy(temp, tmp.c_str(), tmp.size() + 1);
 
-		active_views.push_back(temp);
+		views.push_back(temp);
 		token = strtok(NULL, s);
 	}
 }
@@ -58,7 +62,7 @@ void Ocio::GetOcioActiveViews() noexcept
 // Little dirty method to get the list of views dependant of a display
 void Ocio::GetOcioDisplayViews() noexcept
 {
-    active_views.clear();
+    views.clear();
     
     uint8_t i = 0;
 
@@ -74,7 +78,7 @@ void Ocio::GetOcioDisplayViews() noexcept
         char* temp = new char[tmp.size() + 1];
         memcpy(temp, tmp.c_str(), tmp.size() + 1);
 
-        active_views.push_back(temp);
+        views.push_back(temp);
 
         i++;
     }
@@ -82,15 +86,15 @@ void Ocio::GetOcioDisplayViews() noexcept
 
 void Ocio::GetOcioActiveDisplays() noexcept
 {
-    active_views.clear();
+    views.clear();
 
-    const char* displays = config->getActiveDisplays();
+    const char* active_displays = config->getActiveDisplays();
     const int displays_count = config->getNumDisplays();
     const char s[2] = ",";
 
-    active_displays.reserve(displays_count);
+    displays.reserve(displays_count);
 
-    char* token = strtok((char*)displays, s);
+    char* token = strtok((char*)active_displays, s);
 
     while (token != NULL)
     {
@@ -102,7 +106,7 @@ void Ocio::GetOcioActiveDisplays() noexcept
         char* temp = new char[tmp.size() + 1];
         memcpy(temp, tmp.c_str(), tmp.size() + 1);
 
-        active_displays.push_back(temp);
+        displays.push_back(temp);
         token = strtok(NULL, s);
     }
 }
@@ -111,14 +115,38 @@ void Ocio::GetRoles() noexcept
 {
     uint8_t numroles = config->getNumRoles();
 
+    roles.reserve(numroles);
+
     for (uint8_t i = 0; i < numroles; i++)
     {
-        std::string tmp = config->getRoleName(i);
+        std::string tmp = config->getRoleColorSpace(i);
+        std::string tmp2 = config->getRoleName(i);
+
+        tmp = tmp2 + " : " + tmp;
         
         char* temp = new char[tmp.size() + 1];
         memcpy(temp, tmp.c_str(), tmp.size() + 1);
 
         roles.push_back(temp);
+    }
+}
+
+void Ocio::GetLooks() noexcept
+{
+    uint8_t numlooks = config->getNumLooks();
+
+    looks.reserve(numlooks);
+
+    looks.emplace_back("None");
+
+    for (uint8_t i = 0; i < numlooks; i++)
+    {
+        std::string tmp = config->getLookNameByIndex(i);
+
+        char* temp = new char[tmp.size() + 1];
+        memcpy(temp, tmp.c_str(), tmp.size() + 1);
+
+        looks.push_back(temp);
     }
 }
 
@@ -129,10 +157,16 @@ void Ocio::ChangeConfig(const char* config_path)
         config = OCIO::Config::CreateFromFile(config_path);
 
         GetOcioActiveDisplays();
-        current_display = active_displays[0];
+        current_display = displays[0];
 
         GetOcioActiveViews();
-        current_view = active_views[0];
+        current_view = views[0];
+
+        GetRoles();
+        current_role = roles[0];
+
+        GetLooks();
+        current_look = looks[0];
     }
     catch (const std::exception& e)
     {
@@ -141,19 +175,156 @@ void Ocio::ChangeConfig(const char* config_path)
     
 }
 
-void Ocio::UpdateProcessor() 
+void Ocio::UpdateProcessor()
 {
     const char* display = config->getDisplay(current_display_idx);
     const char* view = config->getView(display, current_view_idx);
+    const char* role = config->getRoleColorSpace(current_role_idx);
 
+    // Create the view pipeline
     try
     {
-        OCIO::ConstProcessorRcPtr processor = config->getProcessor(current_role, current_display, current_view, OCIO::TRANSFORM_DIR_FORWARD);
-        cpu = processor->getOptimizedCPUProcessor(OCIO::OPTIMIZATION_ALL);
+        const OCIO::DisplayViewTransformRcPtr transform = OCIO::DisplayViewTransform::Create();
+        transform->setSrc(role);
+        transform->setDisplay(display);
+        transform->setView(view);
+        
+        const OCIO::LegacyViewingPipelineRcPtr vp = OCIO::LegacyViewingPipeline::Create();
+        vp->setDisplayViewTransform(transform);
+
+        if (current_look_idx != 0)
+        {
+            vp->setLooksOverrideEnabled(true);
+            vp->setLooksOverride(current_look);
+        }
+        else
+        {
+            vp->setLooksOverrideEnabled(false);
+        }
+
+        // Exposure modification
+        {
+            const double gain = powf(2.0f, static_cast<double>(exposure_stops));
+            const double slopoe4f[] = { gain, gain, gain, gain };
+            double m44[16];
+            double offset4[4];
+            OCIO::MatrixTransform::Scale(m44, offset4, slopoe4f);
+            OCIO::MatrixTransformRcPtr mtx = OCIO::MatrixTransform::Create();
+            mtx->setMatrix(m44);
+            mtx->setOffset(offset4);
+            vp->setLinearCC(mtx);
+        }
+
+        // Channel swizzling
+        {
+            double lumacoef[3];
+            config->getDefaultLumaCoefs(lumacoef);
+            double m44[16];
+            double offset[4];
+            OCIO::MatrixTransform::View(m44, offset, channel_hot, lumacoef);
+            OCIO::MatrixTransformRcPtr swizzle = OCIO::MatrixTransform::Create();
+            swizzle->setMatrix(m44);
+            swizzle->setOffset(offset);
+            vp->setChannelView(swizzle);
+        }
+
+        // Post display gamma
+        {
+            double exponent = 1.0f / std::max(0.01, static_cast<double>(gamma));
+            const double exponent4f[] = { exponent, exponent, exponent, exponent };
+            OCIO::ExponentTransformRcPtr exponent_transform = OCIO::ExponentTransform::Create();
+            exponent_transform->setValue(exponent4f);
+            vp->setDisplayCC(exponent_transform);
+        }
+
+        OCIO::ConstProcessorRcPtr processor = vp->getProcessor(config, config->getCurrentContext());
+        
+        // if we use the gpu, create and compile the shader needed for the transform
+        if (use_gpu > 0)
+        {
+            OCIO::GpuShaderDescRcPtr shaderDesc;
+            shaderDesc = OCIO::GpuShaderDesc::CreateShaderDesc();
+            shaderDesc->setLanguage(OCIO::GPU_LANGUAGE_GLSL_1_3);
+            shaderDesc->setFunctionName("OCIODisplay");
+            shaderDesc->setResourcePrefix("ocio_");
+
+            gpu = processor->getOptimizedGPUProcessor(OCIO::OPTIMIZATION_ALL);
+
+            gpu->extractGpuShaderInfo(shaderDesc);
+
+            ogl_builder = OCIO::OpenGLBuilder::Create(shaderDesc);
+
+            ogl_builder->allocateAllTextures(1);
+
+            std::ostringstream frag;
+            frag << std::endl
+                << "uniform sampler2D img;" << std::endl
+                << std::endl
+                << "void main()" << std::endl
+                << "{" << std::endl
+                << "    vec4 col = texture2D(img, gl_TexCoord[0].st);" << std::endl
+                << "    gl_FragColor = " << shaderDesc->getFunctionName() << "(col);" << std::endl
+                << "}" << std::endl;
+
+            ogl_builder->buildProgram(frag.str().c_str());
+            ogl_builder->useProgram();
+            glUniform1i(glGetUniformLocation(ogl_builder->getProgramHandle(), "img"), 0);
+            ogl_builder->useAllTextures();
+            ogl_builder->useAllUniforms();
+        }
+        else
+        // use the cpu processor
+        {
+            cpu = processor->getOptimizedCPUProcessor(OCIO::OPTIMIZATION_ALL);
+        }
     }
     catch (OCIO::Exception& exception)
     {
         std::cerr << "OCIO error : " << exception.what() << "\n";
+
+        const char* display = config->getDefaultDisplay();
+        const char* view = config->getDefaultView(display);
+
+        OCIO::ConstProcessorRcPtr processor = config->getProcessor(OCIO::ROLE_SCENE_LINEAR, display, view, OCIO::TRANSFORM_DIR_FORWARD);
+        
+        // if we use the gpu, create and compile the shader needed for the transform
+        if (use_gpu > 0)
+        {
+            OCIO::GpuShaderDescRcPtr shaderDesc;
+            GL_CHECK(shaderDesc = OCIO::GpuShaderDesc::CreateShaderDesc());
+            shaderDesc->setLanguage(OCIO::GPU_LANGUAGE_GLSL_1_3);
+            shaderDesc->setFunctionName("OCIODisplay");
+            shaderDesc->setResourcePrefix("ocio_");
+
+            gpu = processor->getOptimizedGPUProcessor(OCIO::OPTIMIZATION_ALL);
+
+            gpu->extractGpuShaderInfo(shaderDesc);
+
+            ogl_builder = OCIO::OpenGLBuilder::Create(shaderDesc);
+
+            ogl_builder->allocateAllTextures(1);
+
+            std::ostringstream frag;
+            frag << std::endl
+                << "uniform sampler2D img;" << std::endl
+                << std::endl
+                << "void main()" << std::endl
+                << "{" << std::endl
+                << "    vec4 col = texture2D(img, gl_TexCoord[0].st);" << std::endl
+                << "    gl_FragColor = " << shaderDesc->getFunctionName() << "(col);" << std::endl
+                << "}" << std::endl;
+
+            ogl_builder->buildProgram(frag.str().c_str());
+            ogl_builder->useProgram();
+            glUniform1i(glGetUniformLocation(ogl_builder->getProgramHandle(), "img"), 0);
+            ogl_builder->useAllTextures();
+            ogl_builder->useAllUniforms();
+        }
+        else
+        // use the cpu processor, much slower
+        {
+            cpu = processor->getOptimizedCPUProcessor(OCIO::OPTIMIZATION_ALL);
+        }
     }
 }
 
@@ -163,50 +334,22 @@ void Ocio::Process(float* const __restrict buffer, const uint16_t width, const u
     {
         // apply the ocio view transform
 
-        uint8_t numthreads = 8;
-        
-        // CPU
-#pragma omp parallel for num_threads(numthreads)
-        for (int8_t i = 0; i < numthreads; i++)
-        {
-            uint32_t index = i * ((width * height * 4) / numthreads);
-            OCIO::PackedImageDesc img(&buffer[index], width, height / numthreads, 4);
-            cpu->apply(img);
-        }
-
         // GPU
-        /*
-        ogl_app = OCIO::OglApp::CreateOglApp("convert", 1, 1);
-        ogl_app->printGLInfo();
-        ogl_app->initImage(width, height, OCIO::OglApp::COMPONENTS_RGBA, buffer);
-        ogl_app->createGLBuffers();
-        
-        const char* look = config->getDisplayViewLooks(current_display, current_view);
+        if (use_gpu > 0) ogl_builder->useAllUniforms();
+        else
+        {
+            uint8_t numthreads = 8;
 
-        OCIO::DisplayViewTransformRcPtr transform = OCIO::DisplayViewTransform::Create();
-        transform->setSrc(OCIO::ROLE_SCENE_LINEAR);
-        transform->setDisplay(current_display);
-        transform->setView(current_view);
-
-        OCIO::LegacyViewingPipelineRcPtr vpt = OCIO::LegacyViewingPipeline::Create();
-        vpt->setDisplayViewTransform(transform);
-        vpt->setLooksOverrideEnabled(true);
-        vpt->setLooksOverride(look);
-
-        OCIO::ConstProcessorRcPtr processor = vpt->getProcessor(config, config->getCurrentContext());
-        OCIO::ConstGPUProcessorRcPtr gpu = processor->getDefaultGPUProcessor();
-
-        OCIO::GpuShaderDescRcPtr shaderDesc = OCIO::GpuShaderDesc::CreateShaderDesc();
-        shaderDesc->setLanguage(OCIO::GPU_LANGUAGE_GLSL_1_3);
-        shaderDesc->setFunctionName("OCIODisplay");
-        shaderDesc->setResourcePrefix("ocio_");
-
-        gpu->extractGpuShaderInfo(shaderDesc);
-
-        ogl_app->setShader(shaderDesc);
-        ogl_app->redisplay();
-        ogl_app->readImage(buffer);
-        */
+            // CPU
+#pragma omp parallel for num_threads(numthreads)
+            for (int8_t i = 0; i < numthreads; i++)
+            {
+                uint32_t index = i * ((width * height * 4) / numthreads);
+                OCIO::PackedImageDesc img(&buffer[index], width, height / numthreads, 4);
+                cpu->apply(img);
+            }
+            
+        }
     }
     catch (OCIO::Exception& exception)
     {
@@ -214,17 +357,34 @@ void Ocio::Process(float* const __restrict buffer, const uint16_t width, const u
     }
 }
 
+// cleanup the vectors containing views, displays, roles and looks
 void Ocio::Release() noexcept
 {
-    for (auto& view : active_views)
+    for (auto& view : views)
     {
         delete[] view;
         view = nullptr;
     }
 
-    for (auto& display : active_displays)
+    for (auto& display : displays)
     {
         delete[] display;
         display = nullptr;
+    }
+
+    for (auto& role : roles)
+    {
+        delete[] role;
+        role = nullptr;
+    }
+
+    for (auto& look : looks)
+    {
+        if (look == "None") continue;
+        else
+        {
+            delete[] look;
+            look = nullptr;
+        }
     }
 }

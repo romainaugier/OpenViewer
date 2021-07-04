@@ -5,7 +5,7 @@
 
 #include "implaybar.h"
 
-void ImPlaybar::draw(std::vector<char>& cached)
+void ImPlaybar::draw(std::vector<char>& cached, bool& change) noexcept
 {
 	bool p_open = true;
 

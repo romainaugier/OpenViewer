@@ -5,7 +5,7 @@
 
 #include "settings.h"
 
-void Settings::draw(ImPlaybar& playbar, Profiler& prof)
+void Settings::draw(ImPlaybar& playbar, Profiler& prof) noexcept
 {	
 	if (p_open_playback_window)
 	{

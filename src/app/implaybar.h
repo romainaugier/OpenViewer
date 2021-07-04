@@ -30,7 +30,7 @@ struct ImPlaybar
 		update = 0;
 	}
 
-	void draw(std::vector<char>& cached);
+	void draw(std::vector<char>& cached, bool& change) noexcept;
 };
 
 inline bool hover(ImVec2 min, ImVec2 max, ImVec2 pos)

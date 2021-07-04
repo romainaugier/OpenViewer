@@ -10,6 +10,7 @@ int application(int argc, char** argv)
 {
     // Setup window
     glfwSetErrorCallback(glfw_error_callback);
+
     if (!glfwInit())
     {
         printf("Failed to initialize GLFW");
@@ -26,11 +27,12 @@ int application(int argc, char** argv)
     GLFWwindow* window = glfwCreateWindow(1920, 1080, "OpenViewer", NULL, NULL);
     if (window == NULL)
         return 1;
+
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable vsync
 
     // Initialize OpenGL loader
-    bool err = gl3wInit() != 0;
+    bool err = glewInit() != 0;
 
     if (err)
     {
@@ -55,34 +57,12 @@ int application(int argc, char** argv)
 
     // Setup Platform/Renderer bindings
     ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init(glsl_version);
+    GL_CHECK(ImGui_ImplOpenGL3_Init(glsl_version));
 
     // Our state
     bool show_demo_window = true;
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.06f, 0.05f, 0.07f, 1.00f);
-
-    // initialize ImFileDialog
-    ifd::FileDialog::Instance().CreateTexture = [](uint8_t* data, int w, int h, char fmt) -> void* {
-        GLuint tex;
-
-        glGenTextures(1, &tex);
-        glBindTexture(GL_TEXTURE_2D, tex);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, (fmt == 0) ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-        return (void*)tex;
-    };
-
-    ifd::FileDialog::Instance().DeleteTexture = [](void* tex) {
-        GLuint texID = (GLuint)tex;
-        glDeleteTextures(1, &texID);
-    };
 
     // initialize system
     Parser parser(argc, argv);
@@ -116,6 +96,29 @@ int application(int argc, char** argv)
 
     if (initialize_display) display.Initialize(loader, ocio, profiler);
     
+    static bool change = true;
+
+    // initialize ImFileDialog
+    ifd::FileDialog::Instance().CreateTexture = [](uint8_t* data, int w, int h, char fmt) -> void* {
+        GLuint tex;
+
+        glGenTextures(1, &tex);
+        glBindTexture(GL_TEXTURE_2D, tex);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, (fmt == 0) ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE, data));
+        glGenerateMipmap(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
+        return (void*)tex;
+    };
+
+    ifd::FileDialog::Instance().DeleteTexture = [](void* tex) {
+        GLuint texID = (GLuint)tex;
+        GL_CHECK(glDeleteTextures(1, &texID));
+    };
 
     // Main loop
     while (!glfwWindowShouldClose(window))
@@ -128,7 +131,7 @@ int application(int argc, char** argv)
         
         if (loader.has_been_initialized > 0 && playbar.update > 0)
         {
-            if (!playbar.play)
+            if (!playbar.play && change)
             {
                 auto imgload_start = profiler.Start();
                 loader.is_playing = 0;
@@ -140,6 +143,8 @@ int application(int argc, char** argv)
                 profiler.Load(imgload_start, imgload_end);
 
                 display.Update(loader, ocio, frame_index, profiler);
+
+                change = false;
             }
             else
             {
@@ -180,10 +185,10 @@ int application(int argc, char** argv)
 
         // playbar 
         ImGui::SetNextWindowBgAlpha(settings.interface_windows_bg_alpha);
-        playbar.draw(loader.cached);
+        playbar.draw(loader.cached, change);
 
         // menubar
-        menubar.draw(settings, loader, display, playbar, ocio, profiler);
+        menubar.draw(settings, loader, display, playbar, ocio, profiler, change);
 
         // Rendering
         ImGui::Render();
