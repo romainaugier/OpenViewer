@@ -1,6 +1,6 @@
 # GLOBAL #
 
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.20)
 
 # Vcpkg
 if(DEFINED CMAKE_TOOLCHAIN_FILE)
