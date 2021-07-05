@@ -107,7 +107,7 @@ struct Image
 
 	void Release() noexcept;
 	void Load(void* __restrict buffer) const noexcept;
-	void LoadExr(half* __restrict buffer) const noexcept;
+	void LoadExr(half* __restrict buffer) const;
 	void LoadPng(uint8_t* __restrict buffer) const noexcept;
 	void LoadJpg(uint8_t* __restrict buffer) const noexcept;
 	void LoadOther(half* __restrict allocated_space) const noexcept;

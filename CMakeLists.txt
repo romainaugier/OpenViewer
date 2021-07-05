@@ -92,10 +92,9 @@ elseif(UNIX)
 	include_directories(${VCPKG_INCLUDE_DIR}/OpenEXR)
 endif()
 
-add_subdirectory(dependencies)
-
-include_directories(imgui)
-add_subdirectory(imgui)
-
 include_directories(src)
+include_directories(imgui)
+
+add_subdirectory(dependencies)
+add_subdirectory(imgui)
 add_subdirectory(src)

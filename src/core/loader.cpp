@@ -13,18 +13,25 @@ void Image::Release() noexcept
 }
 
 // loads an image
-void Image::LoadExr(half* __restrict buffer) const noexcept
+void Image::LoadExr(half* __restrict buffer) const 
 {
 	Imf::RgbaInputFile in(path.c_str());
 	
-	const Imath::Box2i win = in.dataWindow();
+	const Imath::Box2i win = in.displayWindow();
 	const Imath::V2i dim(win.max.x - win.min.x + 1, win.max.y - win.max.y + 1);
 
 	const int dx = win.min.x;
 	const int dy = win.min.y;
 
-	in.setFrameBuffer((Imf::Rgba*)buffer - dx - dy * dim.x, 1, dim.x);
-	in.readPixels(win.min.y, win.max.y);
+	try
+	{
+		in.setFrameBuffer((Imf::Rgba*)buffer - dx - dy * dim.x, 1, dim.x);
+		in.readPixels(win.min.y, win.max.y);
+	}
+	catch(std::exception& e)
+	{
+		std::cerr << e.what() << "\n";
+	}
 }
 
 void Image::LoadPng(uint8_t* __restrict buffer) const noexcept
@@ -291,9 +298,13 @@ void Loader::Release() noexcept
 	_aligned_free(memory_arena);
 	memory_arena = nullptr;
 	workers.clear();
+	workers.resize(0);
 	cached.clear();
+	cached.resize(0);
 	last_cached.clear();
+	last_cached.resize(0);
 	images.clear();
+	images.resize(0);
 
 	count = 0;
 	cached_size = 0;

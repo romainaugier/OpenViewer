@@ -43,6 +43,7 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 
 						loader.JoinWorker();
 						loader.Release();
+						display.Release();
 					}
 
 					loader.Initialize(fp, 0, false, prof);
@@ -67,6 +68,7 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 
 						loader.JoinWorker();
 						loader.Release();
+						display.Release();
 					}
 
 					const std::string fp = res.u8string();
