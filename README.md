@@ -46,8 +46,8 @@ If you already have vcpkg installed somewhere, you can pass the toolchain file t
 ```bash
 cd Openviewer
 cmake -S . -B build
-rem if you already have vcpkg installed
-rem cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="/home/path/to/vcpkg"
+# if you already have vcpkg installed
+# cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="/home/path/to/vcpkg"
 
 cd build
 cmake --build . --config Release -j $(numproc)
@@ -57,8 +57,8 @@ cmake --build . --config Release -j $(numproc)
 ```bat
 cd OpenViewer
 cmake -S . -B build
-# if you already have vcpkg installed
-# cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="D:/path/to/vcpkg"
+rem if you already have vcpkg installed
+rem cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="D:/path/to/vcpkg"
 
 cd build
 cmake --build . --config Release -j %NUMBER_OF_PROCESSORS%
