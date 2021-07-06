@@ -32,24 +32,36 @@ git clone https://github.com/romainaugier/OpenViewer.git
 cd OpenViewer
 git clone https://github.com/microsoft/vcpkg.git
 cd vcpkg
-./vcpkg-bootstrap.bat
-./vcpkg install OpenImageIO:x64-windows
-./vcpkg install OpenColorIO:x64-windows
+vcpkg-bootstrap.bat
+vcpkg install OpenImageIO:x64-windows
+vcpkg install OpenColorIO:x64-windows
 ```
 
 
 Once all the dependencies are built, you can run the build script. If you run into a *permission denied* on Linux, use the ```chmod +x``` command with the script name.
+If you already have vcpkg installed somewhere, you can pass the toolchain file to CMake with -DCMAKE_TOOLCHAIN_FILE="D:/path/to/vcpkg.cmake".
+
 
 ### Linux
 ```bash
 cd Openviewer
-./build_linux.sh
+cmake -S . -B build
+# if you already have vcpkg installed
+# cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="/home/path/to/vcpkg"
+
+cd build
+cmake --build . --config Release -j $(numproc)
 ```
 
 ### Windows
-```bash
+```bat
 cd OpenViewer
-./build_windows
+cmake -S . -B build
+# if you already have vcpkg installed
+# cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="D:/path/to/vcpkg"
+
+cd build
+cmake --build . --config Release -j %NUMBER_OF_PROCESSORS%
 ```
 
 ## Copyright
