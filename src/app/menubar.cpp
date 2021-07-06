@@ -34,7 +34,6 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 				if (ifd::FileDialog::Instance().HasResult())
 				{
 					const auto& res = ifd::FileDialog::Instance().GetResults();
-
 					const std::string fp = res[0].u8string();
 
 					if (loader.has_been_initialized > 0)
@@ -61,6 +60,7 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 				if (ifd::FileDialog::Instance().HasResult())
 				{
 					const auto& res = ifd::FileDialog::Instance().GetResult();
+					const std::string fp = res.u8string();
 
 					if (loader.has_been_initialized > 0)
 					{
@@ -70,8 +70,6 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 						loader.Release();
 						display.Release();
 					}
-
-					const std::string fp = res.u8string();
 
 					loader.Initialize(fp, 2000000000, true, prof);
 					loader.LaunchSequenceWorker();

@@ -13,25 +13,29 @@ void Image::Release() noexcept
 }
 
 // loads an image
-void Image::LoadExr(half* __restrict buffer) const 
+void Image::LoadExr(half* __restrict buffer) const noexcept
 {
 	Imf::RgbaInputFile in(path.c_str());
 	
-	const Imath::Box2i win = in.displayWindow();
-	const Imath::V2i dim(win.max.x - win.min.x + 1, win.max.y - win.max.y + 1);
+	const Imath::Box2i display = in.displayWindow();
+	const Imath::Box2i data = in.dataWindow();
+	const Imath::V2i dim(data.max.x - data.min.x + 1, data.max.y - data.max.y + 1);
 
-	const int dx = win.min.x;
-	const int dy = win.min.y;
+	const int dx = data.min.x;
+	const int dy = data.min.y;
+	
+	// in case the data window is smaller than the display window
+	// we fill empty pixels everywhere and then read the image pixels
+	// to avoid non initialized values in memory
+	if (data.min.x > display.min.x || data.max.x < display.max.x || 
+		data.min.y > display.min.y || data.max.y < display.min.y)
+	{
+		memset(&buffer[0], 0.0f, size);
+	}
 
-	try
-	{
-		in.setFrameBuffer((Imf::Rgba*)buffer - dx - dy * dim.x, 1, dim.x);
-		in.readPixels(win.min.y, win.max.y);
-	}
-	catch(std::exception& e)
-	{
-		std::cerr << e.what() << "\n";
-	}
+	// in.setFrameBuffer((Imf::Rgba*)buffer - dx - dy * dim.x, 1, dim.x);
+	in.setFrameBuffer((Imf::Rgba*)buffer, 1, dim.x);
+	in.readPixels(data.min.y, data.max.y);
 }
 
 void Image::LoadPng(uint8_t* __restrict buffer) const noexcept

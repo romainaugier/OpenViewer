@@ -10,6 +10,7 @@ void Ocio::Initialize()
     try
     {
         // config = OCIO::Config::CreateFromFile("C:/Program Files/OCIO/aces_1.2/config_chrisb.ocio");
+        std::cout << std::getenv("OCIO") << "\n";
         config = OCIO::Config::CreateFromEnv();
     }
     catch(const std::exception& e)

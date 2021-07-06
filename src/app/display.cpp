@@ -24,7 +24,7 @@ void Display::InitializeOpenGL(const uint16_t width, const uint16_t height) noex
 	// Generate the color attachement texture
 	glGenTextures(1, &tex_color_buffer);
 	glBindTexture(GL_TEXTURE_2D, tex_color_buffer);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -100,7 +100,7 @@ void Display::Initialize(const Loader& loader, Ocio& ocio, Profiler& prof) noexc
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-		GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, xres, yres, 0, GL_RGBA, GL_FLOAT, buffer));
+		GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, xres, yres, 0, GL_RGBA, GL_FLOAT, buffer));
 
 		// OCIO GPU Processing
 		if (ocio.use_gpu > 0)
@@ -109,6 +109,7 @@ void Display::Initialize(const Loader& loader, Ocio& ocio, Profiler& prof) noexc
 
 			// Bind the framebuffer
 			BindFBO();
+			glViewport(0, 0, xres, yres);
 			glEnable(GL_DEPTH_TEST);
 
 			// Clear the framebuffer
