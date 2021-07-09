@@ -5,7 +5,7 @@
 
 #include "implaybar.h"
 
-void ImPlaybar::draw(std::vector<char>& cached, bool& change) noexcept
+void ImPlaybar::draw(std::vector<char>& cached) noexcept
 {
 	bool p_open = true;
 
@@ -93,6 +93,7 @@ void ImPlaybar::draw(std::vector<char>& cached, bool& change) noexcept
 			playbar_frame = floor(x_position / step);
 			scrolling = x_position;
 			play = 0;
+			update = 1;
 		}
 
 		// dragging and play frames dragged
@@ -103,19 +104,28 @@ void ImPlaybar::draw(std::vector<char>& cached, bool& change) noexcept
 			scrolling = scrolling > (playbar_range.y - 1.0f) * step ? (playbar_range.y - 2.0f) * step : scrolling;
 			playbar_frame = scrolling / step;
 			play = 0;
+			update = 1;
 		}
 
 		// buttons
 		const ImVec2 buttons_size = ImVec2(50.0f, 15.0f);
 
 		ImGui::SameLine();
-		if (ImGui::Button(u8"⮜⮜", buttons_size)) playbar_frame = playbar_range.x;
+		if (ImGui::Button(u8"⮜⮜", buttons_size))
+		{
+			playbar_frame = playbar_range.x;
+			update = 1;
+		}
 		ImGui::SameLine();
 		if (ImGui::Button(u8"⮞", buttons_size)) play = 1;
 		ImGui::SameLine();
 		if (ImGui::Button(u8"■", buttons_size)) play = 0;
 		ImGui::SameLine();
-		if (ImGui::Button(u8"⮞⮞", buttons_size)) playbar_frame = playbar_range.y - 2;
+		if (ImGui::Button(u8"⮞⮞", buttons_size))
+		{
+			playbar_frame = playbar_range.y - 2;
+			update = 1;
+		}
 
 		/*
 

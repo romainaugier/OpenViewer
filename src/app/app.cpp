@@ -8,12 +8,18 @@
 
 int application(int argc, char** argv)
 {
+    Logger logger;
+
+    logger.setLevel(LogLevel_Debug);
+
+    logger.Log(LogLevel_Debug, "Initializing OpenViewer...");
+
     // Setup window
     glfwSetErrorCallback(glfw_error_callback);
 
     if (!glfwInit())
     {
-        printf("Failed to initialize GLFW");
+        logger.Log(LogLevel_Error, "GLFW : Failed to initialize GLFW. Exiting application...");
         return 1;
     }
 
@@ -36,7 +42,7 @@ int application(int argc, char** argv)
 
     if (err)
     {
-        fprintf(stderr, "Failed to initialize OpenGL loader!\n");
+        logger.Log(LogLevel_Error, "OpenGL : Failed to initialize loader. Exiting application...");
         return 1;
     }
 
@@ -68,35 +74,47 @@ int application(int argc, char** argv)
     Parser parser(argc, argv);
     Profiler profiler;
 
-    Ocio ocio;
+    profiler.current_memory_usage = ToMB(GetCurrentRss());
+
+    Ocio ocio(&logger);
     ocio.Initialize();
 
-    Loader loader;
+    Loader loader(&profiler, &logger);
+    Settings_Windows settings;
 
     bool initialize_display = false;
 
     if (parser.is_directory > 0)
     {
-        loader.Initialize(parser.path, 2000000000, true, profiler);
+        uint64_t cache_size = static_cast<uint64_t>(settings.settings.cache_size) * 1000000;
+        loader.Initialize(parser.path, cache_size, true);
         loader.LaunchSequenceWorker();
         initialize_display = true;
     }
     else if (parser.is_file > 0)
     {
-        loader.Initialize(parser.path, 0, false, profiler);
+        loader.Initialize(parser.path, 0, false);
         initialize_display = true;
     }
 
     // initialize windows
     ImPlaybar playbar(ImVec2(0.0f, loader.count + 1.0f));
 
-    Settings settings;
-    Menubar menubar;
-    Display display;
 
-    if (initialize_display) display.Initialize(loader, ocio, profiler);
+    settings.GetOcioConfig(ocio);
+
+    Menubar menubar;
+    Display display(&profiler);
+
+    if (initialize_display) display.Initialize(loader, ocio);
+
+    // initialize memory profiler of main components
+    profiler.current_memory_usage = ToMB(GetCurrentRss());
+    profiler.display_size = ToMB((sizeof(display) + display.buffer_size) / 8);
+    profiler.ocio_size = ToMB((sizeof(ocio) + ocio.GetSize()) / 8);
+    profiler.loader_size = ToMB((sizeof(loader) + loader.cached_size) / 8);
     
-    static bool change = true;
+    bool change = true;
 
     // initialize ImFileDialog
     ifd::FileDialog::Instance().CreateTexture = [](uint8_t* data, int w, int h, char fmt) -> void* {
@@ -125,42 +143,94 @@ int application(int argc, char** argv)
     {
         // if (loader.has_finished > 0 ) loader.JoinWorker();
 
+        // update memory profiler
+        profiler.current_memory_usage = ToMB(GetCurrentRss());
+        profiler.display_size = ToMB((sizeof(display) + display.buffer_size) / 8);
+        profiler.ocio_size = ToMB((sizeof(ocio) + ocio.GetSize()) / 8);
+        profiler.loader_size = ToMB((sizeof(loader) + loader.cached_size) / 8);
+
         loader.frame = playbar.playbar_frame;
         uint16_t frame_index = playbar.playbar_frame;
 
         
-        if (loader.has_been_initialized > 0 && playbar.update > 0)
+        if (loader.has_been_initialized > 0 && playbar.update > 0 ||
+            loader.has_been_initialized > 0 && change)
         {
-            if (!playbar.play && change)
+            if (settings.settings.use_cache) // cache loading
             {
+                if (playbar.play < 1)
+                {
+                    loader.work_for_cache = false;
+                    auto imgload_start = profiler.Start();
+                    loader.is_playing = 0;
+
+                    if (loader.cached[playbar.playbar_frame] < 1)
+                    {
+                        void* address = loader.UnloadImage();
+                        loader.LoadImage(frame_index, address);
+                    }
+
+                    auto imgload_end = profiler.End();
+
+                    profiler.Load(imgload_start, imgload_end);
+
+                    display.Update(loader, ocio, frame_index);
+
+                    change = false;
+                }
+                else
+                {
+                    auto imgload_start = profiler.Start();
+                    loader.is_playing = 1;
+
+                    if (loader.cached[(playbar.playbar_frame + 1) % loader.count] < 1) // emergency load
+                    {
+                        loader.mtx.lock();
+                        loader.work_for_cache = 1;
+                        loader.urgent_load = 1;
+                        loader.cache_load_frame = playbar.playbar_frame;
+                        loader.mtx.unlock();
+                        loader.load_into_cache.notify_all();
+
+                        // wait for a few ms to be make sure some frames are loaded
+                        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                    }
+                    else if (loader.cached[(playbar.playbar_frame + (loader.cache_size_count / 2)) % loader.count] < 1) // "casual" load 
+                    {
+                        loader.mtx.lock();
+                        loader.work_for_cache = 1;
+                        loader.cache_load_frame = playbar.playbar_frame;
+                        loader.mtx.unlock();
+                        loader.load_into_cache.notify_all();
+                    }
+                    if (loader.is_playloader_working == 0)
+                    {
+                        loader.LaunchPlayerWorker();
+                    }
+                    auto imgload_end = profiler.End();
+
+                    profiler.Load(imgload_start, imgload_end);
+
+                    display.Update(loader, ocio, frame_index);
+                }
+            }
+            else // no cache allowed
+            {
+                if (loader.stop_playloader > 0) loader.stop_playloader = 1;
+
                 auto imgload_start = profiler.Start();
                 loader.is_playing = 0;
-                loader.LoadImage(frame_index, profiler);
-                //if (loader.is_playloader_working == 1) loader.JoinWorker();
-                //if (loader.has_finished == 1) loader.JoinWorker();
+
+                void* address = loader.UnloadImage();
+                loader.LoadImage(frame_index, address);
+
                 auto imgload_end = profiler.End();
 
                 profiler.Load(imgload_start, imgload_end);
 
-                display.Update(loader, ocio, frame_index, profiler);
+                display.Update(loader, ocio, frame_index);
 
                 change = false;
-            }
-            else
-            {
-                auto imgload_start = profiler.Start();
-                loader.is_playing = 1;
-
-                if (loader.cached[playbar.playbar_frame] < 1) playbar.playbar_frame++;
-                if (loader.is_playloader_working == 0)
-                {
-                    loader.LaunchPlayerWorker();
-                }
-                auto imgload_end = profiler.End();
-
-                profiler.Load(imgload_start, imgload_end);
-
-                display.Update(loader, ocio, frame_index, profiler);
             }
         }
         
@@ -181,11 +251,11 @@ int application(int argc, char** argv)
         display.Draw(loader, frame_index);
 
         // settings windows
-        settings.draw(playbar, profiler);
+        settings.draw(playbar, &profiler, ocio, loader);
 
         // playbar 
-        ImGui::SetNextWindowBgAlpha(settings.interface_windows_bg_alpha);
-        playbar.draw(loader.cached, change);
+        ImGui::SetNextWindowBgAlpha(settings.settings.interface_windows_bg_alpha);
+        playbar.draw(loader.cached);
 
         // menubar
         menubar.draw(settings, loader, display, playbar, ocio, profiler, change);
@@ -221,6 +291,7 @@ int application(int argc, char** argv)
     loader.Release();
     display.Release();
     ocio.Release();
+    settings.Release();
 
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();

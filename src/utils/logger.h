@@ -2,6 +2,7 @@
 // Copyright (c) 2021 Romain Augier
 // All rights reserved.
 
+#pragma once
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -64,7 +65,7 @@ private:
     int mode : 4;
     int logFileHasBeenSet : 1;
 
-    void getTimeAsTxt(char* buffer)
+    void getTimeAsTxt(char* buffer) const noexcept
     {
         time_t current_time;
         time(&current_time);
@@ -73,25 +74,25 @@ private:
         sprintf(buffer, "%02d:%02d:%02d", local_time->tm_hour, local_time->tm_min, local_time->tm_sec);
     }
 
-    const char* getLevelAsTxt(char lvl)
+    const char* getLevelAsTxt(char lvl) const noexcept
     {
         if (lvl == LogLevel_Error) return "[ERROR]";
-        if (lvl == LogLevel_Warning) return "[WARNING]";
-        if (lvl == LogLevel_Message) return "[MESSAGE]";
-        if (lvl == LogLevel_Verbose) return "[VERBOSE]";
-        if (lvl == LogLevel_Diagnostic) return "[DIAGNOSTIC]";
-        if (lvl == LogLevel_Debug) return "[DEBUG]";
+        else if (lvl == LogLevel_Warning) return "[WARNING]";
+        else if (lvl == LogLevel_Message) return "[MESSAGE]";
+        else if (lvl == LogLevel_Verbose) return "[VERBOSE]";
+        else if (lvl == LogLevel_Diagnostic) return "[DIAGNOSTIC]";
+        else return "[DEBUG]";
     }
 
 #ifdef _WIN32
-    void getColorAsTxt(char lvl)
+    void getColorAsTxt(char lvl) const noexcept
     {
         if (lvl == LogLevel_Error) SetConsoleTextAttribute(winConsole, FOREGROUND_RED);
         if (lvl == LogLevel_Warning) SetConsoleTextAttribute(winConsole, FOREGROUND_RED | FOREGROUND_GREEN);
         if (lvl == LogLevel_Diagnostic) SetConsoleTextAttribute(winConsole, FOREGROUND_GREEN);
     }
 
-    void resetConsoleColor()
+    void resetConsoleColor() const noexcept
     {
         SetConsoleTextAttribute(winConsole, 15);
     }
@@ -123,23 +124,23 @@ public:
         }
     }
 
-    void setLevel(int newLevel)
+    inline void setLevel(int newLevel) noexcept
     {
         level = newLevel;
     }
 
-    void setMode(int newMode)
+    inline void setMode(int newMode) noexcept
     {
         mode = newMode;
     }
 
-    void setLogFile(const char* filePath)
+    inline void setLogFile(const char* filePath) noexcept
     {
         logFile = fopen(filePath, "a");
         logFileHasBeenSet = 1;
     }
 
-    void Log(char lvl, const char* fmt, ...)
+    inline void Log(char lvl, const char* fmt, ...) const noexcept
     {
         if (lvl <= level)
         {

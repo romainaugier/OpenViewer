@@ -20,6 +20,7 @@
 
 #include "utils/string_utils.h"
 #include "utils/profiler.h"
+#include "utils/logger.h"
 
 #undef LoadImage
 
@@ -65,6 +66,9 @@ struct Image
 	Image(const std::string& fp)
 	{
 		path = fp;
+		
+		auto in = OIIO::ImageInput::open(fp);
+		const OIIO::ImageSpec& spec = in->spec();
 
 		if(endsWith(fp, ".exr"))
 		{
@@ -73,40 +77,52 @@ struct Image
 			internal_format = GL_RGBA32F;
 			gl_format = GL_RGBA;
 			gl_type = GL_FLOAT;
+			xres = spec.full_width;
+			yres = spec.full_height;
+			channels = spec.nchannels + 1;
 		}
 		else if(endsWith(fp, ".png"))
 		{
-			type = FileType_Png;
+			type = FileType_Other;
 			format = Format_RGB_U8;
+			internal_format = GL_RGBA32F;
+			gl_format = GL_RGBA;
+			gl_type = GL_FLOAT;
+			xres = spec.width;
+			yres = spec.height;
+			channels = spec.nchannels;
 		}
 		else if(endsWith(fp, ".jpg") || endsWith(fp, ".jpeg"))
 		{
-			type = FileType_Jpg;
+			type = FileType_Other;
 			format = Format_RGB_U8;
+			internal_format = GL_RGBA32F;
+			gl_format = GL_RGBA;
+			gl_type = GL_FLOAT;
+			xres = spec.width;
+			yres = spec.height;
+			channels = spec.nchannels;
 		}
 		else
 		{
 			type = FileType_Other;
 			format = Format_RGB_HALF;
-			internal_format = GL_RGB16F;
-			gl_format = GL_RGB;
-			gl_type = GL_HALF_FLOAT;
+			internal_format = GL_RGBA32F;
+			gl_format = GL_RGBA;
+			gl_type = GL_FLOAT;
+			xres = spec.width;
+			yres = spec.height;
+			channels = spec.nchannels;
 		}
 
-		auto in = OIIO::ImageInput::open(fp);
-		const OIIO::ImageSpec& spec = in->spec();
 
-		xres = spec.full_width;
-		yres = spec.full_height;
-		channels = spec.nchannels == 3 ? spec.nchannels + 1 : spec.nchannels;
-
-		size = xres * yres * channels; // *sizeof(float);
+		size = static_cast<uint64_t>(xres) * yres * channels; // *sizeof(float);
 
 		in->close();
 	}
 
 	void Release() noexcept;
-	void Load(void* __restrict buffer) const noexcept;
+	void Load(void* __restrict buffer, Profiler* prof) noexcept;
 	void LoadExr(half* __restrict buffer) const noexcept;
 	void LoadPng(uint8_t* __restrict buffer) const noexcept;
 	void LoadJpg(uint8_t* __restrict buffer) const noexcept;
@@ -120,13 +136,19 @@ struct Loader
 	std::vector<std::thread> workers;
 	std::vector<uint16_t> last_cached;
 	std::vector<char> cached;
-	mutable std::mutex mtx;
+	std::mutex mtx;
+	std::condition_variable load_into_cache;
+	Profiler* profiler;
+	Logger* logger;
 	uint64_t cache_size;
 	uint64_t cached_size;
 	uint64_t cache_stride;
 	uint16_t count = 0;
 	uint16_t frame = 0;
 	uint16_t cache_size_count = 0;
+	uint16_t cache_load_frame = 0;
+	unsigned int urgent_load : 1;
+	unsigned int work_for_cache : 1;
 	unsigned int has_been_initialized : 1;
 	unsigned int use_cache : 1;
 	unsigned int is_playing : 1;
@@ -135,32 +157,35 @@ struct Loader
 	unsigned int is_playloader_working : 1;
 	unsigned int stop_playloader : 1;
 
-	Loader() 
+	Loader(Profiler* prof, Logger* log) 
 	{
 		has_been_initialized = 0;
-		use_cache = 1;
+		use_cache = 0;
 		cached_size = 0;
 		has_finished = 0;
 		is_working = 0;
 		is_playloader_working = 0;
 		stop_playloader = 0;
+		work_for_cache = 0;
+		urgent_load = 0;
+		profiler = prof;
+		logger = log;
 	}
 
 	~Loader()
 	{
 	}
 
-	void Initialize(const std::string fp, const uint64_t _cache_size, bool isdirectory, Profiler& prof) noexcept;
+	void Initialize(const std::string fp, const uint64_t _cache_size, bool isdirectory) noexcept;
+	void ReallocateCache(const bool& use_cache) noexcept;
 	void LoadSequence() noexcept;
 	void LoadPlayer() noexcept;
-	void LoadImages(const uint16_t idx, const uint8_t number) noexcept;
-	void LoadImage(const uint16_t idx, Profiler& prof) noexcept;
-	void UnloadImages(const uint8_t number) noexcept;
-	void UnloadImage() noexcept;
+	void LoadImage(const uint16_t idx, void* address) noexcept;
+	void* UnloadImage() noexcept;
 	void LaunchSequenceWorker() noexcept;
-	void LaunchCacheLoadWorker(const uint16_t idx, const uint16_t number) noexcept;
 	void LaunchPlayerWorker() noexcept;
 	void JoinWorker() noexcept;
+	void ReleaseCache() noexcept;
 	void Release() noexcept;
 };
 

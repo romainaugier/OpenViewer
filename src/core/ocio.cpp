@@ -5,19 +5,40 @@
 
 #include "ocio.h"
 
+uint32_t Ocio::GetSize() const noexcept
+{
+    uint32_t size = 0;
+
+    for (auto& view : views) size += sizeof(view) * strlen(view);
+    for (auto& display : displays) size += sizeof(display) * strlen(display);
+    for (auto& role : roles) size += sizeof(role) * strlen(role);
+    for (auto& look : looks) size += sizeof(look) * strlen(look);
+
+    size += sizeof(config_path) * strlen(config_path);
+    size += sizeof(current_view) * strlen(current_view);
+    size += sizeof(current_display) * strlen(current_display);
+    size += sizeof(current_role) * strlen(current_role);
+    size += sizeof(current_look) * strlen(current_look);
+
+    return size;
+}
+
 void Ocio::Initialize()
 {
     try
     {
         // config = OCIO::Config::CreateFromFile("C:/Program Files/OCIO/aces_1.2/config_chrisb.ocio");
-        std::cout << std::getenv("OCIO") << "\n";
         config = OCIO::Config::CreateFromEnv();
+        config_path = std::getenv("OCIO");
+
+        logger->Log(LogLevel_Debug, "OCIO : Configuration loaded from file %s", config_path);
     }
     catch(const std::exception& e)
     {
         std::cerr << e.what() << '\n';
+        logger->Log(LogLevel_Warning, "%s. Using default shipped configuration.", e.what());
 
-        // TODO implement config from file shipped with OpenViewer
+        config = OCIO::Config::CreateFromFile("../configs/default.ocio");
     }
 
     GetOcioActiveDisplays();
@@ -35,6 +56,12 @@ void Ocio::Initialize()
 
 void Ocio::GetOcioActiveViews() noexcept
 {
+    for (auto& view : views)
+    {
+        delete[] view;
+        view = nullptr;
+    }
+
     views.clear();
 
 	const char* active_views = config->getActiveViews();
@@ -63,6 +90,12 @@ void Ocio::GetOcioActiveViews() noexcept
 // Little dirty method to get the list of views dependant of a display
 void Ocio::GetOcioDisplayViews() noexcept
 {
+    for (auto& view : views)
+    {
+        delete[] view;
+        view = nullptr;
+    }
+
     views.clear();
     
     uint8_t i = 0;
@@ -87,7 +120,13 @@ void Ocio::GetOcioDisplayViews() noexcept
 
 void Ocio::GetOcioActiveDisplays() noexcept
 {
-    views.clear();
+    for (auto& display : displays)
+    {
+        delete[] display;
+        display = nullptr;
+    }
+
+    displays.clear();
 
     const char* active_displays = config->getActiveDisplays();
     const int displays_count = config->getNumDisplays();
@@ -114,14 +153,22 @@ void Ocio::GetOcioActiveDisplays() noexcept
 
 void Ocio::GetRoles() noexcept
 {
-    uint8_t numroles = config->getNumRoles();
+    for (auto& role : roles)
+    {
+        delete[] role;
+        role = nullptr;
+    }
+
+    roles.clear();
+
+    const uint8_t numroles = config->getNumRoles();
 
     roles.reserve(numroles);
 
     for (uint8_t i = 0; i < numroles; i++)
     {
         std::string tmp = config->getRoleColorSpace(i);
-        std::string tmp2 = config->getRoleName(i);
+        const std::string tmp2 = config->getRoleName(i);
 
         tmp = tmp2 + " : " + tmp;
         
@@ -134,7 +181,19 @@ void Ocio::GetRoles() noexcept
 
 void Ocio::GetLooks() noexcept
 {
-    uint8_t numlooks = config->getNumLooks();
+    for (auto& look : looks)
+    {
+        if (strcmp(look, "None") == 0) continue;
+        else
+        {
+            delete[] look;
+            look = nullptr;
+        }
+    }
+
+    looks.clear();
+
+    const uint8_t numlooks = config->getNumLooks();
 
     looks.reserve(numlooks);
 
@@ -143,6 +202,9 @@ void Ocio::GetLooks() noexcept
     for (uint8_t i = 0; i < numlooks; i++)
     {
         std::string tmp = config->getLookNameByIndex(i);
+
+        if (std::isspace(tmp[0])) tmp.erase(0, 1);
+        if (std::isspace(tmp[tmp.size() - 1])) tmp.erase(tmp.size() - 1);
 
         char* temp = new char[tmp.size() + 1];
         memcpy(temp, tmp.c_str(), tmp.size() + 1);
@@ -156,6 +218,9 @@ void Ocio::ChangeConfig(const char* config_path)
     try
     {
         config = OCIO::Config::CreateFromFile(config_path);
+        config_path = config_path;
+
+        logger->Log(LogLevel_Debug, "OCIO : Configuration switched to %s.", config_path);
 
         GetOcioActiveDisplays();
         current_display = displays[0];
@@ -171,7 +236,7 @@ void Ocio::ChangeConfig(const char* config_path)
     }
     catch (const std::exception& e)
     {
-        std::cerr << e.what() << "\n";
+        logger->Log(LogLevel_Warning, "%s. Keeping the current configuration.", e.what());
     }
     
 }
@@ -181,6 +246,8 @@ void Ocio::UpdateProcessor()
     const char* display = config->getDisplay(current_display_idx);
     const char* view = config->getView(display, current_view_idx);
     const char* role = config->getRoleColorSpace(current_role_idx);
+
+    logger->Log(LogLevel_Debug, "OCIO : Updating processor to use %s | %s | %s.", role, display, view);
 
     // Create the view pipeline
     try
@@ -281,7 +348,7 @@ void Ocio::UpdateProcessor()
     }
     catch (OCIO::Exception& exception)
     {
-        std::cerr << "OCIO error : " << exception.what() << "\n";
+        logger->Log(LogLevel_Warning, "OCIO : %s", exception.what());
 
         const char* display = config->getDefaultDisplay();
         const char* view = config->getDefaultView(display);
@@ -354,7 +421,7 @@ void Ocio::Process(float* const __restrict buffer, const uint16_t width, const u
     }
     catch (OCIO::Exception& exception)
     {
-        std::cerr << "OCIO Error : " << exception.what() << "\n";
+        logger->Log(LogLevel_Error, "OCIO : %s", exception.what());
     }
 }
 
@@ -381,11 +448,13 @@ void Ocio::Release() noexcept
 
     for (auto& look : looks)
     {
-        if (look == "None") continue;
+        if (strcmp(look, "None") == 0) continue;
         else
         {
             delete[] look;
             look = nullptr;
         }
     }
+
+    logger->Log(LogLevel_Debug, "Released OCIO.");
 }

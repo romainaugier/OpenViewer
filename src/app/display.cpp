@@ -6,25 +6,48 @@
 #include "display.h"
 
 // Converts the half buffer to a float buffer, in order to be able to be processed by the OCIO processor
-void __vectorcall Display::ToFloat(const half* __restrict half_buffer, const int64_t size) noexcept
+void __vectorcall Display::Unpack(const half* __restrict half_buffer, const int64_t size, bool add_alpha) noexcept
 {
-	for (int64_t i = 0; i < size; i += 8)
+	if (!add_alpha)
 	{
-		__m128i arr = _mm_lddqu_si128((__m128i*) & half_buffer[i]);
-		__m256 floats = _mm256_cvtph_ps(arr);
-		_mm256_store_ps(&buffer[i], floats);
+		for (int64_t i = 0; i < size; i += 8)
+		{
+			__m128i arr = _mm_lddqu_si128((__m128i*) & half_buffer[i]);
+			__m256 floats = _mm256_cvtph_ps(arr);
+			_mm256_store_ps(&buffer[i], floats);
+		}
+	}
+	// unpack and then we set the alpha to 1.0f
+	else
+	{
+		int64_t idx = 0;
+
+		for (int64_t i = 0; i < size; i += 3)
+		{
+			__m128i arr = _mm_lddqu_si128((__m128i*) & half_buffer[i]);
+			__m128 floats = _mm_cvtph_ps(arr);
+			_mm_store_ps(&buffer[idx], floats);
+			
+			buffer[idx + 3] = 1.0f;
+
+			idx += 4;
+		}
 	}
 }
 
-void Display::InitializeOpenGL(const uint16_t width, const uint16_t height) noexcept
+void Display::InitializeOpenGL(const Image& img) noexcept
 {
+	// Get the properties
+	const uint16_t width = img.xres;
+	const uint16_t height = img.yres;
+
 	// Generate the frame buffer object
 	glGenFramebuffers(1, &fbo);
 
 	// Generate the color attachement texture
 	glGenTextures(1, &tex_color_buffer);
 	glBindTexture(GL_TEXTURE_2D, tex_color_buffer);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, img.internal_format, width, height, 0, img.gl_format, img.gl_type, nullptr);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -70,42 +93,137 @@ __forceinline void Display::UnbindRBO() const noexcept
 }
 
 // Initializes the gl texture that will display the images
-void Display::Initialize(const Loader& loader, Ocio& ocio, Profiler& prof) noexcept
+void Display::Initialize(const Loader& loader, Ocio& ocio) noexcept
 {
 	display = 1;
+
+	bool set_alpha = false;
 
 	const uint64_t size = loader.images[0].size;
 	const uint16_t xres = loader.images[0].xres;
 	const uint16_t yres = loader.images[0].yres;
 
-	InitializeOpenGL(xres, yres);
 
-	if (loader.images[0].type & FileType_Exr)
+	if (size < (xres * yres * 4))
 	{
-		use_buffer = 1;
-
+		// we need to resize the buffer to support 4 channels : alpha, and rgb
+		set_alpha = true;
+		buffer = (float*)_aligned_malloc(xres * yres * 4 * sizeof(float), 32);
+		buffer_size = xres * yres * 4 * sizeof(float);
+	}
+	else
+	{
 		buffer = (float*)_aligned_malloc(size * sizeof(float), 32);
+		buffer_size = size * sizeof(float);
+	}
 
-		auto plot_start = prof.Start();
-		ToFloat((half*)loader.memory_arena, size);
-		auto plot_end = prof.End();
-		prof.Plot(plot_start, plot_end);
+	InitializeOpenGL(loader.images[0]);
 
-		glGenTextures(1, &display_tex);
+	use_buffer = 1;
+
+
+	auto plot_start = profiler->Start();
+	Unpack((half*)loader.memory_arena, size, set_alpha);
+	auto plot_end = profiler->End();
+	profiler->Plot(plot_start, plot_end);
+
+	glGenTextures(1, &display_tex);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, display_tex);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+	GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, loader.images[0].internal_format, xres, yres, 0, 
+						  loader.images[0].gl_format, loader.images[0].gl_type, buffer));
+
+	// OCIO GPU Processing
+	if (ocio.use_gpu > 0)
+	{
+		auto ocio_start = profiler->Start();
+
+		// Bind the framebuffer
+		BindFBO();
+		glViewport(0, 0, xres, yres);
+		glEnable(GL_DEPTH_TEST);
+
+		// Clear the framebuffer
+		glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		ocio.UpdateProcessor();
+		ocio.Process(buffer, xres, yres);
+
+		// Draw the quad
+		glEnable(GL_TEXTURE_2D);
+
+		glPushMatrix();
+			glBegin(GL_QUADS);
+				glTexCoord2f(1.0f, 1.0f);
+				glVertex2f(1.0f, 1.0f);
+
+				glTexCoord2f(1.0f, 0.0f);
+				glVertex2f(1.0f, -1.0f);
+
+				glTexCoord2f(0.0f, 0.0f);
+				glVertex2f(-1.0f, -1.0f);
+
+				glTexCoord2f(0.0f, 1.0f);
+				glVertex2f(-1.0f, 1.0f);
+			glEnd();
+		glPopMatrix();
+
+		glDisable(GL_TEXTURE_2D);
+
+		// Unbind frame buffer object and clear
+		UnbindFBO();
+		glDisable(GL_DEPTH_TEST);
+
+		auto ocio_end = profiler->End();
+		profiler->Ocio(ocio_start, ocio_end);
+	}
+
+	// Unbind our texture
+	GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
+	
+
+	UnbindFBO();
+}
+
+// Updates the gl texture that displays the images
+void Display::Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx) noexcept
+{
+	if (display > 0)
+	{
+		const uint16_t xres = loader.images[frame_idx].xres;
+		const uint16_t yres = loader.images[frame_idx].yres;
+		const int64_t size = loader.images[frame_idx].size;
+
+		bool set_alpha = false;
+
+		if (size < (xres * yres * 4)) set_alpha = true;
+
+		auto plot_start = profiler->Start();
+		Unpack((half*)loader.images[frame_idx].cache_address, size, set_alpha);
+		auto plot_end = profiler->End();
+		profiler->Plot(plot_start, plot_end);
+
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, display_tex);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
-		GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, xres, yres, 0, GL_RGBA, GL_FLOAT, buffer));
+		GL_CHECK(glTexSubImage2D(GL_TEXTURE_2D,
+			0, 0, 0,
+			xres,
+			yres,
+			loader.images[frame_idx].gl_format,
+			loader.images[frame_idx].gl_type,
+			buffer));
 
 		// OCIO GPU Processing
 		if (ocio.use_gpu > 0)
 		{
-			auto ocio_start = prof.Start();
+			auto ocio_start = profiler->Start();
 
 			// Bind the framebuffer
 			BindFBO();
@@ -116,7 +234,6 @@ void Display::Initialize(const Loader& loader, Ocio& ocio, Profiler& prof) noexc
 			glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			ocio.UpdateProcessor();
 			ocio.Process(buffer, xres, yres);
 
 			// Draw the quad
@@ -144,126 +261,10 @@ void Display::Initialize(const Loader& loader, Ocio& ocio, Profiler& prof) noexc
 			UnbindFBO();
 			glDisable(GL_DEPTH_TEST);
 
-			auto ocio_end = prof.End();
-			prof.Ocio(ocio_start, ocio_end);
-		}
-
-		// Unbind our texture
-		GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
-	}
-	else
-	{
-		glGenTextures(1, &display_tex);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, display_tex);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-
-		GL_CHECK(glTexImage2D(GL_TEXTURE_2D,
-			0,
-			loader.images[0].internal_format,
-			xres,
-			yres,
-			0,
-			loader.images[0].gl_format,
-			loader.images[0].gl_type,
-			loader.memory_arena));
-
-		GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
-	}
-
-	UnbindFBO();
-}
-
-// Updates the gl texture that displays the images
-void Display::Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx, Profiler& prof) noexcept
-{
-	if (display > 0)
-	{
-		const uint16_t xres = loader.images[frame_idx].xres;
-		const uint16_t yres = loader.images[frame_idx].yres;
-
-		if (loader.images[frame_idx].type & FileType_Exr)
-		{
-			const int64_t size = loader.images[frame_idx].size;
-
-			auto plot_start = prof.Start();
-			ToFloat((half*)loader.images[frame_idx].cache_address, size);
-			auto plot_end = prof.End();
-			prof.Plot(plot_start, plot_end);
-
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, display_tex);
-			GL_CHECK(glTexSubImage2D(GL_TEXTURE_2D,
-				0, 0, 0,
-				xres,
-				yres,
-				GL_RGBA,
-				GL_FLOAT,
-				buffer));
-
-			// OCIO GPU Processing
-			if (ocio.use_gpu > 0)
-			{
-				auto ocio_start = prof.Start();
-
-				// Bind the framebuffer
-				BindFBO();
-				glEnable(GL_DEPTH_TEST);
-
-				// Clear the framebuffer
-				glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-				ocio.Process(buffer, xres, yres);
-
-				// Draw the quad
-				glEnable(GL_TEXTURE_2D);
-
-				glPushMatrix();
-					glBegin(GL_QUADS);
-						glTexCoord2f(1.0f, 1.0f);
-						glVertex2f(1.0f, 1.0f);
-
-						glTexCoord2f(1.0f, 0.0f);
-						glVertex2f(1.0f, -1.0f);
-
-						glTexCoord2f(0.0f, 0.0f);
-						glVertex2f(-1.0f, -1.0f);
-
-						glTexCoord2f(0.0f, 1.0f);
-						glVertex2f(-1.0f, 1.0f);
-					glEnd();
-				glPopMatrix();
-
-				glDisable(GL_TEXTURE_2D);
-
-				// Unbind frame buffer object and clear
-				UnbindFBO();
-				glDisable(GL_DEPTH_TEST);
-
-				auto ocio_end = prof.End();
-				prof.Ocio(ocio_start, ocio_end);
-			}
+			auto ocio_end = profiler->End();
+			profiler->Ocio(ocio_start, ocio_end);
 
 			// Unbind our texture
-			GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
-		}
-		else
-		{
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, display_tex);
-			GL_CHECK(glTexSubImage2D(GL_TEXTURE_2D,
-				0, 0, 0,
-				xres,
-				yres,
-				loader.images[frame_idx].gl_format,
-				loader.images[frame_idx].gl_type,
-				loader.images[frame_idx].cache_address));
-
 			GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
 		}
 	}

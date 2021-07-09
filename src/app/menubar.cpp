@@ -5,9 +5,9 @@
 
 #include "menubar.h"
 
-void Menubar::draw(Settings& current_settings, Loader& loader, Display& display, ImPlaybar& playbar, Ocio& ocio, Profiler& prof, bool& change) noexcept
+void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& display, ImPlaybar& playbar, Ocio& ocio, Profiler& prof, bool& change) noexcept
 {
-	ImGui::SetNextWindowBgAlpha(current_settings.interface_windows_bg_alpha);
+	ImGui::SetNextWindowBgAlpha(current_settings.settings.interface_windows_bg_alpha);
 
 	ImGui::BeginMainMenuBar();
 	{
@@ -19,11 +19,13 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 				if (ImGui::MenuItem("Open Single File"))
 				{
 					ifd::FileDialog::Instance().Open("SingleFileOpenDialog", "Select an image file", "Image File (*.exr,*.png;*.jpg;*.jpeg;*.bmp;*.tga){.exr,.png,.jpg,.jpeg,.bmp,.tga},.*");
+					has_opened_ifd = 1;
 				}
 
 				if (ImGui::MenuItem("Open Folder"))
 				{
 					ifd::FileDialog::Instance().Open("FolderOpenDialog", "Open a directory", "");
+					has_opened_ifd = 1;
 				}
 
 				ImGui::EndMenu();
@@ -45,8 +47,8 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 						display.Release();
 					}
 
-					loader.Initialize(fp, 0, false, prof);
-					display.Initialize(loader, ocio, prof);
+					loader.Initialize(fp, 0, false);
+					display.Initialize(loader, ocio);
 
 					playbar.playbar_range = ImVec2(0.0f, loader.count + 1.0f);
 					playbar.playbar_frame = 0;
@@ -71,9 +73,11 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 						display.Release();
 					}
 
-					loader.Initialize(fp, 2000000000, true, prof);
+					uint64_t cache_size = static_cast<uint64_t>(current_settings.settings.cache_size) * 1000000;
+
+					loader.Initialize(fp, cache_size, true);
 					loader.LaunchSequenceWorker();
-					display.Initialize(loader, ocio, prof);
+					display.Initialize(loader, ocio);
 
 					playbar.playbar_range = ImVec2(0.0f, loader.count + 1.0f);
 
@@ -82,6 +86,9 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 
 				ifd::FileDialog::Instance().Close();
 			}
+
+			has_opened_ifd = 0;
+			
 
 			if (ImGui::BeginMenu("Plot"))
 			{
@@ -172,7 +179,7 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 
 				ocio.UpdateProcessor();
 
-				display.Update(loader, ocio, playbar.playbar_frame, prof);
+				display.Update(loader, ocio, playbar.playbar_frame);
 			}
 
 			ImGui::Dummy(ImVec2(50.0f, avail_width.y));
@@ -191,7 +198,7 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 
 				ocio.UpdateProcessor();
 
-				display.Update(loader, ocio, playbar.playbar_frame, prof);
+				display.Update(loader, ocio, playbar.playbar_frame);
 			}
 
 			// Display
@@ -208,7 +215,7 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 				ocio.GetOcioDisplayViews();
 				ocio.UpdateProcessor();
 
-				display.Update(loader, ocio, playbar.playbar_frame, prof);
+				display.Update(loader, ocio, playbar.playbar_frame);
 			}
 
 			// View
@@ -223,7 +230,7 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 				ocio.current_view = ocio.views[ocio.current_view_idx];
 				ocio.UpdateProcessor();
 
-				display.Update(loader, ocio, playbar.playbar_frame, prof);
+				display.Update(loader, ocio, playbar.playbar_frame);
 			}
 
 			// Look
@@ -238,7 +245,7 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 				ocio.current_look = ocio.looks[ocio.current_look_idx];
 				ocio.UpdateProcessor();
 
-				display.Update(loader, ocio, playbar.playbar_frame, prof);
+				display.Update(loader, ocio, playbar.playbar_frame);
 			}
 
 			ImGui::Dummy(ImVec2(50.0f, avail_width.y));
@@ -247,14 +254,14 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 			ImGui::Text("Exp");
 			ImGui::PushID(5);
 			ImGui::SetNextItemWidth(150.0f);
-			ImGui::SliderFloat("", &ocio.exposure_stops, 0.0f, 10.0f);
+			ImGui::SliderFloat("", &ocio.exposure_stops, -10.0f, 10.0f);
 			ImGui::PopID();
 
 			if (ImGui::IsItemEdited())
 			{
 				ocio.UpdateProcessor();
 
-				display.Update(loader, ocio, playbar.playbar_frame, prof);
+				display.Update(loader, ocio, playbar.playbar_frame);
 			}
 
 			ImGui::Dummy(ImVec2(20.0f, avail_width.y));
@@ -270,7 +277,7 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 			{
 				ocio.UpdateProcessor();
 
-				display.Update(loader, ocio, playbar.playbar_frame, prof);
+				display.Update(loader, ocio, playbar.playbar_frame);
 			}
 
 			ImGui::Dummy(ImVec2(20.0f, avail_width.y));
@@ -283,7 +290,7 @@ void Menubar::draw(Settings& current_settings, Loader& loader, Display& display,
 
 				ocio.UpdateProcessor();
 
-				display.Update(loader, ocio, playbar.playbar_frame, prof);
+				display.Update(loader, ocio, playbar.playbar_frame);
 			}
 		}
 

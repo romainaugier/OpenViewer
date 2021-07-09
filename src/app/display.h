@@ -25,26 +25,29 @@
 struct Display
 {
 	float* buffer = nullptr;
+	uint32_t buffer_size = 0;
 	GLuint display_tex;
 	GLuint tex_color_buffer;
 	GLuint fbo, rbo;
+	Profiler* profiler;
 	unsigned int display : 1;
 	unsigned int use_buffer : 1;
 
-	Display()
+	Display(Profiler* prof)
 	{
+		profiler = prof;
 		display = 0;
 		use_buffer = 0;
 	}
 
-	void Initialize(const Loader& loader, Ocio& ocio, Profiler& prof) noexcept;
-	void InitializeOpenGL(const uint16_t width, const uint16_t height) noexcept;
+	void Initialize(const Loader& loader, Ocio& ocio) noexcept;
+	void InitializeOpenGL(const Image& img) noexcept;
 	__forceinline void BindFBO() const noexcept;
 	__forceinline void UnbindFBO() const noexcept;
 	__forceinline void BindRBO() const noexcept;
 	__forceinline void UnbindRBO() const noexcept;
-	void Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx, Profiler& prof) noexcept;
+	void Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx) noexcept;
 	void Draw(Loader& loader, uint16_t frame_idx) const noexcept;
-	void __vectorcall ToFloat(const half* __restrict half_buffer, const int64_t size) noexcept;
+	void __vectorcall Unpack(const half* __restrict half_buffer, const int64_t size, bool add_alpha) noexcept;
 	void Release() noexcept;
 };
