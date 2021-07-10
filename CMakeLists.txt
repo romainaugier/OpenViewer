@@ -1,6 +1,6 @@
 # GLOBAL #
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.15)
 
 # Vcpkg
 if(DEFINED CMAKE_TOOLCHAIN_FILE)
@@ -45,14 +45,16 @@ project(OpenViewer)
 set(CMAKE_CXX_STANDARD 17)
 
 # to correct the bug appearing in half.h
-add_definitions(-DOPENEXR_DLL)
+if(WIN32)
+	add_definitions(-DOPENEXR_DLL)
+endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	add_compile_definitions(-D_CRT_SECURE_NO_WARNINGS -DOPENEXR_DLL)
 	set(MSVC_COMPILER_FLAGS "/openmp:experimental /fp:fast /Ox /Os /Oy /GT /GL /Oi /arch:AVX2 /Zi /Gm- /Zc:inline /Qpar")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" "${MSVC_COMPILER_FLAGS}")
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-	add_compile_options(-fopenmp -O3 -msse)
+	add_compile_options(-fopenmp -O3 -mavx2 -mf16c -fpermissive)
 	add_link_options(-fopenmp)
 else()
 	message(FATAL_ERROR "Your compiler is not supported yet, CMake will exit.")

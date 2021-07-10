@@ -97,7 +97,7 @@ private:
         SetConsoleTextAttribute(winConsole, 15);
     }
 #else
-    void getColorAsTxt(char lvl, char* buffer)
+    void getColorAsTxt(char lvl, char* buffer) const noexcept
     {
         if (lvl == LogLevel_Error) buffer = "\033[31m";
         if (lvl == LogLevel_Warning) buffer = "\033[33m";

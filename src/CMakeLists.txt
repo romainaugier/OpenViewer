@@ -8,6 +8,10 @@ add_executable(${PROJECT_NAME} main.cpp)
 
 target_link_libraries(${PROJECT_NAME} app core)
 
+
+# cpp 17
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
+
 # DLL's copy to bin directory
 if(WIN32)
 	if(${CMAKE_SIZEOF_VOID_P} EQUAL 4)
@@ -40,9 +44,6 @@ if(WIN32)
                 ${file_i} $<TARGET_FILE_DIR:${PROJECT_NAME}>)
         endforeach( file_i )
 	endif()
-elseif(UNIX)
-	message(FATAL_ERROR "OCIO : Target platform Linux not supported yet")
-
 endif()
 
 # ImGui initialization file

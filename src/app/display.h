@@ -21,6 +21,7 @@
 #include "core/loader.h"
 #include "core/ocio.h"
 #include "utils/profiler.h"
+#include "utils/memory/alloc.h"
 
 struct Display
 {
@@ -42,12 +43,12 @@ struct Display
 
 	void Initialize(const Loader& loader, Ocio& ocio) noexcept;
 	void InitializeOpenGL(const Image& img) noexcept;
-	__forceinline void BindFBO() const noexcept;
-	__forceinline void UnbindFBO() const noexcept;
-	__forceinline void BindRBO() const noexcept;
-	__forceinline void UnbindRBO() const noexcept;
+	OPENVIEWER_FORCEINLINE void BindFBO() const noexcept;
+	OPENVIEWER_FORCEINLINE void UnbindFBO() const noexcept;
+	OPENVIEWER_FORCEINLINE void BindRBO() const noexcept;
+	OPENVIEWER_FORCEINLINE void UnbindRBO() const noexcept;
 	void Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx) noexcept;
 	void Draw(Loader& loader, uint16_t frame_idx) const noexcept;
-	void __vectorcall Unpack(const half* __restrict half_buffer, const int64_t size, bool add_alpha) noexcept;
+	void OPENVIEWER_VECTORCALL Unpack(const half* __restrict half_buffer, const int64_t size, bool add_alpha) noexcept;
 	void Release() noexcept;
 };

@@ -17,6 +17,9 @@
 #include <iostream>
 #include <sstream>
 #include <cmath>
+#ifdef __GNUC__
+#include <cstring>
+#endif
 #include "OpenColorIOv2/OpenColorIO.h"
 #include "glsl.h"
 

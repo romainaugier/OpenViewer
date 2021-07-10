@@ -6,6 +6,8 @@
 
 #include <chrono>
 
+#include "decl.h"
+
 struct Profiler
 {
 	float avg_ocio_transform_time = 0.0f;
@@ -19,35 +21,35 @@ struct Profiler
 	float display_size = 0;
 	float ocio_size = 0;
 
-	__forceinline auto Start() const noexcept
+	OPENVIEWER_FORCEINLINE auto Start() const noexcept
 	{
 		return std::chrono::system_clock::now();
 	}
 
-	__forceinline auto End() const noexcept
+	OPENVIEWER_FORCEINLINE auto End() const noexcept
 	{
 		return std::chrono::system_clock::now();
 	}
 
-	__forceinline void Ocio(std::chrono::time_point<std::chrono::system_clock>& start, 
+	OPENVIEWER_FORCEINLINE void Ocio(std::chrono::time_point<std::chrono::system_clock>& start, 
 			  std::chrono::time_point<std::chrono::system_clock>& end) noexcept
 	{
 		avg_ocio_transform_time = (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() + avg_ocio_transform_time) / 2.0f;
 	}
 
-	__forceinline void Plot(std::chrono::time_point<std::chrono::system_clock>& start,
+	OPENVIEWER_FORCEINLINE void Plot(std::chrono::time_point<std::chrono::system_clock>& start,
 		std::chrono::time_point<std::chrono::system_clock>& end) noexcept
 	{
 		avg_unpack_calc_time = (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() + avg_unpack_calc_time) / 2.0f;
 	}
 
-	 __forceinline void Load(std::chrono::time_point<std::chrono::system_clock>& start,
+	 OPENVIEWER_FORCEINLINE void Load(std::chrono::time_point<std::chrono::system_clock>& start,
 		std::chrono::time_point<std::chrono::system_clock>& end) noexcept
 	{
 		avg_load_time = (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() + avg_load_time) / 2.0f;
 	}
 
-	 __forceinline void Frame(std::chrono::time_point<std::chrono::system_clock>& start,
+	 OPENVIEWER_FORCEINLINE void Frame(std::chrono::time_point<std::chrono::system_clock>& start,
 		 std::chrono::time_point<std::chrono::system_clock>& end) noexcept
 	 {
 		 avg_frame_time = (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() + avg_frame_time) / 2.0f;

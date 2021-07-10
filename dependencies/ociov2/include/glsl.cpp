@@ -89,18 +89,18 @@ void AllocateTexture3D(unsigned index, unsigned & texId,
         throw Exception("Missing texture data");
     }
 
-    GL_CHECK(glGenTextures(1, &texId));
+    glGenTextures(1, &texId);
 
     edgelen = edgelen > GL_MAX_3D_TEXTURE_SIZE ? GL_MAX_3D_TEXTURE_SIZE : edgelen;
 
-    GL_CHECK(glActiveTexture(GL_TEXTURE0 + index));
+    glActiveTexture(GL_TEXTURE0 + index);
 
-    GL_CHECK(glBindTexture(GL_TEXTURE_3D, texId));
+    glBindTexture(GL_TEXTURE_3D, texId);
 
-    GL_CHECK(SetTextureParameters(GL_TEXTURE_3D, interpolation));
+    SetTextureParameters(GL_TEXTURE_3D, interpolation);
 
-    GL_CHECK(glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB32F_ARB,
-                    edgelen, edgelen, edgelen, 0, GL_RGB, GL_FLOAT, values));
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_RGB32F_ARB,
+                    edgelen, edgelen, edgelen, 0, GL_RGB, GL_FLOAT, values);
 }
 
 void AllocateTexture2D(unsigned index, unsigned & texId, 
@@ -133,7 +133,7 @@ void AllocateTexture2D(unsigned index, unsigned & texId,
 
         SetTextureParameters(GL_TEXTURE_2D, interpolation);
 
-        GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, internalformat, width, height, 0, format, GL_FLOAT, values));
+        glTexImage2D(GL_TEXTURE_2D, 0, internalformat, width, height, 0, format, GL_FLOAT, values);
     }
     else
     {
@@ -141,7 +141,7 @@ void AllocateTexture2D(unsigned index, unsigned & texId,
 
         SetTextureParameters(GL_TEXTURE_1D, interpolation);
 
-        GL_CHECK(glTexImage1D(GL_TEXTURE_1D, 0, internalformat, width, 0, format, GL_FLOAT, values));
+        glTexImage1D(GL_TEXTURE_1D, 0, internalformat, width, 0, format, GL_FLOAT, values);
     }
 }
 
@@ -155,10 +155,10 @@ GLuint CompileShaderText(GLenum shaderType, const char * text)
     GLuint shader;
     GLint stat;
 
-    GL_CHECK(shader = glCreateShader(shaderType));
-    GL_CHECK(glShaderSource(shader, 1, (const GLchar **) &text, NULL));
-    GL_CHECK(glCompileShader(shader));
-    GL_CHECK(glGetShaderiv(shader, GL_COMPILE_STATUS, &stat));
+    shader = glCreateShader(shaderType);
+    glShaderSource(shader, 1, (const GLchar **) &text, NULL);
+    glCompileShader(shader);
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &stat);
 
     if (!stat)
     {
@@ -187,13 +187,13 @@ void LinkShaders(GLuint program, GLuint fragShader)
     }
     else        
     {
-        GL_CHECK(glAttachShader(program, fragShader));
+        glAttachShader(program, fragShader);
     }
 
     glLinkProgram(program);
 
     GLint stat;
-    GL_CHECK(glGetProgramiv(program, GL_LINK_STATUS, &stat));
+    glGetProgramiv(program, GL_LINK_STATUS, &stat);
     if (!stat) 
     {
         GLchar log[1000];
@@ -394,7 +394,7 @@ void OpenGLBuilder::deleteAllTextures()
     for (size_t idx=0; idx<max; ++idx)
     {
         const TextureId & data = m_textureIds[idx];
-        GL_CHECK(glDeleteTextures(1, &data.m_uid));
+        glDeleteTextures(1, &data.m_uid);
     }
 
     m_textureIds.clear();

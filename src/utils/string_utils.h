@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <string>
+
 #ifdef _MSC_VER
 #include <string_view>
 #elif __GNUC__

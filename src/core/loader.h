@@ -21,6 +21,7 @@
 #include "utils/string_utils.h"
 #include "utils/profiler.h"
 #include "utils/logger.h"
+#include "utils/memory/alloc.h"
 
 #undef LoadImage
 

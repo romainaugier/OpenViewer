@@ -6,7 +6,7 @@
 #include "display.h"
 
 // Converts the half buffer to a float buffer, in order to be able to be processed by the OCIO processor
-void __vectorcall Display::Unpack(const half* __restrict half_buffer, const int64_t size, bool add_alpha) noexcept
+void OPENVIEWER_VECTORCALL Display::Unpack(const half* __restrict half_buffer, const int64_t size, bool add_alpha) noexcept
 {
 	if (!add_alpha)
 	{
@@ -69,25 +69,25 @@ void Display::InitializeOpenGL(const Image& img) noexcept
 }
 
 // Binds the display frame buffer object
-__forceinline void Display::BindFBO() const noexcept
+OPENVIEWER_FORCEINLINE void Display::BindFBO() const noexcept
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 }
 
 // Unbinds the display frame buffer object
-__forceinline void Display::UnbindFBO() const noexcept
+OPENVIEWER_FORCEINLINE void Display::UnbindFBO() const noexcept
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 // Binds the ddisplay render buffer object
-__forceinline void Display::BindRBO() const noexcept
+OPENVIEWER_FORCEINLINE void Display::BindRBO() const noexcept
 {
 	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
 }
 
 // Unbinds the display render buffer object
-__forceinline void Display::UnbindRBO() const noexcept
+OPENVIEWER_FORCEINLINE void Display::UnbindRBO() const noexcept
 {
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }
@@ -108,12 +108,12 @@ void Display::Initialize(const Loader& loader, Ocio& ocio) noexcept
 	{
 		// we need to resize the buffer to support 4 channels : alpha, and rgb
 		set_alpha = true;
-		buffer = (float*)_aligned_malloc(xres * yres * 4 * sizeof(float), 32);
+		buffer = aligned_alloc(xres * yres * 4, 32);
 		buffer_size = xres * yres * 4 * sizeof(float);
 	}
 	else
 	{
-		buffer = (float*)_aligned_malloc(size * sizeof(float), 32);
+		buffer = aligned_alloc(size, 32);
 		buffer_size = size * sizeof(float);
 	}
 
@@ -328,7 +328,7 @@ void Display::Release() noexcept
 	// release the display image buffer
 	if (use_buffer > 0)
 	{
-		_aligned_free(buffer);
+		aligned_free(buffer, 32);
 		buffer = nullptr;
 	}
 
