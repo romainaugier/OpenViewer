@@ -166,5 +166,11 @@ public:
 
             if (mode & LogMode_ToFile) fprintf(logFile, "%s %s : %s\n", type, time, buffer);
         }
+    
+    }
+    
+    inline static void StaticDebugConsoleLog(const char* fmt, ...) noexcept
+    {
+        
     }
 };

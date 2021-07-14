@@ -106,6 +106,8 @@ void Loader::Initialize(const std::string fp, const uint64_t _cache_size, bool i
 			//cached_size *= sizeof(half);
 		}
 
+		logger->Log(LogLevel_Debug, "Image size is %d", images[0].size);
+
 		cached_size += (images[0].size * sizeof(half));
 		cache_stride = cached_size;
 
