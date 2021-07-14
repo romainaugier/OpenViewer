@@ -92,16 +92,16 @@ void Loader::Initialize(const std::string fp, const uint64_t _cache_size, bool i
 		if (use_cache > 0)
 		{
 			// make sure memory is not already allocated
-			if (memory_arena != nullptr) aligned_free(memory_arena, 32);
+			if (memory_arena != nullptr) OvFree(memory_arena);
 
-			memory_arena = aligned_alloc(cache_size, 16);
+			memory_arena = OvAlloc(cache_size, 16);
 			use_cache = 1;
 		}
 		else
 		{
-			if (memory_arena != nullptr) aligned_free(memory_arena, 32);
+			if (memory_arena != nullptr) OvFree(memory_arena);
 
-			memory_arena = aligned_alloc(images[0].size * sizeof(half), 16);
+			memory_arena = OvAlloc(images[0].size * sizeof(half), 16);
 			cache_size = images[0].size * sizeof(half);
 			//cached_size *= sizeof(half);
 		}
@@ -140,8 +140,8 @@ void Loader::Initialize(const std::string fp, const uint64_t _cache_size, bool i
 
 			cached_size += images[0].size;
 
-			if (images[0].type & FileType_Exr) memory_arena = aligned_alloc(images[0].size * sizeof(half), 16);
-			else if (images[0].type & FileType_Other) memory_arena = aligned_alloc(cached_size * sizeof(half), 16);
+			if (images[0].type & FileType_Exr) memory_arena = OvAlloc(images[0].size * sizeof(half), 16);
+			else if (images[0].type & FileType_Other) memory_arena = OvAlloc(cached_size * sizeof(half), 16);
 
 			// TODO : implement other file types
 
@@ -167,11 +167,11 @@ void Loader::ReallocateCache(const bool& use_cache) noexcept
 {
 	if (use_cache)
 	{
-		memory_arena = aligned_alloc(cache_size, 16);
+		memory_arena = OvAlloc(cache_size, 16);
 	}
 	else
 	{
-		memory_arena = aligned_alloc(images[0].size * sizeof(half), 16);
+		memory_arena = OvAlloc(images[0].size * sizeof(half), 16);
 	}
 }
 
@@ -305,7 +305,7 @@ void Loader::JoinWorker() noexcept
 // releases the image cache
 void Loader::ReleaseCache() noexcept
 {
-	aligned_free(memory_arena, 32);
+	OvFree(memory_arena);
 	memory_arena = nullptr;
 }
 

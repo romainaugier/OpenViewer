@@ -14,6 +14,8 @@
 
 #include <vector>
 #include <stdio.h>
+#include <stdlib.h>
+#include <filesystem>
 #include <iostream>
 #include <sstream>
 #include <cmath>

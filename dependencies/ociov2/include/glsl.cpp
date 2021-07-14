@@ -46,7 +46,7 @@ bool GetGLError(std::string & error)
         // Unfortunately no gluErrorString equivalent on Mac.
         error = "OpenGL Error";
 #else
-        error = (const char*)gluErrorString(glErr);
+        // error = (const char*)gluErrorString(glErr);
 #endif
         return true;
     }

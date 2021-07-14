@@ -25,21 +25,44 @@ uint32_t Ocio::GetSize() const noexcept
 
 void Ocio::Initialize()
 {
-    try
-    {
-        // config = OCIO::Config::CreateFromFile("C:/Program Files/OCIO/aces_1.2/config_chrisb.ocio");
-        config = OCIO::Config::CreateFromEnv();
-        config_path = std::getenv("OCIO");
+    config_path = std::getenv("OCIO");
 
-        logger->Log(LogLevel_Debug, "OCIO : Configuration loaded from file %s", config_path);
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << '\n';
-        logger->Log(LogLevel_Warning, "%s. Using default shipped configuration.", e.what());
+    std::string current_path = std::filesystem::current_path().string();
 
-        config = OCIO::Config::CreateFromFile("../configs/default.ocio");
+    char default_config_path[4096];
+    sprintf(default_config_path, "%s/configs/default.ocio", current_path.c_str());
+    
+    if(config_path != nullptr)
+    {
+        try
+        {
+            // config = OCIO::Config::CreateFromFile("C:/Program Files/OCIO/aces_1.2/config_chrisb.ocio");
+            config = OCIO::Config::CreateFromEnv();
+
+            logger->Log(LogLevel_Debug, "OCIO : Configuration loaded from file %s", config_path);
+        }
+        catch(const std::exception& e)
+        {
+            std::cerr << e.what() << '\n';
+            logger->Log(LogLevel_Warning, "%s. Using default shipped configuration.", e.what());
+
+            config = OCIO::Config::CreateFromFile(default_config_path);
+        }
     }
+    else
+    {
+        try
+        {
+            logger->Log(LogLevel_Warning, "OCIO Environment variable can't be found. Using default shipped configuration.");
+            config = OCIO::Config::CreateFromFile(default_config_path);
+        }
+        catch(const std::exception& e)
+        {
+            logger->Log(LogLevel_Error, "OCIO Error : %s", e.what());
+            exit(1);
+        }
+    }
+
 
     GetOcioActiveDisplays();
     current_display = displays[0];

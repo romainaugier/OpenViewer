@@ -108,12 +108,12 @@ void Display::Initialize(const Loader& loader, Ocio& ocio) noexcept
 	{
 		// we need to resize the buffer to support 4 channels : alpha, and rgb
 		set_alpha = true;
-		buffer = aligned_alloc(xres * yres * 4, 32);
+		buffer = OvAlloc(xres * yres * 4, 32);
 		buffer_size = xres * yres * 4 * sizeof(float);
 	}
 	else
 	{
-		buffer = aligned_alloc(size, 32);
+		buffer = OvAlloc(size, 32);
 		buffer_size = size * sizeof(float);
 	}
 
@@ -328,7 +328,7 @@ void Display::Release() noexcept
 	// release the display image buffer
 	if (use_buffer > 0)
 	{
-		aligned_free(buffer, 32);
+		OvFree(buffer);
 		buffer = nullptr;
 	}
 

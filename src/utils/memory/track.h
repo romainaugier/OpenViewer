@@ -3,6 +3,9 @@
 // header only utility to track memory usage
 // by Max Liani Blog Post : https://maxliani.wordpress.com/2020/05/02/dev-tracking-memory-usage-part-1/
 
+#ifndef MEM_TRACK
+#define MEM_TRACK
+
 #ifdef _WIN32
 
 #include <windows.h>
@@ -35,7 +38,7 @@ inline size_t GetPeakRss() noexcept
 #include <unistd.h>
 #include <stdio.h>
 
-size_t GetCurrentRss() noexcept
+inline size_t GetCurrentRss() noexcept
 {
     // The value we query later on is measured in number of pages. Query the size
     // of a page in bytes. This is typically 4KB, but pages could be also configured
@@ -55,7 +58,7 @@ size_t GetCurrentRss() noexcept
     return pages_count * page_size;
 }
 
-size_t GetPeakRss() noexcept
+inline size_t GetPeakRss() noexcept
 {
     rusage usage_data;
     getrusage(RUSAGE_SELF, &usage_data);
@@ -73,7 +76,7 @@ size_t GetPeakRss() noexcept
 #include <unistd.h>
 #include <mach/mach.h>
 
-size_t GetCurrentRss() noexcept
+inline size_t GetCurrentRss() noexcept
 {
     // Configure what we want to query
     mach_task_basic_info info;
@@ -87,7 +90,7 @@ size_t GetCurrentRss() noexcept
     return size_t(info.resident_size);
 }
 
-size_t GetPeakRss() noexcept
+inline size_t GetPeakRss() noexcept
 {
     rusage usage_data;
     getrusage(RUSAGE_SELF, &usage_data);
@@ -103,3 +106,5 @@ inline float ToMB(size_t size_in_bytes) noexcept
 {
     return float(size_in_bytes) / float(1 << 20);
 }
+
+#endif // MEM_TRACK

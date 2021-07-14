@@ -74,10 +74,11 @@ int application(int argc, char** argv)
     Parser parser(argc, argv);
     Profiler profiler;
 
-    profiler.current_memory_usage = ToMB(GetCurrentRss());
+    // profiler.current_memory_usage = ToMB(GetCurrentRss());
 
     Ocio ocio(&logger);
     ocio.Initialize();
+
 
     Loader loader(&profiler, &logger);
     Settings_Windows settings;
@@ -100,8 +101,8 @@ int application(int argc, char** argv)
     // initialize windows
     ImPlaybar playbar(ImVec2(0.0f, loader.count + 1.0f));
 
-
-    settings.GetOcioConfig(ocio);
+    // settings.GetOcioConfig(ocio);
+    
 
     Menubar menubar;
     Display display(&profiler);
@@ -109,10 +110,10 @@ int application(int argc, char** argv)
     if (initialize_display) display.Initialize(loader, ocio);
 
     // initialize memory profiler of main components
-    profiler.current_memory_usage = ToMB(GetCurrentRss());
-    profiler.display_size = ToMB((sizeof(display) + display.buffer_size) / 8);
-    profiler.ocio_size = ToMB((sizeof(ocio) + ocio.GetSize()) / 8);
-    profiler.loader_size = ToMB((sizeof(loader) + loader.cached_size) / 8);
+    // profiler.current_memory_usage = ToMB(GetCurrentRss());
+    // profiler.display_size = ToMB((sizeof(display) + display.buffer_size) / 8);
+    // profiler.ocio_size = ToMB((sizeof(ocio) + ocio.GetSize()) / 8);
+    // profiler.loader_size = ToMB((sizeof(loader) + loader.cached_size) / 8);
     
     bool change = true;
 
@@ -144,10 +145,10 @@ int application(int argc, char** argv)
         // if (loader.has_finished > 0 ) loader.JoinWorker();
 
         // update memory profiler
-        profiler.current_memory_usage = ToMB(GetCurrentRss());
-        profiler.display_size = ToMB((sizeof(display) + display.buffer_size) / 8);
-        profiler.ocio_size = ToMB((sizeof(ocio) + ocio.GetSize()) / 8);
-        profiler.loader_size = ToMB((sizeof(loader) + loader.cached_size) / 8);
+        // profiler.current_memory_usage = ToMB(GetCurrentRss());
+        // profiler.display_size = ToMB((sizeof(display) + display.buffer_size) / 8);
+        // profiler.ocio_size = ToMB((sizeof(ocio) + ocio.GetSize()) / 8);
+        // profiler.loader_size = ToMB((sizeof(loader) + loader.cached_size) / 8);
 
         loader.frame = playbar.playbar_frame;
         uint16_t frame_index = playbar.playbar_frame;
