@@ -8,6 +8,7 @@
 #include <stdarg.h>
 #include <ctime>
 #include <fstream>
+#include <assert.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -65,7 +66,7 @@ private:
     int mode : 4;
     int logFileHasBeenSet : 1;
 
-    void getTimeAsTxt(char* buffer) const noexcept
+    void GetTimeAsTxt(char* buffer) const noexcept
     {
         time_t current_time;
         time(&current_time);
@@ -74,7 +75,7 @@ private:
         sprintf(buffer, "%02d:%02d:%02d", local_time->tm_hour, local_time->tm_min, local_time->tm_sec);
     }
 
-    const char* getLevelAsTxt(char lvl) const noexcept
+    const char* GetLevelAsTxt(char lvl) const noexcept
     {
         if (lvl == LogLevel_Error) return "[ERROR]";
         else if (lvl == LogLevel_Warning) return "[WARNING]";
@@ -85,23 +86,24 @@ private:
     }
 
 #ifdef _WIN32
-    void getColorAsTxt(char lvl) const noexcept
+    void GetColorAsTxt(char lvl) const noexcept
     {
         if (lvl == LogLevel_Error) SetConsoleTextAttribute(winConsole, FOREGROUND_RED);
         if (lvl == LogLevel_Warning) SetConsoleTextAttribute(winConsole, FOREGROUND_RED | FOREGROUND_GREEN);
         if (lvl == LogLevel_Diagnostic) SetConsoleTextAttribute(winConsole, FOREGROUND_GREEN);
     }
 
-    void resetConsoleColor() const noexcept
+    void ResetConsoleColor() const noexcept
     {
         SetConsoleTextAttribute(winConsole, 15);
     }
 #else
-    void getColorAsTxt(char lvl, char* buffer) const noexcept
+    void GetColorAsTxt(char lvl, char* buffer) const noexcept
     {
         if (lvl == LogLevel_Error) buffer = "\033[31m";
-        if (lvl == LogLevel_Warning) buffer = "\033[33m";
-        if (lvl == LogLevel_Diagnostic) buffer = "\033[32m";
+        else if (lvl == LogLevel_Warning) buffer = "\033[33m";
+        else if (lvl == LogLevel_Diagnostic) buffer = "\033[32m";
+        else buffer = "\033[37m";
     }
 #endif
 
@@ -124,19 +126,9 @@ public:
         }
     }
 
-    inline void setLevel(int newLevel) noexcept
+    inline void SetLevel(int newLevel) noexcept
     {
         level = newLevel;
-    }
-
-    inline void setMode(int newMode) noexcept
-    {
-        mode = newMode;
-    }
-
-    inline void setLogFile(const char* filePath) noexcept
-    {
-        logFile = fopen(filePath, "a");
         logFileHasBeenSet = 1;
     }
 
@@ -151,16 +143,16 @@ public:
             va_end(args);
 
             char time[32];
-            getTimeAsTxt(time);
-            const char* type = getLevelAsTxt(lvl);
+            GetTimeAsTxt(time);
+            const char* type = GetLevelAsTxt(lvl);
 
 #ifdef _WIN32
-            getColorAsTxt(lvl);
+            GetColorAsTxt(lvl);
             if (mode & LogMode_ToNativeConsole) printf("%s %s : %s\n", type, time, buffer);
             resetConsoleColor();
 #else
             char clr[32];
-            getColorAsTxt(lvl, clr);
+            GetColorAsTxt(lvl, clr);
             if (mode & LogMode_ToNativeConsole) printf("%s%s %s : %s\033[0m\n", clr, type, time, buffer);
 #endif
 
@@ -168,9 +160,28 @@ public:
         }
     
     }
-    
-    inline static void StaticDebugConsoleLog(const char* fmt, ...) noexcept
-    {
-        
-    }
 };
+
+
+inline static void Assert(int expression) noexcept
+{
+    assert(expression);
+}
+
+inline static void StaticDebugConsoleLog(const char* fmt, ...) noexcept
+{
+//#ifdef NDEBUG
+    char cur_time[1024];
+    time_t current_time;
+    time(&current_time);
+    tm* local_time = localtime(&current_time);
+    sprintf(cur_time, "%02d:%02d:%02d", local_time->tm_hour, local_time->tm_min, local_time->tm_sec);
+
+    char buffer[1024];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(buffer, 1024, fmt, args);
+    va_end(args);
+    printf("[NDEBUG] %s : %s\n", cur_time, buffer);
+//#endif
+}

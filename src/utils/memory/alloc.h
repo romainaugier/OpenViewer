@@ -9,10 +9,11 @@
 #include "stdlib.h"
 #include <new>
 #include "utils/decl.h"
+#include "utils/logger.h"
 
 inline OPENVIEWER_FORCEINLINE void* OvAlloc(size_t size, size_t alignement)
 {
-    printf("[MEM_DEBUG] : Allocated %d bits of memory\n", size);
+    StaticDebugConsoleLog("[MEM_DEBUG] : Allocated %lld bytes.", size);
 #ifdef __GNUC__
     return aligned_alloc(alignement, size);
 #else _MSC_VER
@@ -22,6 +23,7 @@ inline OPENVIEWER_FORCEINLINE void* OvAlloc(size_t size, size_t alignement)
 
 inline OPENVIEWER_FORCEINLINE void OvFree(void* ptr)
 {
+    StaticDebugConsoleLog("[MEM_DEBUG] : Freed %d ptr.", ptr);
 #ifdef __GNUC__
     free(ptr);
 #else  _MSC_VER

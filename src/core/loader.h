@@ -50,8 +50,8 @@ enum Format_
 struct Image
 {
 	std::string path;
-	void* cache_address = nullptr;
 	uint64_t size;
+	void* cache_address = nullptr;
 	uint32_t xres;
 	uint32_t yres;
 	uint32_t channels;
@@ -132,13 +132,13 @@ struct Image
 
 struct Loader
 {
-	void* memory_arena = nullptr;
 	std::vector<Image> images;
 	std::vector<std::thread> workers;
 	std::vector<uint16_t> last_cached;
 	std::vector<char> cached;
 	std::mutex mtx;
 	std::condition_variable load_into_cache;
+	void* memory_arena = nullptr;
 	Profiler* profiler;
 	Logger* logger;
 	uint64_t cache_size;

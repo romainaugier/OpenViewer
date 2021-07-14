@@ -94,7 +94,7 @@ void Loader::Initialize(const std::string fp, const uint64_t _cache_size, bool i
 			// make sure memory is not already allocated
 			if (memory_arena != nullptr) OvFree(memory_arena);
 
-			memory_arena = OvAlloc(cache_size, 16);
+			memory_arena = OvAlloc(cache_size * 2, 16);
 			use_cache = 1;
 		}
 		else
@@ -106,9 +106,10 @@ void Loader::Initialize(const std::string fp, const uint64_t _cache_size, bool i
 			//cached_size *= sizeof(half);
 		}
 
-		logger->Log(LogLevel_Debug, "Image size is %d", images[0].size);
+		logger->Log(LogLevel_Debug, "Image size is %d bytes.", images[0].size * sizeof(half));
+		logger->Log(LogLevel_Debug, "Size of half is %d", sizeof(half));
 
-		cached_size += (images[0].size * sizeof(half));
+		cached_size = images[0].size * sizeof(half);
 		cache_stride = cached_size;
 
 		// get the image file format to set the different buffers we need
@@ -160,7 +161,7 @@ void Loader::Initialize(const std::string fp, const uint64_t _cache_size, bool i
 		}
 	}
 
-	logger->Log(LogLevel_Debug, "Cache can handle %d image(s)", cache_size_count);
+	logger->Log(LogLevel_Debug, "Cache can handle %d image(s).", cache_size_count);
 }
 
 // reallocates the image cache. if we use a full cache, allocates the full cache like in the initializer,
@@ -169,7 +170,7 @@ void Loader::ReallocateCache(const bool& use_cache) noexcept
 {
 	if (use_cache)
 	{
-		memory_arena = OvAlloc(cache_size, 16);
+		memory_arena = OvAlloc(cache_size * 2, 16);
 	}
 	else
 	{
@@ -309,6 +310,9 @@ void Loader::ReleaseCache() noexcept
 {
 	OvFree(memory_arena);
 	memory_arena = nullptr;
+	memset(&cached[0], 0, cached.size() * sizeof(cached[0]));
+	last_cached.clear();
+	last_cached.resize(0);
 }
 
 // release all the images and paths in case of reload

@@ -10,7 +10,7 @@ int application(int argc, char** argv)
 {
     Logger logger;
 
-    logger.setLevel(LogLevel_Debug);
+    logger.SetLevel(LogLevel_Debug);
 
     logger.Log(LogLevel_Debug, "Initializing OpenViewer...");
 

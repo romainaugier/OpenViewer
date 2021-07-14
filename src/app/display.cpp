@@ -108,12 +108,12 @@ void Display::Initialize(const Loader& loader, Ocio& ocio) noexcept
 	{
 		// we need to resize the buffer to support 4 channels : alpha, and rgb
 		set_alpha = true;
-		buffer = OvAlloc(xres * yres * 4 * sizeof(float), 32);
+		buffer = static_cast<float*>(OvAlloc(xres * yres * 4 * sizeof(float), 32));
 		buffer_size = xres * yres * 4 * sizeof(float);
 	}
 	else
 	{
-		buffer = OvAlloc(size * sizeof(float), 32);
+		buffer = static_cast<float*>(OvAlloc(size * sizeof(float), 32));
 		buffer_size = size * sizeof(float);
 	}
 
