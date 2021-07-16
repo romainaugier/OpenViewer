@@ -178,12 +178,12 @@ struct Loader
 	}
 
 	void Initialize(const std::string fp, const uint64_t _cache_size, bool isdirectory) noexcept;
-	void ReallocateCache(const bool& use_cache) noexcept;
-	void LoadSequence() noexcept;
+	void ReallocateCache(const bool use_cache) noexcept;
+	void LoadSequence(const bool load_first_frame) noexcept;
 	void LoadPlayer() noexcept;
 	void LoadImage(const uint16_t idx, void* address) noexcept;
 	void* UnloadImage() noexcept;
-	void LaunchSequenceWorker() noexcept;
+	void LaunchSequenceWorker(const bool load_first_frame) noexcept;
 	void LaunchPlayerWorker() noexcept;
 	void JoinWorker() noexcept;
 	void ReleaseCache() noexcept;

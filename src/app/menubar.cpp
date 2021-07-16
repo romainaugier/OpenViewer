@@ -40,7 +40,10 @@ void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& 
 
 					if (loader.has_been_initialized > 0)
 					{
+						loader.mtx.lock();
 						loader.stop_playloader = 1;
+						loader.mtx.unlock();
+						loader.load_into_cache.notify_all();
 
 						loader.JoinWorker();
 						loader.Release();
@@ -51,7 +54,10 @@ void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& 
 					display.Initialize(loader, ocio);
 
 					playbar.playbar_range = ImVec2(0.0f, loader.count + 1.0f);
+					playbar.play = 0;
 					playbar.playbar_frame = 0;
+
+					display.Update(loader, ocio, 0);
 				}
 
 				ifd::FileDialog::Instance().Close();
@@ -66,7 +72,10 @@ void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& 
 
 					if (loader.has_been_initialized > 0)
 					{
+						loader.mtx.lock();
 						loader.stop_playloader = 1;
+						loader.mtx.unlock();
+						loader.load_into_cache.notify_all();
 
 						loader.JoinWorker();
 						loader.Release();
@@ -76,12 +85,14 @@ void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& 
 					uint64_t cache_size = static_cast<uint64_t>(current_settings.settings.cache_size) * 1000000;
 
 					loader.Initialize(fp, cache_size, true);
-					loader.LaunchSequenceWorker();
+					if (current_settings.settings.use_cache) loader.LaunchSequenceWorker(false);
 					display.Initialize(loader, ocio);
 
 					playbar.playbar_range = ImVec2(0.0f, loader.count + 1.0f);
-
+					playbar.play = 0;
 					playbar.playbar_frame = 0;
+
+					display.Update(loader, ocio, 0);
 				}
 
 				ifd::FileDialog::Instance().Close();

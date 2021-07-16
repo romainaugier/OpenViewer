@@ -7,6 +7,7 @@
 
 #include "stdio.h"
 #include "stdlib.h"
+#include <cstdlib>
 #include <new>
 #include "utils/decl.h"
 #include "utils/logger.h"
@@ -15,15 +16,25 @@ inline OPENVIEWER_FORCEINLINE void* OvAlloc(size_t size, size_t alignement)
 {
     StaticDebugConsoleLog("[MEM_DEBUG] : Allocated %lld bytes.", size);
 #ifdef __GNUC__
-    return aligned_alloc(alignement, size);
+    void* tmp = aligned_alloc(alignement, size);
 #else _MSC_VER
-    return static_cast<T>(_aligned_alloc(size, alignement));
+    void* tmp = _aligned_malloc(size, alignement);
 #endif
+    if (tmp != nullptr)
+    {
+        StaticDebugConsoleLog("[MEM_DEBUG] : 0x%p", tmp);
+        return tmp;
+    }
+    else
+    {
+        StaticDebugConsoleLog("[MEMORY ERROR] : Allocation failed, OpenViewer will exit");
+        exit(1);
+    }
 }
 
 inline OPENVIEWER_FORCEINLINE void OvFree(void* ptr)
 {
-    StaticDebugConsoleLog("[MEM_DEBUG] : Freed %d ptr.", ptr);
+    StaticDebugConsoleLog("[MEM_DEBUG] : Freed 0x%p ptr.", ptr);
 #ifdef __GNUC__
     free(ptr);
 #else  _MSC_VER

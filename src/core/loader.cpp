@@ -30,7 +30,7 @@ void Image::LoadExr(half* __restrict buffer) const noexcept
 	if (data.min.x > display.min.x || data.max.x < display.max.x || 
 		data.min.y > display.min.y || data.max.y < display.min.y)
 	{
-		memset(&buffer[0], 0.0f, size);
+		memset(&buffer[0], static_cast<half>(0.0f), size);
 	}
 
 	in.setFrameBuffer((Imf::Rgba*)buffer, 1, dim.x);
@@ -70,7 +70,7 @@ void Image::Load(void* __restrict buffer, Profiler* prof) noexcept
 // initializes the loader with the different paths, the item count and the first frame
 void Loader::Initialize(const std::string fp, const uint64_t _cache_size, bool isdirectory) noexcept
 {
-	logger->Log(LogLevel_Debug, "Initializing Loader with %s", fp.c_str());
+	logger->Log(LogLevel_Debug, "[LOADER] : Initializing Loader with %s", fp.c_str());
 	
 	has_been_initialized = 1;
 
@@ -78,7 +78,6 @@ void Loader::Initialize(const std::string fp, const uint64_t _cache_size, bool i
 	{
 		cache_size = _cache_size;
 
-		logger->Log(LogLevel_Debug, "Loader cache size is %lld bytes", static_cast<long long>(_cache_size));
 
 		for (auto p : std::filesystem::directory_iterator(fp))
 		{
@@ -91,26 +90,27 @@ void Loader::Initialize(const std::string fp, const uint64_t _cache_size, bool i
 		// allocate the cache
 		if (use_cache > 0)
 		{
+			logger->Log(LogLevel_Debug, "[LOADER] : Loader cache size is %lld bytes", static_cast<long long>(_cache_size));
+			
 			// make sure memory is not already allocated
 			if (memory_arena != nullptr) OvFree(memory_arena);
 
-			memory_arena = OvAlloc(cache_size * 2, 16);
+			memory_arena = OvAlloc(cache_size, 16);
 			use_cache = 1;
 		}
 		else
 		{
 			if (memory_arena != nullptr) OvFree(memory_arena);
 
-			memory_arena = OvAlloc(images[0].size * sizeof(half), 16);
 			cache_size = images[0].size * sizeof(half);
-			//cached_size *= sizeof(half);
+			memory_arena = OvAlloc(cache_size, 16);
+			use_cache = 0;
 		}
 
-		logger->Log(LogLevel_Debug, "Image size is %d bytes.", images[0].size * sizeof(half));
-		logger->Log(LogLevel_Debug, "Size of half is %d", sizeof(half));
+		logger->Log(LogLevel_Debug, "[LOADER] : Image size is %d bytes.", images[0].size * sizeof(half));
 
 		cached_size = images[0].size * sizeof(half);
-		cache_stride = cached_size;
+		cache_stride = images[0].size;
 
 		// get the image file format to set the different buffers we need
 		//if (images[0].type & FileType_Exr || images[0].type & FileType_Other)
@@ -161,16 +161,25 @@ void Loader::Initialize(const std::string fp, const uint64_t _cache_size, bool i
 		}
 	}
 
-	logger->Log(LogLevel_Debug, "Cache can handle %d image(s).", cache_size_count);
+	logger->Log(LogLevel_Debug, "[LOADER] : Cache can handle %d image(s).", cache_size_count);
 }
 
 // reallocates the image cache. if we use a full cache, allocates the full cache like in the initializer,
 // else allocate enough memory to store one image
-void Loader::ReallocateCache(const bool& use_cache) noexcept
+void Loader::ReallocateCache(const bool use_cache) noexcept
 {
 	if (use_cache)
 	{
-		memory_arena = OvAlloc(cache_size * 2, 16);
+		memory_arena = OvAlloc(cache_size, 16);
+
+		logger->Log(LogLevel_Debug, "[LOADER] : Cache reallocation size : %lld", cache_size);
+
+		cache_size_count = round(cache_size / (images[0].size * sizeof(half)));
+		cache_size_count = cache_size_count > count ? count : cache_size_count;
+
+		last_cached.reserve(cache_size_count);
+
+		logger->Log(LogLevel_Debug, "[LOADER] : Cache reallocation : cache can now handle %d image(s)", cache_size_count);
 	}
 	else
 	{
@@ -186,43 +195,56 @@ void Loader::LoadImage(const uint16_t idx, void* address) noexcept
 	images[idx].Load(address, profiler);
 	cached_size += (images[idx].size * sizeof(half));
 	cached[idx] = 1;
-	last_cached[last_cached.size() - 1] = idx;
+	
+	if (last_cached.size() < 1) last_cached.push_back(idx);
+	else last_cached[last_cached.size() - 1] = idx;
 }
 
 // unloads the first image in the cache and returns its address
 void* Loader::UnloadImage() noexcept
 {
-	const uint16_t idx = last_cached[0];
-	if(last_cached.size() > 1) memmove(&last_cached[0], &last_cached[1], (last_cached.size() - 1) * sizeof(uint16_t));
+	if (last_cached.size() > 0)
+	{
+		const uint16_t idx = last_cached[0];
+		cached[idx] = 0;
 
-	cached[idx] = 0;
-	void* tmp = images[idx].cache_address;
-	images[idx].cache_address = nullptr;
-	cached_size -= (images[idx].size * sizeof(half));
+		if (last_cached.size() > 1) memmove(&last_cached[0], &last_cached[1], (last_cached.size() - 1) * sizeof(uint16_t));
 
-	return tmp;
+		void* tmp = images[idx].cache_address;
+		images[idx].cache_address = nullptr;
+		cached_size -= (images[idx].size * sizeof(half));
+
+		if (tmp == nullptr)
+		{
+			logger->Log(LogLevel_Debug, "[LOADER] : Problem with memory, using source pointer.");
+			tmp = memory_arena;
+		}
+
+		return tmp;
+	}
+	else
+	{
+		logger->Log(LogLevel_Debug, "[LOADER] : Unload Image returned nullptr (%d).", last_cached.size());
+		return nullptr;
+	}
 }
 
 // loads a sequence of images - used when OpenViewer is launched with an image sequence as an argument
-void Loader::LoadSequence() noexcept
+void Loader::LoadSequence(const bool load_first_frame) noexcept
 {
 	uint64_t cached_amount = 0;
 
-	for (int i = 1; i < cache_size_count; i++)
+	logger->Log(LogLevel_Debug, "[LOADER] : Starting sequence loading.");
+
+	for (int i = 0; i < cache_size_count; i++)
 	{
 		{
+			if (!load_first_frame && i == 0) i = 1;
+			
 			void* address = nullptr;
 
-			if (images[i].type & FileType_Exr || images[i].type & FileType_Other)
-			{
-				auto tmp_address = static_cast<half*>(memory_arena);
-				address = (void*)&tmp_address[cache_stride * i];
-			}
-			else if (images[i].type & FileType_Png)
-			{
-				auto tmp_address = static_cast<uint8_t*>(memory_arena);
-				address = (void*)&tmp_address[cache_stride * i];
-			}
+			auto tmp_address = static_cast<half*>(memory_arena);
+			address = static_cast<void*>(&tmp_address[cache_stride * i]);
 
 			images[i].Load(address, profiler);
 			images[i].cache_address = address;
@@ -234,6 +256,8 @@ void Loader::LoadSequence() noexcept
 
 	cached_size += cached_amount;
 
+	logger->Log(LogLevel_Debug, "[LOADER] : Finished sequence loading.");
+
 	has_finished = 1;
 }
 
@@ -243,8 +267,16 @@ void Loader::LoadPlayer() noexcept
 	while (true)
 	{
 		std::unique_lock<std::mutex> lock(mtx);
-		load_into_cache.wait(lock, [this] { return work_for_cache; });		
-		if (work_for_cache > 0)
+
+		load_into_cache.wait(lock, [this] { return work_for_cache || stop_playloader; });	
+
+		if (stop_playloader > 0)
+		{
+			logger->Log(LogLevel_Debug, "[LOADER] : Load player thread exiting");
+			is_playloader_working = 0;
+			break;
+		}
+		else if (work_for_cache > 0)
 		{
 			uint16_t index = urgent_load > 0 ? 0 : cache_size_count / 2;
 			
@@ -253,17 +285,18 @@ void Loader::LoadPlayer() noexcept
 				if (cached[(cache_load_frame + index + i) % count] == 0)
 				{
 					void* address = UnloadImage();
+
+					if (address == nullptr)
+					{
+						address = memory_arena;
+					}
+
 					LoadImage((cache_load_frame + index + i) % (count), address);
 				}
 				else continue;
 			}
 
-			work_for_cache = false;
-		}
-		else if (stop_playloader > 0)
-		{
-			logger->Log(LogLevel_Debug, "Load player thread exiting");
-			break;
+			work_for_cache = 0;
 		}
 		
 		lock.unlock();
@@ -272,9 +305,9 @@ void Loader::LoadPlayer() noexcept
 }
 
 // launch a worker thread to load an image sequence
-void Loader::LaunchSequenceWorker() noexcept
+void Loader::LaunchSequenceWorker(const bool load_first_frame) noexcept
 {
-	workers.emplace_back(&Loader::LoadSequence, this);
+	workers.emplace_back(&Loader::LoadSequence, this, load_first_frame);
 
 	has_finished = 0;
 	is_working = 1;
@@ -313,6 +346,7 @@ void Loader::ReleaseCache() noexcept
 	memset(&cached[0], 0, cached.size() * sizeof(cached[0]));
 	last_cached.clear();
 	last_cached.resize(0);
+	cached_size = 0;
 }
 
 // release all the images and paths in case of reload

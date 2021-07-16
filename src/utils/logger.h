@@ -149,7 +149,7 @@ public:
 #ifdef _WIN32
             GetColorAsTxt(lvl);
             if (mode & LogMode_ToNativeConsole) printf("%s %s : %s\n", type, time, buffer);
-            resetConsoleColor();
+            ResetConsoleColor();
 #else
             char clr[32];
             GetColorAsTxt(lvl, clr);

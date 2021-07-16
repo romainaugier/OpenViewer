@@ -98,29 +98,55 @@ void Settings_Windows::draw(ImPlaybar& playbar, Profiler* prof, Ocio& ocio, Load
 				ImGui::Checkbox("Use Cache", &settings.use_cache);
 				if (ImGui::IsItemEdited())
 				{
-					if (settings.use_cache && loader.has_been_initialized > 0)
+					if (settings.use_cache)
 					{
-						playbar.playbar_frame = 0;
-						playbar.play = 0;
-						loader.use_cache = 1;
-						loader.ReleaseCache();
-						loader.ReallocateCache(true);
-						loader.LaunchSequenceWorker();
-						std::this_thread::sleep_for(std::chrono::milliseconds(100)); // sleep a bit to get everything running fine
-					}
-					else if (settings.use_cache)
-					{
-						loader.use_cache = 1;
-					}
-					else if (loader.has_been_initialized > 0)
-					{
-						loader.use_cache = 0;
-						loader.ReleaseCache();
-						loader.ReallocateCache(false);
+						if (loader.has_been_initialized > 0)
+						{
+							loader.mtx.lock();
+							loader.stop_playloader = 1;
+							loader.is_playloader_working = 0;
+							loader.mtx.unlock();
+							loader.load_into_cache.notify_all();
+							
+							std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+							playbar.play = 0;
+							playbar.playbar_frame = 0;
+							loader.use_cache = 1;
+							loader.cache_size = static_cast<uint64_t>(settings.cache_size) * 1000000;
+							loader.ReleaseCache();
+							loader.ReallocateCache(true);
+							loader.LaunchSequenceWorker(true);
+						}
+						else
+						{
+							loader.use_cache = 1;
+						}
 					}
 					else
 					{
-						loader.use_cache = 0;
+						if (loader.has_been_initialized > 0)
+						{
+							loader.mtx.lock();
+							loader.stop_playloader = 1;
+							loader.is_playloader_working = 0;
+							loader.mtx.unlock();
+							loader.load_into_cache.notify_all();
+
+							std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+							playbar.play = 0;
+							playbar.playbar_frame = 0;
+							loader.use_cache = 0;
+							loader.cache_size = static_cast<uint64_t>(settings.cache_size) * 1000000;
+							loader.ReleaseCache();
+							loader.ReallocateCache(false);
+							loader.LoadImage(0, loader.memory_arena);
+						}
+						else
+						{
+							loader.use_cache = 0;
+						}
 					}
 				}
 				
@@ -128,17 +154,25 @@ void Settings_Windows::draw(ImPlaybar& playbar, Profiler* prof, Ocio& ocio, Load
 				ImGui::SameLine();
 				ImGui::SetNextItemWidth(100.0f);
 				ImGui::InputInt("", &settings.cache_size, 0);
-				if (ImGui::IsItemEdited())
+				ImGui::SameLine();
+				if (ImGui::SmallButton("Set"))
 				{
 					if (settings.use_cache && loader.has_been_initialized > 0)
 					{
-						playbar.playbar_frame = 0;
+						loader.mtx.lock();
+						loader.stop_playloader = 1;
+						loader.is_playloader_working = 0;
+						loader.mtx.unlock();
+						loader.load_into_cache.notify_all();
+						
+						std::this_thread::sleep_for(std::chrono::milliseconds(100));
+						
 						playbar.play = 0;
+						playbar.playbar_frame = 0;
 						loader.cache_size = static_cast<uint64_t>(settings.cache_size) * 1000000;
 						loader.ReleaseCache();
 						loader.ReallocateCache(true);
-						loader.LaunchSequenceWorker();
-						std::this_thread::sleep_for(std::chrono::milliseconds(100)); // sleep a bit to get everything running fine
+						loader.LaunchSequenceWorker(true);
 					}
 					else
 					{

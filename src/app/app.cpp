@@ -89,7 +89,7 @@ int application(int argc, char** argv)
     {
         uint64_t cache_size = static_cast<uint64_t>(settings.settings.cache_size) * 1000000;
         loader.Initialize(parser.path, cache_size, true);
-        loader.LaunchSequenceWorker();
+        loader.LaunchSequenceWorker(false);
         initialize_display = true;
     }
     else if (parser.is_file > 0)
@@ -110,10 +110,10 @@ int application(int argc, char** argv)
     if (initialize_display) display.Initialize(loader, ocio);
 
     // initialize memory profiler of main components
-    // profiler.current_memory_usage = ToMB(GetCurrentRss());
-    // profiler.display_size = ToMB((sizeof(display) + display.buffer_size) / 8);
-    // profiler.ocio_size = ToMB((sizeof(ocio) + ocio.GetSize()) / 8);
-    // profiler.loader_size = ToMB((sizeof(loader) + loader.cached_size) / 8);
+    profiler.current_memory_usage = ToMB(GetCurrentRss());
+    profiler.display_size = ToMB((sizeof(display) + display.buffer_size) / 8);
+    profiler.ocio_size = ToMB((sizeof(ocio) + ocio.GetSize()) / 8);
+    profiler.loader_size = ToMB((sizeof(loader) + loader.cached_size) / 8);
     
     bool change = true;
 
@@ -145,10 +145,10 @@ int application(int argc, char** argv)
         // if (loader.has_finished > 0 ) loader.JoinWorker();
 
         // update memory profiler
-        // profiler.current_memory_usage = ToMB(GetCurrentRss());
-        // profiler.display_size = ToMB((sizeof(display) + display.buffer_size) / 8);
-        // profiler.ocio_size = ToMB((sizeof(ocio) + ocio.GetSize()) / 8);
-        // profiler.loader_size = ToMB((sizeof(loader) + loader.cached_size) / 8);
+        profiler.current_memory_usage = ToMB(GetCurrentRss());
+        profiler.display_size = ToMB((sizeof(display) + display.buffer_size) / 8);
+        profiler.ocio_size = ToMB((sizeof(ocio) + ocio.GetSize()) / 8);
+        profiler.loader_size = ToMB((sizeof(loader) + loader.cached_size) / 8);
 
         loader.frame = playbar.playbar_frame;
         uint16_t frame_index = playbar.playbar_frame;
@@ -168,6 +168,9 @@ int application(int argc, char** argv)
                     if (loader.cached[playbar.playbar_frame] < 1)
                     {
                         void* address = loader.UnloadImage();
+
+                        if (address == nullptr) address = loader.memory_arena;
+                        
                         loader.LoadImage(frame_index, address);
                     }
 
@@ -194,7 +197,7 @@ int application(int argc, char** argv)
                         loader.load_into_cache.notify_all();
 
                         // wait for a few ms to be make sure some frames are loaded
-                        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                        std::this_thread::sleep_for(std::chrono::milliseconds(50));
                     }
                     else if (loader.cached[(playbar.playbar_frame + (loader.cache_size_count / 2)) % loader.count] < 1) // "casual" load 
                     {
@@ -204,8 +207,9 @@ int application(int argc, char** argv)
                         loader.mtx.unlock();
                         loader.load_into_cache.notify_all();
                     }
-                    if (loader.is_playloader_working == 0)
+                    if (loader.is_playloader_working < 1)
                     {
+                        loader.stop_playloader = 0;
                         loader.LaunchPlayerWorker();
                     }
                     auto imgload_end = profiler.End();
@@ -254,12 +258,13 @@ int application(int argc, char** argv)
         // settings windows
         settings.draw(playbar, &profiler, ocio, loader);
 
+        // menubar
+        menubar.draw(settings, loader, display, playbar, ocio, profiler, change);
+        
         // playbar 
         ImGui::SetNextWindowBgAlpha(settings.settings.interface_windows_bg_alpha);
         playbar.draw(loader.cached);
 
-        // menubar
-        menubar.draw(settings, loader, display, playbar, ocio, profiler, change);
 
         // Rendering
         ImGui::Render();
@@ -285,7 +290,10 @@ int application(int argc, char** argv)
     }
 
     // make sure to join remaining thread if it has not been     
+    loader.mtx.lock();
     loader.stop_playloader = 1;
+    loader.mtx.unlock();
+    loader.load_into_cache.notify_all();
 
     if(loader.has_finished > 0 || loader.is_playloader_working > 0) loader.JoinWorker();
 

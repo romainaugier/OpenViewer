@@ -200,13 +200,21 @@ void Display::Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx)
 		const uint16_t xres = loader.images[frame_idx].xres;
 		const uint16_t yres = loader.images[frame_idx].yres;
 		const int64_t size = loader.images[frame_idx].size;
+		const void* address = loader.images[frame_idx].cache_address;
+
+		if (address == nullptr)
+		{
+			StaticDebugConsoleLog("Display Error : Frame Index %d", frame_idx);
+			StaticDebugConsoleLog("Previous frame cache : %d", loader.cached[frame_idx - 1]);
+			StaticDebugConsoleLog("Next frame cache : %d", loader.cached[frame_idx + 1]);
+		}
 
 		bool set_alpha = false;
 
 		if (size < (xres * yres * 4)) set_alpha = true;
 
 		auto plot_start = profiler->Start();
-		Unpack((half*)loader.images[frame_idx].cache_address, size, set_alpha);
+		Unpack((half*)address, size, set_alpha);
 		auto plot_end = profiler->End();
 		profiler->Plot(plot_start, plot_end);
 
