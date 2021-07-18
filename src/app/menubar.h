@@ -26,5 +26,5 @@ struct Menubar
 	}
 
 	void draw(Settings_Windows& current_settings, Loader& loader, Display& display, 
-			  ImPlaybar& playbar, Ocio& ocio, Profiler& prof, bool& change) noexcept;
+			  ImPlaybar& playbar, Ocio& ocio, Profiler& prof, Plot& plot, bool& change) noexcept;
 };

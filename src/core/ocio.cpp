@@ -36,7 +36,6 @@ void Ocio::Initialize()
     {
         try
         {
-            // config = OCIO::Config::CreateFromFile("C:/Program Files/OCIO/aces_1.2/config_chrisb.ocio");
             config = OCIO::Config::CreateFromEnv();
 
             logger->Log(LogLevel_Debug, "OCIO : Configuration loaded from file %s", config_path);
@@ -47,6 +46,7 @@ void Ocio::Initialize()
             logger->Log(LogLevel_Warning, "%s. Using default shipped configuration.", e.what());
 
             config = OCIO::Config::CreateFromFile(default_config_path);
+            config_path = default_config_path;
         }
     }
     else
@@ -55,6 +55,7 @@ void Ocio::Initialize()
         {
             logger->Log(LogLevel_Warning, "OCIO Environment variable can't be found. Using default shipped configuration.");
             config = OCIO::Config::CreateFromFile(default_config_path);
+            config_path = default_config_path;
         }
         catch(const std::exception& e)
         {
@@ -296,10 +297,10 @@ void Ocio::UpdateProcessor()
         // Exposure modification
         {
             const double gain = powf(2.0f, static_cast<double>(exposure_stops));
-            const double slopoe4f[] = { gain, gain, gain, gain };
+            const double slope4f[] = { gain, gain, gain, 1.0 };
             double m44[16];
             double offset4[4];
-            OCIO::MatrixTransform::Scale(m44, offset4, slopoe4f);
+            OCIO::MatrixTransform::Scale(m44, offset4, slope4f);
             OCIO::MatrixTransformRcPtr mtx = OCIO::MatrixTransform::Create();
             mtx->setMatrix(m44);
             mtx->setOffset(offset4);
@@ -322,7 +323,7 @@ void Ocio::UpdateProcessor()
         // Post display gamma
         {
             double exponent = 1.0f / std::max(0.01, static_cast<double>(gamma));
-            const double exponent4f[] = { exponent, exponent, exponent, exponent };
+            const double exponent4f[] = { exponent, exponent, exponent, 1.0 };
             OCIO::ExponentTransformRcPtr exponent_transform = OCIO::ExponentTransform::Create();
             exponent_transform->setValue(exponent4f);
             vp->setDisplayCC(exponent_transform);

@@ -5,7 +5,8 @@
 
 #include "menubar.h"
 
-void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& display, ImPlaybar& playbar, Ocio& ocio, Profiler& prof, bool& change) noexcept
+void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& display, 
+				   ImPlaybar& playbar, Ocio& ocio, Profiler& prof, Plot& plot, bool& change) noexcept
 {
 	ImGui::SetNextWindowBgAlpha(current_settings.settings.interface_windows_bg_alpha);
 
@@ -48,16 +49,23 @@ void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& 
 						loader.JoinWorker();
 						loader.Release();
 						display.Release();
+						plot.Release();
 					}
 
 					loader.Initialize(fp, 0, false);
 					display.Initialize(loader, ocio);
+					plot.Initialize((loader.images[0].size), loader.images[0].xres, loader.images[0].yres);
 
 					playbar.playbar_range = ImVec2(0.0f, loader.count + 1.0f);
 					playbar.play = 0;
 					playbar.playbar_frame = 0;
 
-					display.Update(loader, ocio, 0);
+					change = true;
+					ocio.UpdateProcessor();
+					display.Update(loader, ocio, playbar.playbar_frame);
+					
+					display.GetDisplayPixels();
+					plot.Update(display.buffer);
 				}
 
 				ifd::FileDialog::Instance().Close();
@@ -80,6 +88,7 @@ void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& 
 						loader.JoinWorker();
 						loader.Release();
 						display.Release();
+						plot.Release();
 					}
 
 					uint64_t cache_size = static_cast<uint64_t>(current_settings.settings.cache_size) * 1000000;
@@ -87,12 +96,19 @@ void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& 
 					loader.Initialize(fp, cache_size, true);
 					if (current_settings.settings.use_cache) loader.LaunchSequenceWorker(false);
 					display.Initialize(loader, ocio);
+					plot.Initialize((loader.images[0].size), loader.images[0].xres, loader.images[0].yres);
 
 					playbar.playbar_range = ImVec2(0.0f, loader.count + 1.0f);
 					playbar.play = 0;
 					playbar.playbar_frame = 0;
 
-					display.Update(loader, ocio, 0);
+					change = true;
+					ocio.UpdateProcessor();
+					display.Update(loader, ocio, playbar.playbar_frame);
+
+
+					display.GetDisplayPixels();
+					plot.Update(display.buffer);
 				}
 
 				ifd::FileDialog::Instance().Close();
@@ -105,6 +121,11 @@ void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& 
 			{
 				if (ImGui::MenuItem("Histogram")) {}
 				if (ImGui::MenuItem("Waveform")) {}
+				if (ImGui::MenuItem("Parade"))
+				{
+					if (current_settings.settings.parade) current_settings.settings.parade = false;
+					else current_settings.settings.parade = true;
+				}
 				if (ImGui::MenuItem("Vector Scope")) {}
 				if (ImGui::MenuItem("Custom")) {}
 
@@ -132,7 +153,7 @@ void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& 
 
 			const ImVec2 avail_width = ImGui::GetContentRegionAvail();
 
-			ImGui::Dummy(ImVec2(50.0f, avail_width.y));
+			// ImGui::Dummy(ImVec2(50.0f, avail_width.y));
 
 			// Channels
 			static const char* channels[] = {"RGB", "R", "G", "B", "A", "L"};
@@ -190,7 +211,9 @@ void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& 
 
 				ocio.UpdateProcessor();
 
-				display.Update(loader, ocio, playbar.playbar_frame);
+				//display.Update(loader, ocio, playbar.playbar_frame);
+
+				change = true;
 			}
 
 			ImGui::Dummy(ImVec2(50.0f, avail_width.y));
@@ -209,7 +232,9 @@ void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& 
 
 				ocio.UpdateProcessor();
 
-				display.Update(loader, ocio, playbar.playbar_frame);
+				//display.Update(loader, ocio, playbar.playbar_frame);
+
+				change = true;
 			}
 
 			// Display
@@ -226,7 +251,9 @@ void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& 
 				ocio.GetOcioDisplayViews();
 				ocio.UpdateProcessor();
 
-				display.Update(loader, ocio, playbar.playbar_frame);
+				//display.Update(loader, ocio, playbar.playbar_frame);
+
+				change = true;
 			}
 
 			// View
@@ -241,7 +268,9 @@ void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& 
 				ocio.current_view = ocio.views[ocio.current_view_idx];
 				ocio.UpdateProcessor();
 
-				display.Update(loader, ocio, playbar.playbar_frame);
+				//display.Update(loader, ocio, playbar.playbar_frame);
+
+				change = true;
 			}
 
 			// Look
@@ -256,7 +285,9 @@ void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& 
 				ocio.current_look = ocio.looks[ocio.current_look_idx];
 				ocio.UpdateProcessor();
 
-				display.Update(loader, ocio, playbar.playbar_frame);
+				//display.Update(loader, ocio, playbar.playbar_frame);
+
+				change = true;
 			}
 
 			ImGui::Dummy(ImVec2(50.0f, avail_width.y));
@@ -272,7 +303,9 @@ void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& 
 			{
 				ocio.UpdateProcessor();
 
-				display.Update(loader, ocio, playbar.playbar_frame);
+				//display.Update(loader, ocio, playbar.playbar_frame);
+
+				change = true;
 			}
 
 			ImGui::Dummy(ImVec2(20.0f, avail_width.y));
@@ -288,7 +321,9 @@ void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& 
 			{
 				ocio.UpdateProcessor();
 
-				display.Update(loader, ocio, playbar.playbar_frame);
+				// display.Update(loader, ocio, playbar.playbar_frame);
+
+				change = true;
 			}
 
 			ImGui::Dummy(ImVec2(20.0f, avail_width.y));
@@ -301,7 +336,9 @@ void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& 
 
 				ocio.UpdateProcessor();
 
-				display.Update(loader, ocio, playbar.playbar_frame);
+				// display.Update(loader, ocio, playbar.playbar_frame);
+
+				change = true;
 			}
 		}
 

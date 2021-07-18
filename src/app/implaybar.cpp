@@ -33,6 +33,10 @@ void ImPlaybar::draw(std::vector<char>& cached) noexcept
 			update = 0;
 		}
 	}
+	else
+	{
+		update = 0;
+	}
 
 	ImGui::SetNextWindowBgAlpha(0.3f);
 	ImGui::SetNextWindowPos(ImVec2(0.0f, ImGui::GetIO().DisplaySize.y - 30.0f));
@@ -111,17 +115,17 @@ void ImPlaybar::draw(std::vector<char>& cached) noexcept
 		const ImVec2 buttons_size = ImVec2(50.0f, 15.0f);
 
 		ImGui::SameLine();
-		if (ImGui::Button(u8"⮜⮜", buttons_size))
+		if (ImGui::Button(u8"<<", buttons_size))
 		{
 			playbar_frame = playbar_range.x;
 			update = 1;
 		}
 		ImGui::SameLine();
-		if (ImGui::Button(u8"⮞", buttons_size)) play = 1;
+		if (ImGui::Button(u8"play", buttons_size)) play = 1;
 		ImGui::SameLine();
-		if (ImGui::Button(u8"■", buttons_size)) play = 0;
+		if (ImGui::Button(u8"pause", buttons_size)) play = 0;
 		ImGui::SameLine();
-		if (ImGui::Button(u8"⮞⮞", buttons_size))
+		if (ImGui::Button(u8">>", buttons_size))
 		{
 			playbar_frame = playbar_range.y - 2;
 			update = 1;

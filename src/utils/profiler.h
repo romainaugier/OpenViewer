@@ -12,6 +12,8 @@ struct Profiler
 {
 	float avg_ocio_transform_time = 0.0f;
 	float avg_unpack_calc_time = 0.0f;
+	float avg_plot_time = 0.0f;
+	float avg_plot_draw_time = 0.0f;
 	float avg_load_time = 0.0f;
 	float avg_frame_time = 0.0f;
 
@@ -37,10 +39,22 @@ struct Profiler
 		avg_ocio_transform_time = (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() + avg_ocio_transform_time) / 2.0f;
 	}
 
-	OPENVIEWER_FORCEINLINE void Plot(std::chrono::time_point<std::chrono::system_clock>& start,
+	OPENVIEWER_FORCEINLINE void Unpack(std::chrono::time_point<std::chrono::system_clock>& start,
 		std::chrono::time_point<std::chrono::system_clock>& end) noexcept
 	{
 		avg_unpack_calc_time = (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() + avg_unpack_calc_time) / 2.0f;
+	}
+
+	OPENVIEWER_FORCEINLINE void Plot(std::chrono::time_point<std::chrono::system_clock>& start,
+		std::chrono::time_point<std::chrono::system_clock>& end) noexcept
+	{
+		avg_plot_time = (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() + avg_plot_time) / 2.0f;
+	}
+
+	OPENVIEWER_FORCEINLINE void DrawPlot(std::chrono::time_point<std::chrono::system_clock>& start,
+		std::chrono::time_point<std::chrono::system_clock>& end) noexcept
+	{
+		avg_plot_draw_time = (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() + avg_plot_draw_time) / 2.0f;
 	}
 
 	 OPENVIEWER_FORCEINLINE void Load(std::chrono::time_point<std::chrono::system_clock>& start,

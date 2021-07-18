@@ -190,14 +190,17 @@ void Loader::ReallocateCache(const bool use_cache) noexcept
 // loads a single image
 void Loader::LoadImage(const uint16_t idx, void* address) noexcept
 {
-	if (use_cache < 1) address = memory_arena;
-	
-	images[idx].Load(address, profiler);
-	cached_size += (images[idx].size * sizeof(half));
-	cached[idx] = 1;
-	
-	if (last_cached.size() < 1) last_cached.push_back(idx);
-	else last_cached[last_cached.size() - 1] = idx;
+	if (cached[idx] == 0)
+	{
+		if (use_cache < 1) address = memory_arena;
+
+		images[idx].Load(address, profiler);
+		cached_size += (images[idx].size * sizeof(half));
+		cached[idx] = 1;
+
+		if (last_cached.size() < 1) last_cached.push_back(idx);
+		else last_cached[last_cached.size() - 1] = idx;
+	}
 }
 
 // unloads the first image in the cache and returns its address

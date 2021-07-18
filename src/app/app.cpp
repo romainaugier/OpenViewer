@@ -49,6 +49,7 @@ int application(int argc, char** argv)
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    ImPlot::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
 
     // setup Dear ImGui style
@@ -101,11 +102,82 @@ int application(int argc, char** argv)
     // initialize windows
     ImPlaybar playbar(ImVec2(0.0f, loader.count + 1.0f));
 
-    // settings.GetOcioConfig(ocio);
+    settings.GetOcioConfig(ocio);
     
 
     Menubar menubar;
     Display display(&profiler);
+    Plot plot;
+
+    // Initialize Plot Maps
+    ImVec4 colors[20] = { ImVec4(0.95f, 0.0f, 0.0f, 0.0f),
+                          ImVec4(0.95f, 0.0f, 0.0f, 0.15f),
+                          ImVec4(0.95f, 0.0f, 0.0f, 0.25f),
+                          ImVec4(0.95f, 0.0f, 0.0f, 0.25f),
+                          ImVec4(0.95f, 0.0f, 0.0f, 0.35f),
+                          ImVec4(0.95f, 0.05f, 0.05f, 0.5f),
+                          ImVec4(0.95f, 0.15f, 0.15f, 0.6f),
+                          ImVec4(0.95f, 0.25f, 0.25f, 0.7f),
+                          ImVec4(0.95f, 0.35f, 0.35f, 0.8f),
+                          ImVec4(0.95f, 0.45f, 0.45f, 0.9f),
+                          ImVec4(0.95f, 0.55f, 0.55f, 1.0f),
+                          ImVec4(0.95f, 0.65f, 0.65f, 1.0f), 
+                          ImVec4(0.95f, 0.70f, 0.70f, 1.0f),
+                          ImVec4(0.95f, 0.75f, 0.75f, 1.0f),
+                          ImVec4(0.95f, 0.80f, 0.80f, 1.0f),
+                          ImVec4(0.95f, 0.85f, 0.85f, 1.0f),
+                          ImVec4(0.95f, 0.87f, 0.87f, 1.0f),
+                          ImVec4(0.95f, 0.90f, 0.90f, 1.0f),
+                          ImVec4(0.95f, 0.95f, 0.95f, 1.0f),
+                          ImVec4(1.0f, 1.0f, 1.0f, 1.0f) };
+
+    ImPlot::AddColormap("RedWF", colors, 20);
+
+    ImVec4 colors2[20] = { ImVec4(0.0f, 0.95f, 0.0f, 0.0f),
+                          ImVec4(0.0f, 0.95f, 0.0f, 0.15f),
+                          ImVec4(0.0f, 0.95f, 0.0f, 0.25f),
+                          ImVec4(0.0, 0.95f, 0.0f, 0.25f),
+                          ImVec4(0.0f, 0.95f, 0.0f, 0.35f),
+                          ImVec4(0.05f, 0.95f, 0.05f, 0.5f),
+                          ImVec4(0.15f, 0.95f, 0.15f, 0.6f),
+                          ImVec4(0.25f, 0.95f, 0.25f, 0.7f),
+                          ImVec4(0.35f, 0.95f, 0.35f, 0.8f),
+                          ImVec4(0.45f, 0.95f, 0.45f, 0.9f),
+                          ImVec4(0.55f, 0.95f, 0.55f, 1.0f),
+                          ImVec4(0.65f, 0.95f, 0.65f, 1.0f),
+                          ImVec4(0.70f, 0.95f, 0.70f, 1.0f),
+                          ImVec4(0.75f, 0.95f, 0.75f, 1.0f),
+                          ImVec4(0.80f, 0.95f, 0.80f, 1.0f),
+                          ImVec4(0.85f, 0.95f, 0.85f, 1.0f),
+                          ImVec4(0.87f, 0.95f, 0.87f, 1.0f),
+                          ImVec4(0.90f, 0.95f, 0.90f, 1.0f),
+                          ImVec4(0.95f, 0.95f, 0.95f, 1.0f),
+                          ImVec4(1.0f, 1.0f, 1.0f, 1.0f) };
+
+    ImPlot::AddColormap("GreenWF", colors2, 20);
+
+    ImVec4 colors3[20] = { ImVec4(0.3f, 0.3f, 0.95f, 0.0f),
+                          ImVec4(0.3f, 0.3f, 0.95f, 0.15f),
+                          ImVec4(0.3f, 0.3f, 0.95f, 0.25f),
+                          ImVec4(0.3f, 0.3f, 0.95f, 0.25f),
+                          ImVec4(0.3f, 0.3f, 0.95f, 0.35f),
+                          ImVec4(0.3f, 0.3f, 0.95f, 0.5f),
+                          ImVec4(0.3f, 0.3f, 0.95f, 0.6f),
+                          ImVec4(0.3f, 0.3f, 0.95f, 0.7f),
+                          ImVec4(0.3f, 0.3f, 0.95f, 0.8f),
+                          ImVec4(0.4f, 0.4f, 0.95f, 0.9f),
+                          ImVec4(0.55f, 0.55f, 0.95f, 1.0f),
+                          ImVec4(0.65f, 0.65f, 0.95f, 1.0f),
+                          ImVec4(0.70f, 0.75f, 0.95f, 1.0f),
+                          ImVec4(0.75f, 0.75f, 0.95f, 1.0f),
+                          ImVec4(0.80f, 0.80f, 0.95f, 1.0f),
+                          ImVec4(0.85f, 0.85f, 0.95f, 1.0f),
+                          ImVec4(0.87f, 0.87f, 0.95f, 1.0f),
+                          ImVec4(0.90f, 0.90f, 0.95f, 1.0f),
+                          ImVec4(0.95f, 0.95f, 0.95f, 1.0f),
+                          ImVec4(1.0f, 1.0f, 1.0f, 1.0f) };
+
+    ImPlot::AddColormap("BlueWF", colors3, 20);
 
     if (initialize_display) display.Initialize(loader, ocio);
 
@@ -180,6 +252,15 @@ int application(int argc, char** argv)
 
                     display.Update(loader, ocio, frame_index);
 
+                    if (settings.settings.parade)
+                    {
+                        auto plotstart = profiler.Start();
+                        display.GetDisplayPixels();
+                        plot.Update(display.buffer);
+                        auto plotend = profiler.End();
+                        profiler.Plot(plotstart, plotend);
+                    }
+
                     change = false;
                 }
                 else
@@ -217,6 +298,17 @@ int application(int argc, char** argv)
                     profiler.Load(imgload_start, imgload_end);
 
                     display.Update(loader, ocio, frame_index);
+                    
+                    if (settings.settings.parade)
+                    {
+                        auto plotstart = profiler.Start();
+                        display.GetDisplayPixels();
+                        plot.Update(display.buffer);
+                        auto plotend = profiler.End();
+                        profiler.Plot(plotstart, plotend);
+                    }
+
+                    change = false;
                 }
             }
             else // no cache allowed
@@ -226,8 +318,11 @@ int application(int argc, char** argv)
                 auto imgload_start = profiler.Start();
                 loader.is_playing = 0;
 
-                void* address = loader.UnloadImage();
-                loader.LoadImage(frame_index, address);
+                if (loader.cached[frame_index] == 0)
+                {
+                    void* address = loader.UnloadImage();
+                    loader.LoadImage(frame_index, address);
+                }
 
                 auto imgload_end = profiler.End();
 
@@ -235,10 +330,18 @@ int application(int argc, char** argv)
 
                 display.Update(loader, ocio, frame_index);
 
+                if (settings.settings.parade)
+                {
+                    auto plotstart = profiler.Start();
+                    display.GetDisplayPixels();
+                    plot.Update(display.buffer);
+                    auto plotend = profiler.End();
+                    profiler.Plot(plotstart, plotend);
+                }
+
                 change = false;
             }
         }
-        
 
         glfwPollEvents();
 
@@ -248,9 +351,9 @@ int application(int argc, char** argv)
         ImGui::NewFrame();
         ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 
-
         // demo window for ImGui
         // if (show_demo_window) ImGui::ShowDemoWindow(&show_demo_window);
+        // ImPlot::ShowDemoWindow();
 
         // display
         display.Draw(loader, frame_index);
@@ -259,12 +362,20 @@ int application(int argc, char** argv)
         settings.draw(playbar, &profiler, ocio, loader);
 
         // menubar
-        menubar.draw(settings, loader, display, playbar, ocio, profiler, change);
+        menubar.draw(settings, loader, display, playbar, ocio, profiler, plot, change);
         
         // playbar 
         ImGui::SetNextWindowBgAlpha(settings.settings.interface_windows_bg_alpha);
         playbar.draw(loader.cached);
 
+        // plot
+        if (settings.settings.parade)
+        {
+            auto plot_draw_start = profiler.Start();
+            plot.Parade();
+            auto plot_draw_end = profiler.End();
+            profiler.DrawPlot(plot_draw_start, plot_draw_end);
+        }
 
         // Rendering
         ImGui::Render();
@@ -301,10 +412,12 @@ int application(int argc, char** argv)
     display.Release();
     ocio.Release();
     settings.Release();
+    plot.Release();
 
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
+    ImPlot::DestroyContext();
     ImGui::DestroyContext();
 
     glfwDestroyWindow(window);

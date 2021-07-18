@@ -10,6 +10,7 @@ void OPENVIEWER_VECTORCALL Display::Unpack(const half* __restrict half_buffer, c
 {
 	if (!add_alpha)
 	{
+#pragma omp parallel for num_threads(4)    
 		for (int64_t i = 0; i < size; i += 8)
 		{
 			__m128i arr = _mm_lddqu_si128((__m128i*) & half_buffer[i]);
@@ -29,7 +30,6 @@ void OPENVIEWER_VECTORCALL Display::Unpack(const half* __restrict half_buffer, c
 			_mm_store_ps(&buffer[idx], floats);
 			
 			buffer[idx + 3] = 1.0f;
-
 			idx += 4;
 		}
 	}
@@ -37,10 +37,6 @@ void OPENVIEWER_VECTORCALL Display::Unpack(const half* __restrict half_buffer, c
 
 void Display::InitializeOpenGL(const Image& img) noexcept
 {
-	// Get the properties
-	const uint16_t width = img.xres;
-	const uint16_t height = img.yres;
-
 	// Generate the frame buffer object
 	glGenFramebuffers(1, &fbo);
 
@@ -48,6 +44,7 @@ void Display::InitializeOpenGL(const Image& img) noexcept
 	glGenTextures(1, &tex_color_buffer);
 	glBindTexture(GL_TEXTURE_2D, tex_color_buffer);
 	glTexImage2D(GL_TEXTURE_2D, 0, img.internal_format, width, height, 0, img.gl_format, img.gl_type, nullptr);
+	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -100,16 +97,16 @@ void Display::Initialize(const Loader& loader, Ocio& ocio) noexcept
 	bool set_alpha = false;
 
 	const uint64_t size = loader.images[0].size;
-	const uint16_t xres = loader.images[0].xres;
-	const uint16_t yres = loader.images[0].yres;
+	width = loader.images[0].xres;
+	height = loader.images[0].yres;
 
 
-	if (size < (xres * yres * 4))
+	if (size < (width * height * 4))
 	{
 		// we need to resize the buffer to support 4 channels : alpha, and rgb
 		set_alpha = true;
-		buffer = static_cast<float*>(OvAlloc(xres * yres * 4 * sizeof(float), 32));
-		buffer_size = xres * yres * 4 * sizeof(float);
+		buffer = static_cast<float*>(OvAlloc(width * height * 4 * sizeof(float), 32));
+		buffer_size = width * height * 4 * sizeof(float);
 	}
 	else
 	{
@@ -125,7 +122,7 @@ void Display::Initialize(const Loader& loader, Ocio& ocio) noexcept
 	auto plot_start = profiler->Start();
 	Unpack((half*)loader.memory_arena, size, set_alpha);
 	auto plot_end = profiler->End();
-	profiler->Plot(plot_start, plot_end);
+	profiler->Unpack(plot_start, plot_end);
 
 	glGenTextures(1, &display_tex);
 	glActiveTexture(GL_TEXTURE0);
@@ -136,8 +133,8 @@ void Display::Initialize(const Loader& loader, Ocio& ocio) noexcept
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-	GL_CHECK(glTexImage2D(GL_TEXTURE_2D, 0, loader.images[0].internal_format, xres, yres, 0, 
-						  loader.images[0].gl_format, loader.images[0].gl_type, buffer));
+	glTexImage2D(GL_TEXTURE_2D, 0, loader.images[0].internal_format, width, height, 0, 
+						  loader.images[0].gl_format, loader.images[0].gl_type, buffer);
 
 	// OCIO GPU Processing
 	if (ocio.use_gpu > 0)
@@ -146,7 +143,7 @@ void Display::Initialize(const Loader& loader, Ocio& ocio) noexcept
 
 		// Bind the framebuffer
 		BindFBO();
-		glViewport(0, 0, xres, yres);
+		glViewport(0, 0, width, height);
 		glEnable(GL_DEPTH_TEST);
 
 		// Clear the framebuffer
@@ -154,7 +151,7 @@ void Display::Initialize(const Loader& loader, Ocio& ocio) noexcept
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		ocio.UpdateProcessor();
-		ocio.Process(buffer, xres, yres);
+		ocio.Process(buffer, width, height);
 
 		// Draw the quad
 		glEnable(GL_TEXTURE_2D);
@@ -216,7 +213,7 @@ void Display::Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx)
 		auto plot_start = profiler->Start();
 		Unpack((half*)address, size, set_alpha);
 		auto plot_end = profiler->End();
-		profiler->Plot(plot_start, plot_end);
+		profiler->Unpack(plot_start, plot_end);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, display_tex);
@@ -329,6 +326,17 @@ void Display::Draw(Loader& loader, uint16_t frame_idx) const noexcept
 		}
 	}
 	ImGui::End();
+}
+
+void Display::GetDisplayPixels() noexcept
+{
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
+	glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, buffer);
+	//glBindTexture(GL_TEXTURE_2D, tex_color_buffer);
+	//GL_CHECK(glGetTextureSubImage(tex_color_buffer, 0, 0, 0, 0, width, height, 0, GL_RGBA, GL_FLOAT, (width * height * 4), buffer));
+	//GL_CHECK(glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, buffer));
+	//glBindTexture(GL_TEXTURE_2D, 0);
+	UnbindFBO();
 }
 
 void Display::Release() noexcept

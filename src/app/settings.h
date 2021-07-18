@@ -28,6 +28,9 @@ struct Settings
 	const char* current_config = "";
 	int current_config_idx = 0;
 	std::vector<const char*> configs;
+
+	// plot
+	bool parade = false;
 };
 
 // struct to hold the different windows for settings

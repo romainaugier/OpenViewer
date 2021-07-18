@@ -186,6 +186,8 @@ void Settings_Windows::draw(ImPlaybar& playbar, Profiler* prof, Ocio& ocio, Load
 				ImGui::Text("Speed");
 				ImGui::Text("Frame Average Time : %0.3f ms/frame (%0.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 				ImGui::Text("Image Load Average Time : %0.3f ms", prof->avg_load_time);
+				ImGui::Text("Plot Average Time : %0.3f ms", prof->avg_plot_time);
+				ImGui::Text("Plot Draw Average Time : %0.3f ms", prof->avg_plot_draw_time);
 				ImGui::Text("Ocio Transform Average Time : %0.3f ms", prof->avg_ocio_transform_time);
 				ImGui::Text("Unpacking Average Time : %0.3f ms", prof->avg_unpack_calc_time);
 				ImGui::Text("Memory");
