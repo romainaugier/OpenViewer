@@ -332,8 +332,8 @@ int application(int argc, char** argv)
 
                 if (settings.settings.parade)
                 {
-                    auto plotstart = profiler.Start();
                     display.GetDisplayPixels();
+                    auto plotstart = profiler.Start();
                     plot.Update(display.buffer);
                     auto plotend = profiler.End();
                     profiler.Plot(plotstart, plotend);

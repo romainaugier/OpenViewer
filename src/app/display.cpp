@@ -9,8 +9,7 @@
 void OPENVIEWER_VECTORCALL Display::Unpack(const half* __restrict half_buffer, const int64_t size, bool add_alpha) noexcept
 {
 	if (!add_alpha)
-	{
-#pragma omp parallel for num_threads(4)    
+	{ 
 		for (int64_t i = 0; i < size; i += 8)
 		{
 			__m128i arr = _mm_lddqu_si128((__m128i*) & half_buffer[i]);
@@ -44,7 +43,6 @@ void Display::InitializeOpenGL(const Image& img) noexcept
 	glGenTextures(1, &tex_color_buffer);
 	glBindTexture(GL_TEXTURE_2D, tex_color_buffer);
 	glTexImage2D(GL_TEXTURE_2D, 0, img.internal_format, width, height, 0, img.gl_format, img.gl_type, nullptr);
-	glGenerateMipmap(GL_TEXTURE_2D);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -100,6 +98,7 @@ void Display::Initialize(const Loader& loader, Ocio& ocio) noexcept
 	width = loader.images[0].xres;
 	height = loader.images[0].yres;
 
+	mipmap_idx = floor(height / 1000);
 
 	if (size < (width * height * 4))
 	{
@@ -331,11 +330,11 @@ void Display::Draw(Loader& loader, uint16_t frame_idx) const noexcept
 void Display::GetDisplayPixels() noexcept
 {
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo);
-	glReadPixels(0, 0, width, height, GL_RGBA, GL_FLOAT, buffer);
-	//glBindTexture(GL_TEXTURE_2D, tex_color_buffer);
-	//GL_CHECK(glGetTextureSubImage(tex_color_buffer, 0, 0, 0, 0, width, height, 0, GL_RGBA, GL_FLOAT, (width * height * 4), buffer));
-	//GL_CHECK(glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_FLOAT, buffer));
-	//glBindTexture(GL_TEXTURE_2D, 0);
+	glBindTexture(GL_TEXTURE_2D, tex_color_buffer);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glGetTexImage(GL_TEXTURE_2D, mipmap_idx, GL_RGBA, GL_FLOAT, buffer);
+	glBindTexture(GL_TEXTURE_2D, 0);
 	UnbindFBO();
 }
 

@@ -58,7 +58,8 @@ void CheckStatus()
     std::string error;
     if (GetGLError(error))
     {
-        throw Exception(error.c_str());
+        /*if(error.c_str() != NULL)
+            throw Exception(error.c_str());*/
     }
 }
 

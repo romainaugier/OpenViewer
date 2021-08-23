@@ -2050,7 +2050,6 @@ double PlotHistogram2D(const char* label_id, const float* __restrict xs, const f
     double max_count = 0;
 
     
-#pragma omp parallel for num_threads(4)
     for (int i = 0; i < count; ++i) {
         const int xb = static_cast<int>(xs[i] / width);
         const int yb = static_cast<int>(ys[i] / height);
@@ -2060,7 +2059,6 @@ double PlotHistogram2D(const char* label_id, const float* __restrict xs, const f
     
     
     /*
-#pragma omp parallel for num_threads(4)    
     for (int i = 0; i < count; i += 8)
     {
         const __m256 x = _mm256_load_ps(&xs[i]);
@@ -2086,7 +2084,7 @@ double PlotHistogram2D(const char* label_id, const float* __restrict xs, const f
     }
     */
 
-    max_count = 600;
+    max_count = 50;
 
     if (BeginItem(label_id)) {
         if (FitThisFrame()) {

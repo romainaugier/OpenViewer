@@ -34,6 +34,7 @@ struct Display
 	Profiler* profiler;
 	uint16_t width;
 	uint16_t height;
+	uint8_t mipmap_idx;
 	unsigned int display : 1;
 	unsigned int use_buffer : 1;
 

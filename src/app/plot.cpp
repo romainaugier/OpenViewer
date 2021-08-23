@@ -11,14 +11,16 @@ void Plot::Initialize(uint64_t size, uint16_t width, uint16_t height) noexcept
 {
 	has_been_initialized = 1;
 
-	image_size = size;
+	mipmap_idx = floor(height / 1000);
+
+	image_size = size / (mipmap_idx * 4);
 	image_width = width;
 	image_height = height;
 
-	r_array = static_cast<float*>(OvAlloc((size / 4) * sizeof(float), 32));
-	g_array = static_cast<float*>(OvAlloc((size / 4) * sizeof(float), 32));
-	b_array = static_cast<float*>(OvAlloc((size / 4) * sizeof(float), 32));
-	pos_array = static_cast<float*>(OvAlloc((size / 4) * sizeof(float), 32));
+	r_array = static_cast<float*>(OvAlloc((image_size / 4) * sizeof(float), 32));
+	g_array = static_cast<float*>(OvAlloc((image_size / 4) * sizeof(float), 32));
+	b_array = static_cast<float*>(OvAlloc((image_size / 4) * sizeof(float), 32));
+	pos_array = static_cast<float*>(OvAlloc((image_size / 4) * sizeof(float), 32));
 }
 
 void Plot::Update(float* image) noexcept
@@ -42,14 +44,6 @@ void Plot::Update(float* image) noexcept
 		__m256 b = _mm256_set_ps(image[i + 2], image[i + 6], image[i + 10], image[i + 14],
 			image[i + 18], image[i + 22], image[i + 26], image[i + 30]);
 
-		__m256i indices = _mm256_set_epi32(i + 0, i + 4, i + 8, i + 12, i + 16, i + 20, i + 24, i + 28);
-		__m256i divisors = _mm256_set1_epi32(4);
-		__m256i positions_int;
-		indices = _mm256_div_epi32(indices, divisors);
-		divisors = _mm256_set1_epi32(image_width);
-		indices = _mm256_divrem_epi32(&positions_int, indices, divisors);
-		__m256 positions = _mm256_cvtepi32_ps(positions_int);
-
 		__m256 mask = _mm256_cmp_ps(r, max, 14);
 		r = _mm256_blendv_ps(r, max, mask);
 
@@ -58,6 +52,17 @@ void Plot::Update(float* image) noexcept
 
 		mask = _mm256_cmp_ps(b, max, 14);
 		b = _mm256_blendv_ps(b, max, mask);
+		
+		__m256i indices = _mm256_set_epi32(i + 0, i + 4, i + 8, i + 12, i + 16, i + 20, i + 24, i + 28);
+		//__m256i multiplier = _mm256_set1_epi32(2);
+		__m256i divisors = _mm256_set1_epi32(mipmap_idx);
+		__m256i positions_int;
+		//indices = _mm256_mul_epi32(indices, multiplier);
+		//indices = _mm256_div_epi32(indices, divisors);
+		divisors = _mm256_set1_epi32(image_width);
+		indices = _mm256_divrem_epi32(&positions_int, indices, divisors);
+		__m256 positions = _mm256_cvtepi32_ps(positions_int);
+
 
 		_mm256_store_ps(&r_array[idx], r);
 		_mm256_store_ps(&g_array[idx], g);

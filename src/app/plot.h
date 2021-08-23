@@ -23,8 +23,9 @@ struct Plot
 	float* pos_array = nullptr;
 	uint16_t image_width = 0;
 	uint16_t image_height = 0;
-	uint16_t bin_x = 200;
-	uint16_t bin_y = 100;
+	uint16_t bin_x = 500;
+	uint16_t bin_y = 250;
+	uint8_t mipmap_idx = 0;
 	unsigned int has_been_initialized : 1;
 
 	Plot()
