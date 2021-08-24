@@ -22,6 +22,7 @@ jobs:
     - name: Run Vcpkg
       uses: lukka/run-vcpkg@v4
       with:
+        vcpkgGitCommitId: 025e564979cc01d0fbc5c920aa8a36635efb01bb
         setupOnly: true
 
     - run: echo $VCPKG_ROOT
