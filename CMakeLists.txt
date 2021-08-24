@@ -64,7 +64,7 @@ endif()
 include_directories(dependencies/glfw/include)
 
 # OpenColorIO
-find_package(OpenColorIO REQUIRED)
+# find_package(OpenColorIO REQUIRED)
 include_directories(dependencies/ociov2/include)
 
 # OpenImageIO
