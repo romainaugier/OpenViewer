@@ -1,5 +1,5 @@
 # OpenViewer
-![example workflow](https://github.com/romainaugier/OpenViewer/blob/master/.github/workflows/cmake.yml/badge.svg)
+![example workflow](https://github.com/romainaugier/OpenViewer/blob/master/.github/workflows/build.yml/badge.svg)
 
 OpenViewer is an open source, tiny and powerful image viewer made for professionals and enthusiasts of the animation and vfx industry.
 
