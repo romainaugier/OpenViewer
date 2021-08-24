@@ -1,4 +1,4 @@
-name: Build
+name: Build Linux
 
 on:
   push:
@@ -11,10 +11,7 @@ env:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        platform: [windows-latest, ubuntu-latest]
-    runs-on: ${{ matrix.platform }}
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
