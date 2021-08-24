@@ -51,11 +51,11 @@ endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	add_compile_definitions(-D_CRT_SECURE_NO_WARNINGS -DOPENEXR_DLL)
-	set(MSVC_COMPILER_FLAGS "/openmp:experimental /fp:fast /Ox /Os /Oy /GT /GL /Oi /arch:AVX2 /Zi /Gm- /Zc:inline /Qpar")
+	set(MSVC_COMPILER_FLAGS "/fp:fast /Ox /Os /Oy /GT /GL /Oi /arch:AVX2 /Zi /Gm- /Zc:inline /Qpar")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" "${MSVC_COMPILER_FLAGS}")
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 	add_compile_options(-fopenmp -O3 -mavx2 -mf16c -fpermissive)
-	add_link_options(-fopenmp -lstdc++fs)
+	add_link_options(-lstdc++fs)
 else()
 	message(FATAL_ERROR "Your compiler is not supported yet, CMake will exit.")
 endif()
@@ -70,8 +70,8 @@ include_directories(dependencies/ociov2/include)
 # OpenImageIO
 find_package(OpenImageIO REQUIRED)
 
-# OpenMP
-find_package(OpenMP REQUIRED)
+# TBB
+find_package(tbb REQUIRED)
 
 # As openimageio include variable works on window and not on linux, we need to use a hack to find
 # the vcpkg include directory
