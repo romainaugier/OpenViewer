@@ -22,14 +22,16 @@ jobs:
         vcpkgGitCommitId: 025e564979cc01d0fbc5c920aa8a36635efb01bb
         setupOnly: true
 
+    - run: echo $VCPKG_ROOT
+
     - name: Install TBB
-      run: %VCPKG_ROOT%/vcpkg.exe install tbb:x64-windows
+      run: $VCPKG_ROOT/vcpkg.exe install tbb:x64-windows
 
     - name: Install OpenImageIO
-      run: %VCPKG_ROOT%/vcpkg.exe install openimageio:x64-windows
+      run: $VCPKG_ROOT/vcpkg.exe install openimageio:x64-windows
     
     - name: Install OpenColorIO
-      run: %VCPKG_ROOT%/vcpkg.exe install opencolorio:x64-windows
+      run: $VCPKG_ROOT/vcpkg.exe install opencolorio:x64-windows
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
