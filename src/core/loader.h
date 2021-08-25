@@ -16,7 +16,6 @@
 #include <vector>
 #include <stdlib.h>
 #include <filesystem>
-#include <malloc.h>
 
 #include "utils/string_utils.h"
 #include "utils/profiler.h"
@@ -30,9 +29,11 @@ enum FileType_
 	FileType_Exr   = 0x1,
 	FileType_Png   = 0x2,
 	FileType_Jpg   = 0x4,
-	FileType_Mov   = 0x8,
-	FileType_Mp4   = 0x10,
-	FileType_Other = 0x20
+	FileType_Tiff  = 0x8
+	FileType_Hdr   = 0X10,
+	FileType_Mov   = 0x20,
+	FileType_Mp4   = 0x40,
+	FileType_Other = 0x80
 };
 
 enum Format_
