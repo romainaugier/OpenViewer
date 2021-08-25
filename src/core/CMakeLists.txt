@@ -9,7 +9,6 @@ target_link_libraries(core OpenImageIO::OpenImageIO)
 target_link_libraries(core wuffs utils)
 target_link_libraries(core IlmBase::Iex IlmBase::Half IlmBase::Imath IlmBase::IexMath)
 target_link_libraries(core OpenEXR::IlmImf OpenEXR::IlmImfUtil OpenEXR::IlmImfConfig)
-target_link_libraries(core OpenMP::OpenMP_CXX)
 
 if(WIN32)
 	if(${CMAKE_SIZEOF_VOID_P} EQUAL 4)

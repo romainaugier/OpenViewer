@@ -64,6 +64,7 @@ endif()
 include_directories(dependencies/glfw/include)
 
 # OpenColorIO
+# There is an issue with OCIO V2 and vcpkg, so we will keep on using the shipped library instead
 # find_package(OpenColorIO REQUIRED)
 include_directories(dependencies/ociov2/include)
 
