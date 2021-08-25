@@ -17,7 +17,7 @@ jobs:
     - uses: actions/checkout@v2
     
     - name: Run Vcpkg
-      uses: lukka/run-vcpkg@v4
+      uses: lukka/run-vcpkg@v7
       with:
         vcpkgGitCommitId: 025e564979cc01d0fbc5c920aa8a36635efb01bb
         setupOnly: true
