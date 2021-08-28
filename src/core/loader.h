@@ -29,7 +29,7 @@ enum FileType_
 	FileType_Exr   = 0x1,
 	FileType_Png   = 0x2,
 	FileType_Jpg   = 0x4,
-	FileType_Tiff  = 0x8
+	FileType_Tiff  = 0x8,
 	FileType_Hdr   = 0X10,
 	FileType_Mov   = 0x20,
 	FileType_Mp4   = 0x40,

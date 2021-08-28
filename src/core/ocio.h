@@ -5,7 +5,6 @@
 #pragma once
 
 #include <GL/glew.h>
-#include <GL/glut.h>
 #include "utils/gl_utils.h"
 #include "utils/logger.h"
 

@@ -16,23 +16,8 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 if(WIN32)
 	if(${CMAKE_SIZEOF_VOID_P} EQUAL 4)
 		message(FATAL_ERROR "OCIO : Target platform Windows x86 not supported yet")
-                set(DEPENDENCIES_DLLS
-                ${CMAKE_SOURCE_DIR}/dependencies/ociov2/dll-windows-x86/OpenColorIO_2_1.dll
-                ${CMAKE_SOURCE_DIR}/dependencies/glfw/lib-vc2019-x86/glew32.dll
-                ${CMAKE_SOURCE_DIR}/dependencies/glfw/lib-vc2019-x86/freeglut.dll)
-
-                foreach(file_i ${DEPENDENCIES_DLLS})
-                add_custom_command(
-                        TARGET ${PROJECT_NAME}
-                        POST_BUILD
-                        COMMAND ${CMAKE_COMMAND} -E copy 
-                        ${file_i} $<TARGET_FILE_DIR:${PROJECT_NAME}>)
-                endforeach( file_i )
 	elseif(${CMAKE_SIZEOF_VOID_P} EQUAL 8)
-                set(DEPENDENCIES_DLLS
-                ${CMAKE_SOURCE_DIR}/dependencies/ociov2/dll-windows-x64/OpenColorIO_2_1.dll
-                ${CMAKE_SOURCE_DIR}/dependencies/glfw/lib-vc2019-x64/glew32.dll
-                ${CMAKE_SOURCE_DIR}/dependencies/glfw/lib-vc2019-x64/freeglut.dll)
+                set(DEPENDENCIES_DLLS ${CMAKE_SOURCE_DIR}/dependencies/ociov2/dll-windows-x64/OpenColorIO_2_1.dll)
 
                 foreach(file_i ${DEPENDENCIES_DLLS})
                 add_custom_command(
@@ -48,9 +33,6 @@ elseif(UNIX)
         elseif(${CMAKE_SIZEOF_VOID_P} EQUAL 8)
                 set(DEPENDENCIES_SO
                 ${CMAKE_SOURCE_DIR}/dependencies/ociov2/lib-linux-x64/libOpenColorIO2_1.so)
-                #${CMAKE_SOURCE_DIR}/dependencies/gflw/lib-linux-x64/libGL.so
-                #${CMAKE_SOURCE_DIR}/dependencies/gflw/lib-linux-x64/libGLEW.so
-                #${CMAKE_SOURCE_DIR}/dependencies/gflw/lib-linux-x64/libGLU.so)
 
                 foreach(file_i ${DEPENDENCIES_SO})
                 add_custom_command(

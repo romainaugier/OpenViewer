@@ -63,6 +63,8 @@ endif()
 # OpenGL
 include_directories(dependencies/glfw/include)
 
+find_package(GLEW REQUIRED)
+
 # OpenColorIO
 # There is an issue with OCIO V2 and vcpkg, so we will keep on using the shipped library instead
 # find_package(OpenColorIO REQUIRED)
