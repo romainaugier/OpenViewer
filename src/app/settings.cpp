@@ -181,20 +181,14 @@ void Settings_Windows::draw(ImPlaybar& playbar, Profiler* prof, Ocio& ocio, Load
 				}
 			}
 
-			if (ImGui::CollapsingHeader("Profiler"))
+			if (ImGui::CollapsingHeader("Profiling"))
 			{
-				ImGui::Text("Speed");
+				ImGui::Text("Time");
 				ImGui::Text("Frame Average Time : %0.3f ms/frame (%0.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-				ImGui::Text("Image Load Average Time : %0.3f ms", prof->avg_load_time);
-				ImGui::Text("Plot Update Average Time : %0.3f ms", prof->avg_plot_time);
-				ImGui::Text("Plot Draw Average Time : %0.3f ms", prof->avg_plot_draw_time);
-				ImGui::Text("Ocio Transform Average Time : %0.3f ms", prof->avg_ocio_transform_time);
-				ImGui::Text("Image Unpacking Average Time : %0.3f ms", prof->avg_unpack_calc_time);
+				for(const auto& [key, value] : prof->times)	ImGui::Text("%s : %0.3f ms", key.c_str(), value);
+				ImGui::Separator();
 				ImGui::Text("Memory");
-				ImGui::Text("Current Memory Usage : %0.3f MB", prof->current_memory_usage);
-				ImGui::Text("Loader : %0.6f MB", prof->loader_size);
-				ImGui::Text("Display : %0.6f MB", prof->display_size);
-				ImGui::Text("Ocio : %0.6f MB", prof->ocio_size);
+				for(const auto& [key, value] : prof->mem_usage) ImGui::Text("%s : %0.3f MB", key.c_str(), value);
 			}
 		}
 		ImGui::End();

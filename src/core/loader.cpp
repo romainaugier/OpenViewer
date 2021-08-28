@@ -64,7 +64,7 @@ void Image::Load(void* __restrict buffer, Profiler* prof) noexcept
 	else if (type & FileType_Other) LoadOther((half*)buffer);
 
 	auto load_timer_end = prof->End();
-	prof->Load(load_timer_start, load_timer_end);
+	prof->Time("Image Loading Time", load_timer_start, load_timer_end);
 }
 
 // initializes the loader with the different paths, the item count and the first frame
@@ -78,13 +78,14 @@ void Loader::Initialize(const std::string fp, const uint64_t _cache_size, bool i
 	{
 		cache_size = _cache_size;
 
-
+		// TODO : make a real system to detect different image sequences in the same directory
+		// and let the user choose them
 		for (auto p : std::filesystem::directory_iterator(fp))
 		{
 			count++;
 			const std::string t = p.path().u8string();
 			images.emplace_back(t);
-			// logger->Log(LogLevel_Debug, "Loading : %s", t.c_str());
+			logger->Log(LogLevel_Debug, "Loading : %s", t.c_str());
 		}
 
 		// allocate the cache
@@ -329,16 +330,10 @@ void Loader::LaunchPlayerWorker() noexcept
 // join the last worker
 void Loader::JoinWorker() noexcept
 {
-	//uint8_t idx = workers.size() - 1;
-	//workers[idx].join();
-	
 	for (auto& worker : workers)
 	{
 		if(worker.joinable()) worker.join();
 	}
-	// has_finished = 1;
-
-	//if (is_playloader_working == 1) is_playloader_working = 0;
 }
 
 // releases the image cache

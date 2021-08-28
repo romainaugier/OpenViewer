@@ -182,10 +182,10 @@ int application(int argc, char** argv)
     if (initialize_display) display.Initialize(loader, ocio);
 
     // initialize memory profiler of main components
-    profiler.current_memory_usage = ToMB(GetCurrentRss());
-    profiler.display_size = ToMB((sizeof(display) + display.buffer_size) / 8);
-    profiler.ocio_size = ToMB((sizeof(ocio) + ocio.GetSize()) / 8);
-    profiler.loader_size = ToMB((sizeof(loader) + loader.cached_size) / 8);
+    profiler.MemUsage("Application Memory Usage", ToMB(GetCurrentRss()));
+    profiler.MemUsage("Display Memory Usage", ToMB((sizeof(display) + display.buffer_size) / 8));
+    profiler.MemUsage("Ocio Module Memory Usage", ToMB((sizeof(ocio) + ocio.GetSize()) / 8));
+    profiler.MemUsage("Loader Memory Usage", ToMB((sizeof(loader) + loader.cached_size) / 8));
     
     bool change = true;
 
@@ -217,10 +217,10 @@ int application(int argc, char** argv)
         // if (loader.has_finished > 0 ) loader.JoinWorker();
 
         // update memory profiler
-        profiler.current_memory_usage = ToMB(GetCurrentRss());
-        profiler.display_size = ToMB((sizeof(display) + display.buffer_size) / 8);
-        profiler.ocio_size = ToMB((sizeof(ocio) + ocio.GetSize()) / 8);
-        profiler.loader_size = ToMB((sizeof(loader) + loader.cached_size) / 8);
+        profiler.MemUsage("Application Memory Usage", ToMB(GetCurrentRss()));
+        profiler.MemUsage("Display Memory Usage", ToMB((sizeof(display) + display.buffer_size) / 8));
+        profiler.MemUsage("Ocio Module Memory Usage", ToMB((sizeof(ocio) + ocio.GetSize()) / 8));
+        profiler.MemUsage("Loader Memory Usage", ToMB((sizeof(loader) + loader.cached_size) / 8));
 
         loader.frame = playbar.playbar_frame;
         uint16_t frame_index = playbar.playbar_frame;
@@ -248,7 +248,7 @@ int application(int argc, char** argv)
 
                     auto imgload_end = profiler.End();
 
-                    profiler.Load(imgload_start, imgload_end);
+                    profiler.Time("Image Loading Time", imgload_start, imgload_end);
 
                     display.Update(loader, ocio, frame_index);
 
@@ -258,7 +258,7 @@ int application(int argc, char** argv)
                         display.GetDisplayPixels();
                         plot.Update(display.buffer);
                         auto plotend = profiler.End();
-                        profiler.Plot(plotstart, plotend);
+                        profiler.Time("Plot Time", plotstart, plotend);
                     }
 
                     change = false;
@@ -295,7 +295,7 @@ int application(int argc, char** argv)
                     }
                     auto imgload_end = profiler.End();
 
-                    profiler.Load(imgload_start, imgload_end);
+                    profiler.Time("Image Loading Time", imgload_start, imgload_end);
 
                     display.Update(loader, ocio, frame_index);
                     
@@ -305,7 +305,7 @@ int application(int argc, char** argv)
                         display.GetDisplayPixels();
                         plot.Update(display.buffer);
                         auto plotend = profiler.End();
-                        profiler.Plot(plotstart, plotend);
+                        profiler.Time("Plot Time", plotstart, plotend);
                     }
 
                     change = false;
@@ -326,7 +326,7 @@ int application(int argc, char** argv)
 
                 auto imgload_end = profiler.End();
 
-                profiler.Load(imgload_start, imgload_end);
+                profiler.Time("Image Loading Time", imgload_start, imgload_end);
 
                 display.Update(loader, ocio, frame_index);
 
@@ -336,7 +336,7 @@ int application(int argc, char** argv)
                     auto plotstart = profiler.Start();
                     plot.Update(display.buffer);
                     auto plotend = profiler.End();
-                    profiler.Plot(plotstart, plotend);
+                    profiler.Time("Plot Time", plotstart, plotend);
                 }
 
                 change = false;
@@ -374,7 +374,7 @@ int application(int argc, char** argv)
             auto plot_draw_start = profiler.Start();
             plot.Parade();
             auto plot_draw_end = profiler.End();
-            profiler.DrawPlot(plot_draw_start, plot_draw_end);
+            profiler.Time("Plot Drawing Time", plot_draw_start, plot_draw_end);
         }
 
         // Rendering

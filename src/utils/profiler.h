@@ -5,23 +5,26 @@
 #pragma once
 
 #include <chrono>
+#include <unordered_map>
+#include <string>
 
 #include "decl.h"
 
+// Very simple profiler to get timings of some actions at runtime to help finding hotspots in the application
+
+// There is also a simple map to get the memory usage of different structures used by OpenViewer, to help
+// see what is consuming more or less memory
+
 struct Profiler
 {
-	float avg_ocio_transform_time = 0.0f;
-	float avg_unpack_calc_time = 0.0f;
-	float avg_plot_time = 0.0f;
-	float avg_plot_draw_time = 0.0f;
-	float avg_load_time = 0.0f;
-	float avg_frame_time = 0.0f;
+	std::unordered_map<std::string, float> times;
+	std::unordered_map<std::string, float> mem_usage;
 
-	// to check memory usage at runtime
-	float current_memory_usage = 0;
-	float loader_size = 0;
-	float display_size = 0;
-	float ocio_size = 0;
+	OPENVIEWER_FORCEINLINE void MemUsage(std::string name, float memory) noexcept
+	{
+		if(mem_usage.find(name) != mem_usage.end()) mem_usage[name] = memory;
+		else mem_usage.emplace(name, memory);
+	}
 
 	OPENVIEWER_FORCEINLINE auto Start() const noexcept
 	{
@@ -33,39 +36,13 @@ struct Profiler
 		return std::chrono::system_clock::now();
 	}
 
-	OPENVIEWER_FORCEINLINE void Ocio(std::chrono::time_point<std::chrono::system_clock>& start, 
-			  std::chrono::time_point<std::chrono::system_clock>& end) noexcept
+	OPENVIEWER_FORCEINLINE void Time(std::string name,
+									 std::chrono::time_point<std::chrono::system_clock>& start, 
+			  						 std::chrono::time_point<std::chrono::system_clock>& end) noexcept
 	{
-		avg_ocio_transform_time = (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() + avg_ocio_transform_time) / 2.0f;
+		float time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+		
+		if(times.find(name) != times.end()) times[name] = time;
+		else times.emplace(name, time);
 	}
-
-	OPENVIEWER_FORCEINLINE void Unpack(std::chrono::time_point<std::chrono::system_clock>& start,
-		std::chrono::time_point<std::chrono::system_clock>& end) noexcept
-	{
-		avg_unpack_calc_time = (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() + avg_unpack_calc_time) / 2.0f;
-	}
-
-	OPENVIEWER_FORCEINLINE void Plot(std::chrono::time_point<std::chrono::system_clock>& start,
-		std::chrono::time_point<std::chrono::system_clock>& end) noexcept
-	{
-		avg_plot_time = (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() + avg_plot_time) / 2.0f;
-	}
-
-	OPENVIEWER_FORCEINLINE void DrawPlot(std::chrono::time_point<std::chrono::system_clock>& start,
-		std::chrono::time_point<std::chrono::system_clock>& end) noexcept
-	{
-		avg_plot_draw_time = (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() + avg_plot_draw_time) / 2.0f;
-	}
-
-	 OPENVIEWER_FORCEINLINE void Load(std::chrono::time_point<std::chrono::system_clock>& start,
-		std::chrono::time_point<std::chrono::system_clock>& end) noexcept
-	{
-		avg_load_time = (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() + avg_load_time) / 2.0f;
-	}
-
-	 OPENVIEWER_FORCEINLINE void Frame(std::chrono::time_point<std::chrono::system_clock>& start,
-		 std::chrono::time_point<std::chrono::system_clock>& end) noexcept
-	 {
-		 avg_frame_time = (std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() + avg_frame_time) / 2.0f;
-	 }
 };

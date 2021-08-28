@@ -2050,7 +2050,7 @@ double PlotHistogram2D(const char* label_id, const float* __restrict xs, const f
     double max_count = 0;
 
     
-    for (int i = 0; i < count; ++i) 
+    for (int i = 0; i < count; ++i)
     {
         const int xb = static_cast<int>(xs[i] / width);
         const int yb = static_cast<int>(ys[i] / height);

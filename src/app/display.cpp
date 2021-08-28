@@ -121,7 +121,7 @@ void Display::Initialize(const Loader& loader, Ocio& ocio) noexcept
 	auto plot_start = profiler->Start();
 	Unpack((half*)loader.memory_arena, size, set_alpha);
 	auto plot_end = profiler->End();
-	profiler->Unpack(plot_start, plot_end);
+	profiler->Time("Image Unpacking Time", plot_start, plot_end);
 
 	glGenTextures(1, &display_tex);
 	glActiveTexture(GL_TEXTURE0);
@@ -178,7 +178,7 @@ void Display::Initialize(const Loader& loader, Ocio& ocio) noexcept
 		glDisable(GL_DEPTH_TEST);
 
 		auto ocio_end = profiler->End();
-		profiler->Ocio(ocio_start, ocio_end);
+		profiler->Time("Ocio Transform Time", ocio_start, ocio_end);
 	}
 
 	// Unbind our texture
@@ -212,7 +212,7 @@ void Display::Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx)
 		auto plot_start = profiler->Start();
 		Unpack((half*)address, size, set_alpha);
 		auto plot_end = profiler->End();
-		profiler->Unpack(plot_start, plot_end);
+		profiler->Time("Image Unpacking Time", plot_start, plot_end);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, display_tex);
@@ -266,7 +266,7 @@ void Display::Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx)
 			glDisable(GL_DEPTH_TEST);
 
 			auto ocio_end = profiler->End();
-			profiler->Ocio(ocio_start, ocio_end);
+			profiler->Time("Ocio Transform Time", ocio_start, ocio_end);
 
 			// Unbind our texture
 			GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
