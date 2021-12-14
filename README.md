@@ -2,7 +2,7 @@
 ![build windows](https://github.com/romainaugier/OpenViewer/actions/workflows/build-windows.yml/badge.svg)
 ![build linux](https://github.com/romainaugier/OpenViewer/actions/workflows/build-linux.yml/badge.svg)
 
-OpenViewer is an open source, tiny and powerful image viewer made for professionals and enthusiasts of the animation and vfx industry.
+OpenViewer is an open source, tiny and powerful image viewer made for professionals and enthusiasts of the animation and vfx industry. As I am currently in the last year of my studies, I don't have a lot of time to work on the project, but I'll do my best to advance it from time to time.
 
 The wiki (under development) is [here](https://github.com/romainaugier/OpenViewer/wiki), and the roadmap of the project is [here](https://github.com/romainaugier/OpenViewer/wiki/Roadmap).
 
