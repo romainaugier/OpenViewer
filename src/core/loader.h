@@ -17,177 +17,42 @@
 #include <stdlib.h>
 #include <filesystem>
 
-#include "utils/string_utils.h"
-#include "utils/profiler.h"
-#include "utils/logger.h"
-#include "utils/memory/alloc.h"
+#include "cache.h"
 
+// WinUser.h has a LoadImage definition
+#ifdef _WIN32
 #undef LoadImage
+#endif
 
-enum FileType_
+// A Loader is just a file loader that has a cache and interacts with a player
+// There are a many loaders as there are players
+// The loader is mostly used to interface the cache with the player, as it passes which image to load to the cache
+
+namespace Core
 {
-	FileType_Exr   = 0x1,
-	FileType_Png   = 0x2,
-	FileType_Jpg   = 0x4,
-	FileType_Tiff  = 0x8,
-	FileType_Hdr   = 0X10,
-	FileType_Mov   = 0x20,
-	FileType_Mp4   = 0x40,
-	FileType_Other = 0x80
-};
-
-enum Format_
-{
-	Format_RGBA_FLOAT = 0x1,
-	Format_RGB_FLOAT  = 0x2,
-	Format_RGBA_U8    = 0x4,
-	Format_RGB_U8     = 0x8,
-	Format_RGBA_U32   = 0x10,
-	Format_RGB_U32    = 0x20,
-	Format_RGBA_HALF  = 0x40,
-	Format_RGB_HALF   = 0x80
-};
-
-struct Image
-{
-	std::string path;
-	uint64_t size;
-	void* cache_address = nullptr;
-	uint32_t xres;
-	uint32_t yres;
-	uint32_t channels;
-	int16_t cache_index = -1;
-	FileType_ type;
-	Format_ format;
-	GLint internal_format;
-	GLenum gl_format;
-	GLenum gl_type;
-
-	Image() {}
-
-	Image(const std::string& fp)
+	struct Loader
 	{
-		path = fp;
+		std::vector<Image> m_Images; // Contains the image seq that will be played in the player which the loader is attached to
+
+		std::vector<std::thread> m_Workers; // Contains workers that are used to load the different images
+
+		ImageCache* m_Cache;
+
+		bool m_UseCache = false;
+
+		// Initializes the loader with a directory path and the cache size
+		void Initialize(const std::string& directoryPath, const size_t cacheSize) noexcept;
 		
-		auto in = OIIO::ImageInput::open(fp);
-		const OIIO::ImageSpec& spec = in->spec();
+		// Initializes the loader with a single image, and as it is a single image it will not be cached
+		void Initialize(const std::string& imagePath) noexcept;
+		
+		// Loads an image. If the cache is enabled, it will load it in the cache, otherwise loads it on the fly
+		void LoadImage(const uint16_t index) noexcept;
 
-		if(endsWith(fp, ".exr"))
-		{
-			type = FileType_Exr;
-			format = Format_RGBA_HALF;
-			internal_format = GL_RGBA32F;
-			gl_format = GL_RGBA;
-			gl_type = GL_FLOAT;
-			xres = spec.full_width;
-			yres = spec.full_height;
-			channels = spec.nchannels + 1;
-		}
-		else if(endsWith(fp, ".png"))
-		{
-			type = FileType_Other;
-			format = Format_RGB_U8;
-			internal_format = GL_RGBA32F;
-			gl_format = GL_RGBA;
-			gl_type = GL_FLOAT;
-			xres = spec.width;
-			yres = spec.height;
-			channels = spec.nchannels;
-		}
-		else if(endsWith(fp, ".jpg") || endsWith(fp, ".jpeg"))
-		{
-			type = FileType_Other;
-			format = Format_RGB_U8;
-			internal_format = GL_RGBA32F;
-			gl_format = GL_RGBA;
-			gl_type = GL_FLOAT;
-			xres = spec.width;
-			yres = spec.height;
-			channels = spec.nchannels;
-		}
-		else
-		{
-			type = FileType_Other;
-			format = Format_RGB_HALF;
-			internal_format = GL_RGBA32F;
-			gl_format = GL_RGBA;
-			gl_type = GL_FLOAT;
-			xres = spec.width;
-			yres = spec.height;
-			channels = spec.nchannels;
-		}
+		// Loads as much image as it can in the cache
+		void LoadSequence() noexcept;
 
-
-		size = static_cast<uint64_t>(xres) * yres * channels; // *sizeof(float);
-
-		in->close();
-	}
-
-	void Release() noexcept;
-	void Load(void* __restrict buffer, Profiler* prof) noexcept;
-	void LoadExr(half* __restrict buffer) const noexcept;
-	void LoadPng(uint8_t* __restrict buffer) const noexcept;
-	void LoadJpg(uint8_t* __restrict buffer) const noexcept;
-	void LoadOther(half* __restrict allocated_space) const noexcept;
-};
-
-struct Loader
-{
-	std::vector<Image> images;
-	std::vector<std::thread> workers;
-	std::vector<uint16_t> last_cached;
-	std::vector<char> cached;
-	std::mutex mtx;
-	std::condition_variable load_into_cache;
-	void* memory_arena = nullptr;
-	Profiler* profiler;
-	Logger* logger;
-	uint64_t cache_size;
-	uint64_t cached_size;
-	uint64_t cache_stride;
-	uint16_t count = 0;
-	uint16_t frame = 0;
-	uint16_t cache_size_count = 0;
-	uint16_t cache_load_frame = 0;
-	unsigned int urgent_load : 1;
-	unsigned int work_for_cache : 1;
-	unsigned int has_been_initialized : 1;
-	unsigned int use_cache : 1;
-	unsigned int is_playing : 1;
-	unsigned int has_finished : 1;
-	unsigned int is_working : 1;
-	unsigned int is_playloader_working : 1;
-	unsigned int stop_playloader : 1;
-
-	Loader(Profiler* prof, Logger* log) 
-	{
-		has_been_initialized = 0;
-		use_cache = 0;
-		cached_size = 0;
-		has_finished = 0;
-		is_working = 0;
-		is_playloader_working = 0;
-		stop_playloader = 0;
-		work_for_cache = 0;
-		urgent_load = 0;
-		profiler = prof;
-		logger = log;
-	}
-
-	~Loader()
-	{
-	}
-
-	void Initialize(const std::string fp, const uint64_t _cache_size, bool isdirectory) noexcept;
-	void ReallocateCache(const bool use_cache) noexcept;
-	void LoadSequence(const bool load_first_frame) noexcept;
-	void LoadPlayer() noexcept;
-	void LoadImage(const uint16_t idx, void* address) noexcept;
-	void* UnloadImage() noexcept;
-	void LaunchSequenceWorker(const bool load_first_frame) noexcept;
-	void LaunchPlayerWorker() noexcept;
-	void JoinWorker() noexcept;
-	void ReleaseCache() noexcept;
-	void Release() noexcept;
-};
-
+		// Deallocate resources and release the loader
+		void Release() noexcept;
+	};
+} // End namespace Core

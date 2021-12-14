@@ -13,7 +13,9 @@ void Plot::Initialize(uint64_t size, uint16_t width, uint16_t height) noexcept
 
 	mipmap_idx = floor(height / 1000);
 
-	image_size = size / (mipmap_idx * 4);
+	if(mipmap_idx == 0) image_size = size;
+	else image_size = size / (mipmap_idx * 4);
+	
 	image_width = width;
 	image_height = height;
 
