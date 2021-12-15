@@ -65,7 +65,7 @@ void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& 
 					display.Update(loader, ocio, playbar.playbar_frame);
 					
 					display.GetDisplayPixels();
-					plot.Update(display.buffer);
+					// plot.Update(display.buffer);
 				}
 
 				ifd::FileDialog::Instance().Close();
@@ -90,7 +90,7 @@ void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& 
 						display.Release();
 						plot.Release();
 					}
-
+	
 					uint64_t cache_size = static_cast<uint64_t>(current_settings.settings.cache_size) * 1000000;
 
 					loader.Initialize(fp, cache_size, true);
@@ -108,7 +108,7 @@ void Menubar::draw(Settings_Windows& current_settings, Loader& loader, Display& 
 
 
 					display.GetDisplayPixels();
-					plot.Update(display.buffer);
+					// plot.Update(display.buffer);
 				}
 
 				ifd::FileDialog::Instance().Close();

@@ -6,32 +6,32 @@
 #include "display.h"
 
 // Converts the half buffer to a float buffer, in order to be able to be processed by the OCIO processor
-void OPENVIEWER_VECTORCALL Display::Unpack(const half* __restrict half_buffer, const int64_t size, bool add_alpha) noexcept
+void OPENVIEWER_VECTORCALL Display::Unpack(const void* __restrict half_buffer, const int64_t size, bool add_alpha) noexcept
 {
-	if (!add_alpha)
-	{ 
-		for (int64_t i = 0; i < size; i += 8)
-		{
-			__m128i arr = _mm_lddqu_si128((__m128i*) & half_buffer[i]);
-			__m256 floats = _mm256_cvtph_ps(arr);
-			_mm256_store_ps(&buffer[i], floats);
-		}
-	}
-	// unpack and then we set the alpha to 1.0f
-	else
-	{
-		int64_t idx = 0;
+	// if (!add_alpha)
+	// { 
+	// 	for (int64_t i = 0; i < size; i += 8)
+	// 	{
+	// 		__m128i arr = _mm_lddqu_si128((__m128i*) & half_buffer[i]);
+	// 		__m256 floats = _mm256_cvtph_ps(arr);
+	// 		_mm256_store_ps(&buffer[i], floats);
+	// 	}
+	// }
+	// // unpack and then we set the alpha to 1.0f
+	// else
+	// {
+	// 	int64_t idx = 0;
 
-		for (int64_t i = 0; i < size; i += 3)
-		{
-			__m128i arr = _mm_lddqu_si128((__m128i*) & half_buffer[i]);
-			__m128 floats = _mm_cvtph_ps(arr);
-			_mm_store_ps(&buffer[idx], floats);
+	// 	for (int64_t i = 0; i < size; i += 3)
+	// 	{
+	// 		__m128i arr = _mm_lddqu_si128((__m128i*) & half_buffer[i]);
+	// 		__m128 floats = _mm_cvtph_ps(arr);
+	// 		_mm_store_ps(&buffer[idx], floats);
 			
-			buffer[idx + 3] = 1.0f;
-			idx += 4;
-		}
-	}
+	// 		buffer[idx + 3] = 1.0f;
+	// 		idx += 4;
+	// 	}
+	// }
 }
 
 void Display::InitializeOpenGL(const Image& img) noexcept
@@ -100,18 +100,11 @@ void Display::Initialize(const Loader& loader, Ocio& ocio) noexcept
 
 	mipmap_idx = floor(height / 1000);
 
-	if (size < (width * height * 4))
-	{
-		// we need to resize the buffer to support 4 channels : alpha, and rgb
-		set_alpha = true;
-		buffer = static_cast<float*>(OvAlloc(width * height * 4 * sizeof(float), 32));
-		buffer_size = width * height * 4 * sizeof(float);
-	}
-	else
-	{
-		buffer = static_cast<float*>(OvAlloc(size * sizeof(float), 32));
-		buffer_size = size * sizeof(float);
-	}
+	uint8_t img_type_size, img_format_size;
+	loader.images[0].GetTypeSize(img_format_size, img_type_size);
+
+	buffer = OvAlloc(size * img_type_size, 32);
+	buffer_size = size * img_type_size;
 
 	InitializeOpenGL(loader.images[0]);
 
@@ -150,7 +143,7 @@ void Display::Initialize(const Loader& loader, Ocio& ocio) noexcept
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		ocio.UpdateProcessor();
-		ocio.Process(buffer, width, height);
+		ocio.Process(width, height);
 
 		// Draw the quad
 		glEnable(GL_TEXTURE_2D);
@@ -238,7 +231,7 @@ void Display::Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx)
 			glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			ocio.Process(buffer, xres, yres);
+			ocio.Process(xres, yres);
 
 			// Draw the quad
 			glEnable(GL_TEXTURE_2D);
@@ -277,15 +270,6 @@ void Display::Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx)
 // Main function that contains the window drawing 
 void Display::Draw(Loader& loader, uint16_t frame_idx) const noexcept
 {
-	/*
-	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar |
-		ImGuiWindowFlags_NoMove |
-		ImGuiWindowFlags_NoNav |
-		ImGuiWindowFlags_NoScrollbar |
-		ImGuiWindowFlags_NoCollapse |
-		ImGuiWindowFlags_NoResize;
-	*/
-
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar |
 		ImGuiWindowFlags_NoScrollbar |
 		ImGuiWindowFlags_NoCollapse;

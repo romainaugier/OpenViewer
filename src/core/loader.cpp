@@ -5,113 +5,54 @@
 
 #include "loader.h"
 
-// releases an image data
-void Image::Release() noexcept
-{
-	cache_index = -1;
-	cache_address = nullptr;
-}
-
-// loads an image
-void Image::LoadExr(half* __restrict buffer) const noexcept
-{
-	Imf::RgbaInputFile in(path.c_str());
-	
-	const Imath::Box2i display = in.displayWindow();
-	const Imath::Box2i data = in.dataWindow();
-	const Imath::V2i dim(data.max.x - data.min.x + 1, data.max.y - data.max.y + 1);
-
-	const int dx = data.min.x;
-	const int dy = data.min.y;
-	
-	// in case the data window is smaller than the display window
-	// we fill empty pixels everywhere and then read the image pixels
-	// to avoid non initialized values in memory
-	if (data.min.x > display.min.x || data.max.x < display.max.x || 
-		data.min.y > display.min.y || data.max.y < display.min.y)
-	{
-		memset(&buffer[0], static_cast<half>(0.0f), size);
-	}
-
-	in.setFrameBuffer((Imf::Rgba*)buffer, 1, dim.x);
-	in.readPixels(data.min.y, data.max.y);
-}
-
-void Image::LoadPng(uint8_t* __restrict buffer) const noexcept
-{
-
-}
-
-void Image::LoadJpg(uint8_t* __restrict buffer) const noexcept
-{
-
-}
-
-void Image::LoadOther(half* __restrict buffer) const noexcept
-{
-	auto in = OIIO::ImageInput::open(path);
-	in->read_image(0, -1, OIIO::TypeDesc::HALF, (half*)buffer);
-	in->close();
-}
-
-void Image::Load(void* __restrict buffer, Profiler* prof) noexcept
-{
-	cache_address = buffer;
-	
-	auto load_timer_start = prof->Start();
-
-	if (type & FileType_Exr) LoadExr((half*)buffer);
-	else if (type & FileType_Other) LoadOther((half*)buffer);
-
-	auto load_timer_end = prof->End();
-	prof->Time("Image Loading Time", load_timer_start, load_timer_end);
-}
-
 // initializes the loader with the different paths, the item count and the first frame
 void Loader::Initialize(const std::string fp, const uint64_t _cache_size, bool isdirectory) noexcept
 {
-	logger->Log(LogLevel_Debug, "[LOADER] : Initializing Loader with %s", fp.c_str());
+	this->logger->Log(LogLevel_Debug, "[LOADER] : Initializing Loader with %s", fp.c_str());
 	
-	has_been_initialized = 1;
+	this->has_been_initialized = 1;
 
 	if (isdirectory)
 	{
-		cache_size = _cache_size;
+		this->cache_size = _cache_size;
 
 		// TODO : make a real system to detect different image sequences in the same directory
 		// and let the user choose them
 		for (auto p : std::filesystem::directory_iterator(fp))
 		{
-			count++;
+			this->count++;
 			const std::string t = p.path().u8string();
-			images.emplace_back(t);
-			logger->Log(LogLevel_Debug, "Loading : %s", t.c_str());
+			this->images.emplace_back(t);
+			this->logger->Log(LogLevel_Debug, "Loading : %s", t.c_str());
 		}
 
 		// allocate the cache
 		if (use_cache > 0)
 		{
-			logger->Log(LogLevel_Debug, "[LOADER] : Loader cache size is %lld bytes", static_cast<long long>(_cache_size));
+			this->logger->Log(LogLevel_Debug, "[LOADER] : Loader cache size is %lld bytes", static_cast<long long>(_cache_size));
 			
 			// make sure memory is not already allocated
-			if (memory_arena != nullptr) OvFree(memory_arena);
+			if (this->memory_arena != nullptr) OvFree(this->memory_arena);
 
-			memory_arena = OvAlloc(cache_size, 16);
-			use_cache = 1;
+			this->memory_arena = OvAlloc(this->cache_size, 16);
+			this->use_cache = 1;
 		}
 		else
 		{
-			if (memory_arena != nullptr) OvFree(memory_arena);
+			uint8_t img_type_size, img_format_size;
+			this->images[0].GetTypeSize(img_format_size, img_type_size);
 
-			cache_size = images[0].size * sizeof(half);
-			memory_arena = OvAlloc(cache_size, 16);
-			use_cache = 0;
+			if (this->memory_arena != nullptr) OvFree(this->memory_arena);
+
+			this->cache_size = this->images[0].size * img_type_size;
+			this->memory_arena = OvAlloc(this->cache_size, 16);
+			this->use_cache = 0;
 		}
 
-		logger->Log(LogLevel_Debug, "[LOADER] : Image size is %d bytes.", images[0].size * sizeof(half));
+		this->logger->Log(LogLevel_Debug, "[LOADER] : Image size is %d bytes.", this->images[0].size * sizeof(half));
 
-		cached_size = images[0].size * sizeof(half);
-		cache_stride = images[0].size;
+		this->cached_size = this->images[0].size * sizeof(half);
+		this->cache_stride = this->images[0].size;
 
 		// get the image file format to set the different buffers we need
 		//if (images[0].type & FileType_Exr || images[0].type & FileType_Other)
@@ -204,7 +145,7 @@ void Loader::LoadImage(const uint16_t idx, void* address) noexcept
 	}
 }
 
-// unloads the first image in the cache and returns its address
+// nloads the first image in the cache and returns its address
 void* Loader::UnloadImage() noexcept
 {
 	if (last_cached.size() > 0)

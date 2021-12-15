@@ -26,7 +26,7 @@
 
 struct Display
 {
-	float* buffer = nullptr;
+	void* buffer = nullptr;
 	uint32_t buffer_size = 0;
 	GLuint display_tex;
 	GLuint tex_color_buffer;
@@ -53,7 +53,7 @@ struct Display
 	OPENVIEWER_FORCEINLINE void UnbindRBO() const noexcept;
 	void Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx) noexcept;
 	void Draw(Loader& loader, uint16_t frame_idx) const noexcept;
-	void OPENVIEWER_VECTORCALL Unpack(const half* __restrict half_buffer, const int64_t size, bool add_alpha) noexcept;
+	void OPENVIEWER_VECTORCALL Unpack(const void* __restrict half_buffer, const int64_t size, bool add_alpha) noexcept;
 	void GetDisplayPixels() noexcept;
 	void Release() noexcept;
 };

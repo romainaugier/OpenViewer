@@ -256,7 +256,7 @@ int application(int argc, char** argv)
                     {
                         auto plotstart = profiler.Start();
                         display.GetDisplayPixels();
-                        plot.Update(display.buffer);
+                        // plot.Update(display.buffer);
                         auto plotend = profiler.End();
                         profiler.Time("Plot Time", plotstart, plotend);
                     }
@@ -303,7 +303,7 @@ int application(int argc, char** argv)
                     {
                         auto plotstart = profiler.Start();
                         display.GetDisplayPixels();
-                        plot.Update(display.buffer);
+                        // plot.Update(display.buffer);
                         auto plotend = profiler.End();
                         profiler.Time("Plot Time", plotstart, plotend);
                     }
@@ -334,7 +334,7 @@ int application(int argc, char** argv)
                 {
                     display.GetDisplayPixels();
                     auto plotstart = profiler.Start();
-                    plot.Update(display.buffer);
+                    // plot.Update(display.buffer);
                     auto plotend = profiler.End();
                     profiler.Time("Plot Time", plotstart, plotend);
                 }

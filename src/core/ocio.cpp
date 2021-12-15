@@ -420,7 +420,7 @@ void Ocio::UpdateProcessor()
     }
 }
 
-void Ocio::Process(float* const __restrict buffer, const uint16_t width, const uint16_t height)
+void Ocio::Process(const uint16_t width, const uint16_t height)
 {
     try
     {
@@ -428,20 +428,7 @@ void Ocio::Process(float* const __restrict buffer, const uint16_t width, const u
 
         // GPU
         if (use_gpu > 0) ogl_builder->useAllUniforms();
-        else
-        {
-            uint8_t numthreads = 8;
-
-            // CPU
-#pragma omp parallel for num_threads(numthreads)
-            for (int8_t i = 0; i < numthreads; i++)
-            {
-                uint32_t index = i * ((width * height * 4) / numthreads);
-                OCIO::PackedImageDesc img(&buffer[index], width, height / numthreads, 4);
-                cpu->apply(img);
-            }
-            
-        }
+        else logger->Log(LogLevel_Error, "OCIO CPU Processor has not been implemented yet.");
     }
     catch (OCIO::Exception& exception)
     {

@@ -13,8 +13,11 @@
 #include "string_view"
 #endif
 
-bool endsWith(const std::string_view& str, const std::string_view& suffix);
+namespace Utils
+{
+    bool EndsWith(const std::string_view& str, const std::string_view& suffix);
 
-bool startsWith(const std::string_view& str, const std::string_view& prefix);
+    bool StartsWith(const std::string_view& str, const std::string_view& prefix);
 
-const char* remove_spaces(char* s);
+    const char* RemoveSpaces(char* s);
+} // End namespace utils

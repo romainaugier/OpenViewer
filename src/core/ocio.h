@@ -70,6 +70,6 @@ struct Ocio
     void GetLooks() noexcept;
     void ChangeConfig(const char* config_path);
     void UpdateProcessor();
-    void Process(float* const __restrict buffer, const uint16_t width, const uint16_t height);
+    void Process(const uint16_t width, const uint16_t height);
     void Release() noexcept;
 };
