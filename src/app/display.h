@@ -24,36 +24,42 @@
 #include "utils/profiler.h"
 #include "utils/memory/alloc.h"
 
-struct Display
+namespace Interface
 {
-	void* buffer = nullptr;
-	uint32_t buffer_size = 0;
-	GLuint display_tex;
-	GLuint tex_color_buffer;
-	GLuint fbo, rbo;
-	Profiler* profiler;
-	uint16_t width;
-	uint16_t height;
-	uint8_t mipmap_idx;
-	unsigned int display : 1;
-	unsigned int use_buffer : 1;
-
-	Display(Profiler* prof)
+	struct Display
 	{
-		profiler = prof;
-		display = 0;
-		use_buffer = 0;
-	}
+		Profiler* m_Profiler;
 
-	void Initialize(const Loader& loader, Ocio& ocio) noexcept;
-	void InitializeOpenGL(const Image& img) noexcept;
-	OPENVIEWER_FORCEINLINE void BindFBO() const noexcept;
-	OPENVIEWER_FORCEINLINE void UnbindFBO() const noexcept;
-	OPENVIEWER_FORCEINLINE void BindRBO() const noexcept;
-	OPENVIEWER_FORCEINLINE void UnbindRBO() const noexcept;
-	void Update(const Loader& loader, Ocio& ocio, const uint16_t frame_idx) noexcept;
-	void Draw(Loader& loader, uint16_t frame_idx) const noexcept;
-	void OPENVIEWER_VECTORCALL Unpack(const void* __restrict half_buffer, const int64_t size, bool add_alpha) noexcept;
-	void GetDisplayPixels() noexcept;
-	void Release() noexcept;
-};
+		Logger* m_Logger;
+		
+		Core::Loader* m_Loader;
+
+		GLuint m_DisplayTexture;
+		GLuint m_ColorBuffer;
+		GLuint m_FBO, m_RBO;
+		
+		uint16_t m_Width;
+		uint16_t m_Height;
+
+		uint8_t m_MipMapIndex;
+
+		bool m_IsOpen = true;
+
+		Display(Profiler* profiler, Logger* logger)
+		{
+			m_Profiler = profiler;
+			m_Logger = logger;
+			m_Loader = new Core::Loader(logger, profiler);
+		}
+
+		void Initialize(Core::Ocio& ocio) noexcept;
+		void InitializeOpenGL(const Core::Image& image) noexcept;
+		OPENVIEWER_FORCEINLINE void BindFBO() const noexcept;
+		OPENVIEWER_FORCEINLINE void UnbindFBO() const noexcept;
+		OPENVIEWER_FORCEINLINE void BindRBO() const noexcept;
+		OPENVIEWER_FORCEINLINE void UnbindRBO() const noexcept;
+		void Update(Core::Ocio& ocio, const uint16_t frameIndex) noexcept;
+		void Draw(uint16_t frameIndex) const noexcept;
+		void Release() noexcept;
+	};
+} // End namespace Interface

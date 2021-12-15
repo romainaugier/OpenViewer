@@ -2,17 +2,24 @@
 // Copyright (c) 2021 Romain Augier
 // All rights reserved.
 
-
 #include "app.h"
 
+namespace Interface
+{
+    Application::Application(Logger* logger)
+    {
+        this->m_Logger = logger;
+    }
+}
 
 int application(int argc, char** argv)
 {
+    // Initialize the application
     Logger logger;
-
     logger.SetLevel(LogLevel_Debug);
-
     logger.Log(LogLevel_Debug, "Initializing OpenViewer...");
+
+    Interface::Application app(&logger);
 
     // Setup window
     glfwSetErrorCallback(glfw_error_callback);
@@ -22,7 +29,6 @@ int application(int argc, char** argv)
         logger.Log(LogLevel_Error, "GLFW : Failed to initialize GLFW. Exiting application...");
         return 1;
     }
-
 
     const char* glsl_version = "#version 130";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -42,7 +48,7 @@ int application(int argc, char** argv)
 
     if (err)
     {
-        logger.Log(LogLevel_Error, "OpenGL : Failed to initialize loader. Exiting application...");
+        logger.Log(LogLevel_Error, "OPENGL Failed to initialize loader. Exiting application...");
         return 1;
     }
 
@@ -77,21 +83,16 @@ int application(int argc, char** argv)
 
     // profiler.current_memory_usage = ToMB(GetCurrentRss());
 
-    Ocio ocio(&logger);
+    Core::Ocio ocio(&logger);
     ocio.Initialize();
 
+    Interface::Settings_Windows settings;
 
-    Loader loader(&profiler, &logger);
-    Settings_Windows settings;
-
-    bool initialize_display = false;
-
+    // When the app is launched, we have a command line argument specifying to open a directory
+    // We initialize a display to load and display its content
     if (parser.is_directory > 0)
     {
-        uint64_t cache_size = static_cast<uint64_t>(settings.settings.cache_size) * 1000000;
-        loader.Initialize(parser.path, cache_size, true);
-        loader.LaunchSequenceWorker(false);
-        initialize_display = true;
+        Interface::Display* newDisplay = new Interface::Display(&profiler, &logger);
     }
     else if (parser.is_file > 0)
     {
@@ -105,81 +106,11 @@ int application(int argc, char** argv)
     settings.GetOcioConfig(ocio);
     
 
-    Menubar menubar;
-    Display display(&profiler);
-    Plot plot;
+    Interface::Menubar menubar;
+    Interface::Display display;
 
-    // Initialize Plot Maps
-    ImVec4 colors[20] = { ImVec4(0.95f, 0.0f, 0.0f, 0.0f),
-                          ImVec4(0.95f, 0.0f, 0.0f, 0.15f),
-                          ImVec4(0.95f, 0.0f, 0.0f, 0.25f),
-                          ImVec4(0.95f, 0.0f, 0.0f, 0.25f),
-                          ImVec4(0.95f, 0.0f, 0.0f, 0.35f),
-                          ImVec4(0.95f, 0.05f, 0.05f, 0.5f),
-                          ImVec4(0.95f, 0.15f, 0.15f, 0.6f),
-                          ImVec4(0.95f, 0.25f, 0.25f, 0.7f),
-                          ImVec4(0.95f, 0.35f, 0.35f, 0.8f),
-                          ImVec4(0.95f, 0.45f, 0.45f, 0.9f),
-                          ImVec4(0.95f, 0.55f, 0.55f, 1.0f),
-                          ImVec4(0.95f, 0.65f, 0.65f, 1.0f), 
-                          ImVec4(0.95f, 0.70f, 0.70f, 1.0f),
-                          ImVec4(0.95f, 0.75f, 0.75f, 1.0f),
-                          ImVec4(0.95f, 0.80f, 0.80f, 1.0f),
-                          ImVec4(0.95f, 0.85f, 0.85f, 1.0f),
-                          ImVec4(0.95f, 0.87f, 0.87f, 1.0f),
-                          ImVec4(0.95f, 0.90f, 0.90f, 1.0f),
-                          ImVec4(0.95f, 0.95f, 0.95f, 1.0f),
-                          ImVec4(1.0f, 1.0f, 1.0f, 1.0f) };
 
-    ImPlot::AddColormap("RedWF", colors, 20);
-
-    ImVec4 colors2[20] = { ImVec4(0.0f, 0.95f, 0.0f, 0.0f),
-                          ImVec4(0.0f, 0.95f, 0.0f, 0.15f),
-                          ImVec4(0.0f, 0.95f, 0.0f, 0.25f),
-                          ImVec4(0.0, 0.95f, 0.0f, 0.25f),
-                          ImVec4(0.0f, 0.95f, 0.0f, 0.35f),
-                          ImVec4(0.05f, 0.95f, 0.05f, 0.5f),
-                          ImVec4(0.15f, 0.95f, 0.15f, 0.6f),
-                          ImVec4(0.25f, 0.95f, 0.25f, 0.7f),
-                          ImVec4(0.35f, 0.95f, 0.35f, 0.8f),
-                          ImVec4(0.45f, 0.95f, 0.45f, 0.9f),
-                          ImVec4(0.55f, 0.95f, 0.55f, 1.0f),
-                          ImVec4(0.65f, 0.95f, 0.65f, 1.0f),
-                          ImVec4(0.70f, 0.95f, 0.70f, 1.0f),
-                          ImVec4(0.75f, 0.95f, 0.75f, 1.0f),
-                          ImVec4(0.80f, 0.95f, 0.80f, 1.0f),
-                          ImVec4(0.85f, 0.95f, 0.85f, 1.0f),
-                          ImVec4(0.87f, 0.95f, 0.87f, 1.0f),
-                          ImVec4(0.90f, 0.95f, 0.90f, 1.0f),
-                          ImVec4(0.95f, 0.95f, 0.95f, 1.0f),
-                          ImVec4(1.0f, 1.0f, 1.0f, 1.0f) };
-
-    ImPlot::AddColormap("GreenWF", colors2, 20);
-
-    ImVec4 colors3[20] = { ImVec4(0.3f, 0.3f, 0.95f, 0.0f),
-                          ImVec4(0.3f, 0.3f, 0.95f, 0.15f),
-                          ImVec4(0.3f, 0.3f, 0.95f, 0.25f),
-                          ImVec4(0.3f, 0.3f, 0.95f, 0.25f),
-                          ImVec4(0.3f, 0.3f, 0.95f, 0.35f),
-                          ImVec4(0.3f, 0.3f, 0.95f, 0.5f),
-                          ImVec4(0.3f, 0.3f, 0.95f, 0.6f),
-                          ImVec4(0.3f, 0.3f, 0.95f, 0.7f),
-                          ImVec4(0.3f, 0.3f, 0.95f, 0.8f),
-                          ImVec4(0.4f, 0.4f, 0.95f, 0.9f),
-                          ImVec4(0.55f, 0.55f, 0.95f, 1.0f),
-                          ImVec4(0.65f, 0.65f, 0.95f, 1.0f),
-                          ImVec4(0.70f, 0.75f, 0.95f, 1.0f),
-                          ImVec4(0.75f, 0.75f, 0.95f, 1.0f),
-                          ImVec4(0.80f, 0.80f, 0.95f, 1.0f),
-                          ImVec4(0.85f, 0.85f, 0.95f, 1.0f),
-                          ImVec4(0.87f, 0.87f, 0.95f, 1.0f),
-                          ImVec4(0.90f, 0.90f, 0.95f, 1.0f),
-                          ImVec4(0.95f, 0.95f, 0.95f, 1.0f),
-                          ImVec4(1.0f, 1.0f, 1.0f, 1.0f) };
-
-    ImPlot::AddColormap("BlueWF", colors3, 20);
-
-    if (initialize_display) display.Initialize(loader, ocio);
+    if (initialize_display) display.Initialize(ocio);
 
     // initialize memory profiler of main components
     profiler.MemUsage("Application Memory Usage", ToMB(GetCurrentRss()));

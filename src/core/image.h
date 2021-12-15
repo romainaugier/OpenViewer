@@ -44,9 +44,12 @@ namespace Core
 	{
 		std::string m_Path;
 
-		uint32_t m_Xres;
-		uint32_t m_Yres;
-		uint32_t m_Channels;
+		uint64_t m_Size = 0;   // Size 
+		uint64_t m_Stride = 0; // Size in bytes
+
+		uint32_t m_Xres = 0;
+		uint32_t m_Yres = 0;
+		uint32_t m_Channels = 0;
 		
 		uint16_t m_CacheIndex = 0; // zero means it is not cached
 		
@@ -75,6 +78,8 @@ namespace Core
 				m_Xres = spec.full_width;
 				m_Yres = spec.full_height;
 				m_Channels = spec.nchannels + 1;
+				m_Size = m_Xres * m_Yres * m_Channels;
+				m_Stride = m_Size * Size::Size16;
 			}
 			else if(Utils::EndsWith(fp, ".png"))
 			{
@@ -86,6 +91,8 @@ namespace Core
 				m_Xres = spec.width;
 				m_Yres = spec.height;
 				m_Channels = spec.nchannels;
+				m_Size = m_Xres * m_Yres * m_Channels;
+				m_Stride = m_Size * Size::Size8;
 			}
 			else if(Utils::EndsWith(fp, ".jpg") || Utils::EndsWith(fp, ".jpeg"))
 			{
@@ -97,6 +104,8 @@ namespace Core
 				m_Xres = spec.width;
 				m_Yres = spec.height;
 				m_Channels = spec.nchannels;
+				m_Size = m_Xres * m_Yres * m_Channels;
+				m_Stride = m_Size * Size::Size8;
 			}
 			else if(Utils::EndsWith(fp, ".hdr"))
 			{
@@ -108,17 +117,21 @@ namespace Core
 				m_Xres = spec.width;
 				m_Yres = spec.height;
 				m_Channels = spec.nchannels;
+				m_Size = m_Xres * m_Yres * m_Channels;
+				m_Stride = m_Size * Size::Size32;
 			}
 			else if(Utils::EndsWith(fp, ".tiff"))
 			{
 				m_Type = FileType_Tiff;
-				m_Format = Format_RGB_FLOAT;
-				m_GLInternalFormat = GL_RGB32F;
+				m_Format = Format_RGB_HALF;
+				m_GLInternalFormat = GL_RGBA32F;
 				m_GLFormat = GL_RGBA;
-				m_GLType = GL_FLOAT;
+				m_GLType = GL_HALF_FLOAT;
 				m_Xres = spec.width;
 				m_Yres = spec.height;
 				m_Channels = spec.nchannels;
+				m_Size = m_Xres * m_Yres * m_Channels;
+				m_Stride = m_Size * Size::Size16;
 			}
 			else
 			{
@@ -130,6 +143,7 @@ namespace Core
 				m_Xres = spec.width;
 				m_Yres = spec.height;
 				m_Channels = spec.nchannels;
+				m_Size = m_Xres * m_Yres * m_Channels;
 			}
 
 			in->close();

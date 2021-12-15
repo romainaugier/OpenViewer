@@ -9,7 +9,7 @@ namespace Core
 	// releases an image data
 	void Image::Release() noexcept
 	{
-		this->m_CacheIndex = -1;
+		this->m_CacheIndex = 0;
 	}
 
 	// returns the size of the image type (float, uint8...)
@@ -101,12 +101,11 @@ namespace Core
 
 	void Image::Load(void* __restrict buffer, Profiler* prof) noexcept
 	{
-		
 		auto load_timer_start = prof->Start();
 
 		if (this->m_Type & FileType_Exr) LoadExr((half*)buffer);
-		if (this->m_Type& FileType_Jpg) LoadJpg((uint8_t*)buffer);
-		if (this->m_Type & FileType_Png) LoadPng((uint8_t*)buffer);
+		else if (this->m_Type& FileType_Jpg) LoadJpg((uint8_t*)buffer);
+		else if (this->m_Type & FileType_Png) LoadPng((uint8_t*)buffer);
 		else if (this->m_Type & FileType_Other) LoadOther((half*)buffer);
 
 		auto load_timer_end = prof->End();

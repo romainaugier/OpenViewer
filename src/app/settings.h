@@ -34,16 +34,20 @@ struct Settings
 };
 
 // struct to hold the different windows for settings
-struct Settings_Windows
+
+namespace Interface
 {
-	Settings settings;
+	struct Settings_Windows
+	{
+		Settings settings;
 
-	bool p_open_interface_window = false;
-	bool p_open_ocio_window = false;
-	bool p_open_playback_window = false;
-	bool p_open_performance_window = false;
+		bool p_open_interface_window = false;
+		bool p_open_ocio_window = false;
+		bool p_open_playback_window = false;
+		bool p_open_performance_window = false;
 
-	void draw(ImPlaybar& playbar, Profiler* prof, Ocio& ocio, Loader& loader) noexcept;
-	void GetOcioConfig(Ocio& ocio) noexcept;
-	void Release() noexcept;
-};
+		void Draw(ImPlaybar& playbar, Profiler* prof, Core::Ocio& ocio, Core::Loader& loader) noexcept;
+		void GetOcioConfig(Core::Ocio& ocio) noexcept;
+		void Release() noexcept;
+	};
+} // End namespace Interface

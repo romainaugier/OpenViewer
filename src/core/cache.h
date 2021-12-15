@@ -63,10 +63,19 @@ namespace Core
         uint16_t m_Size = 0;
         uint16_t m_Capacity = 0;
 
+        // Initializes the cache, the size needs to be expressed in MB
         void Initialize(const size_t size, Logger* logger) noexcept;
-        void Add(Image* item) noexcept;
+
+        // Adds an image to the cache, and it will remove one at the beginning (or more) is the cache is full
+        uint16_t Add(Image* item) noexcept;
+
+        // Remove an image from the cache
         void Remove(const uint16_t index) noexcept;
+
+        // Resizes the cache
         void Resize(const size_t newSize) noexcept;
+        
+        // Releases the cache, deinitialise everything and free the memory
         void Release() noexcept;
     };
 

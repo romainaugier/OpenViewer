@@ -24,13 +24,25 @@ static void glfw_error_callback(int error, const char* description)
     fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-
-
 #include <thread>
 
 #include "menubar.h"
 #include "display.h"
 #include "core/loader.h"
 #include "core/parser.h"
+
+namespace Interface
+{
+    using Displays = std::unordered_map<uint8_t, Display*>;
+
+    struct Application
+    {
+        Displays m_Displays;
+
+        Logger* m_Logger = nullptr;
+
+        Application(Logger* logger);        
+    };
+}
 
 int application(int argc, char** argv);

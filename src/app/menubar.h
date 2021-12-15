@@ -2,7 +2,6 @@
 // Copyright (c) 2021 Romain Augier
 // All rights reserved.
 
-
 #pragma once
 
 #include "settings.h"
@@ -15,16 +14,20 @@
 #include "stdio.h"
 #include <algorithm>
 
-struct Menubar
+namespace Interface
 {
-	int bar_mode = 0;
-	unsigned int has_opened_ifd : 1;
-
-	Menubar()
+	struct Menubar
 	{
-		has_opened_ifd = 0;
-	}
+		int m_BarMode = 0;
+		bool m_HasOpenedIFD = false;
 
-	void draw(Settings_Windows& current_settings, Loader& loader, Display& display, 
-			  ImPlaybar& playbar, Ocio& ocio, Profiler& prof, Plot& plot, bool& change) noexcept;
-};
+		void Draw(Settings_Windows& currentSettings, 
+				  Core::Loader& loader, 
+				  Display& display, 
+				  ImPlaybar& playbar, 
+				  Core::Ocio& ocio, 
+				  Profiler& prof, 
+				  Plot& plot, 
+				  bool& change) noexcept;
+	};
+} // End namespace Interface

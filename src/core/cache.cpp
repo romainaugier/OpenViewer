@@ -8,17 +8,17 @@ namespace Core
 {
     void ImageCache::Initialize(const size_t size, Logger* logger) noexcept
     {
-        // Size needs to be specified in MB 
         this->m_Capacity = size;
+        // Size needs to be specified in MB 
         this->m_BytesCapacity = size * 1000000;
         this->m_Logger = logger;
 
-        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Initializing Image Cache");
+        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Initializing Image Cache (%d MB)", size);
 
-        this->m_MemoryArena = OvAlloc(size, 32);
+        this->m_MemoryArena = OvAlloc(this->m_BytesCapacity, 32);
     }
 
-    void ImageCache::Add(Image* image) noexcept
+    uint16_t ImageCache::Add(Image* image) noexcept
     {
         this->m_Mtx.lock();
 
@@ -44,7 +44,11 @@ namespace Core
             this->m_CurrentIndex += 1;
             this->m_Size += 1;
 
-            this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Added image to the image cache at index %d", this->m_CurrentIndex);
+            this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Added image to the Image Cache at index %d", this->m_CurrentIndex);
+
+            this->m_Mtx.unlock();
+
+            return this->m_CurrentIndex - 1;
         }
         // The image we want to store does not fit in the cache. We will release images until
         // we have enough space to store the image
@@ -75,8 +79,10 @@ namespace Core
                     image->m_CacheIndex = traversingIdx;
 
                     this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Removed image at index [%d] and loaded a new one", traversingIdx);
+
+                    this->m_Mtx.unlock();
                     
-                    break;
+                    return traversingIdx;
                 }
                 else
                 {
@@ -95,7 +101,9 @@ namespace Core
 
                         this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Loaded image at index [%d]", traversingIdx);
 
-                        break;
+                        this->m_Mtx.unlock();
+
+                        return cleanIndex;
                     }
                     else
                     {
@@ -113,8 +121,6 @@ namespace Core
                 ++traversingIdx;
             }
         }
-
-        this->m_Mtx.unlock();
     }
 
     void ImageCache::Remove(const uint16_t index) noexcept
@@ -139,7 +145,7 @@ namespace Core
             this->m_BytesCapacity = newSizeBytes;
         }
 
-        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Resized to %d MB", newSize);
+        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Image Cache resized (%d MB)", newSize);
     }
     
     void ImageCache::Release() noexcept
