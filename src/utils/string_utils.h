@@ -13,8 +13,8 @@
 #include "string_view"
 #endif
 
-bool endsWith(std::string_view str, std::string_view suffix);
+bool endsWith(const std::string_view& str, const std::string_view& suffix);
 
-bool startsWith(std::string_view str, std::string_view prefix);
+bool startsWith(const std::string_view& str, const std::string_view& prefix);
 
 const char* remove_spaces(char* s);
