@@ -12,7 +12,6 @@ namespace Interface
 				       ImPlaybar& playbar, 
 				       Core::Ocio& ocio, 
 				       Profiler& prof, 
-				       Plot& plot, 
 				       bool& change) noexcept
 	{
 		ImGui::SetNextWindowBgAlpha(currentSettings.settings.interface_windows_bg_alpha);
@@ -50,7 +49,6 @@ namespace Interface
 						{
 							loader.Release();
 							display.Release();
-							plot.Release();
 						}
 
 						loader.Initialize(fp);
@@ -79,7 +77,6 @@ namespace Interface
 						{
 							loader.Release();
 							display.Release();
-							plot.Release();
 						}
 		
 						uint64_t cache_size = static_cast<uint64_t>(currentSettings.settings.cache_size) * 1000000;

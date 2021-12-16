@@ -27,7 +27,6 @@ namespace Interface
 				  ImPlaybar& playbar, 
 				  Core::Ocio& ocio, 
 				  Profiler& prof, 
-				  Plot& plot, 
 				  bool& change) noexcept;
 	};
 } // End namespace Interface

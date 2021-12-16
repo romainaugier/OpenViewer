@@ -88,35 +88,43 @@ int application(int argc, char** argv)
 
     Interface::Settings_Windows settings;
 
+    uint16_t playbarCount = 1;
+
     // When the app is launched, we have a command line argument specifying to open a directory
     // We initialize a display to load and display its content
     if (parser.is_directory > 0)
     {
         Interface::Display* newDisplay = new Interface::Display(&profiler, &logger);
+
+        newDisplay->Initialize(ocio);
+        newDisplay->m_Loader->Initialize(parser.path, false, 0);
+        playbarCount = newDisplay->m_Loader->m_ImageCount;
+
+        app.m_Displays[0] = newDisplay;
     }
     else if (parser.is_file > 0)
     {
-        loader.Initialize(parser.path, 0, false);
-        initialize_display = true;
+        Interface::Display* newDisplay = new Interface::Display(&profiler, &logger);
+
+        newDisplay->Initialize(ocio);
+        newDisplay->m_Loader->Initialize(parser.path);
+        playbarCount = newDisplay->m_Loader->m_ImageCount;
+
+        app.m_Displays[0] = newDisplay;
     }
 
     // initialize windows
-    ImPlaybar playbar(ImVec2(0.0f, loader.count + 1.0f));
+    ImPlaybar playbar(ImVec2(0.0f, playbarCount + 1.0f));
 
     settings.GetOcioConfig(ocio);
     
-
     Interface::Menubar menubar;
-    Interface::Display display;
-
-
-    if (initialize_display) display.Initialize(ocio);
 
     // initialize memory profiler of main components
     profiler.MemUsage("Application Memory Usage", ToMB(GetCurrentRss()));
-    profiler.MemUsage("Display Memory Usage", ToMB((sizeof(display) + display.buffer_size) / 8));
+    // profiler.MemUsage("Display Memory Usage", ToMB((sizeof(display) + display.buffer_size) / 8));
     profiler.MemUsage("Ocio Module Memory Usage", ToMB((sizeof(ocio) + ocio.GetSize()) / 8));
-    profiler.MemUsage("Loader Memory Usage", ToMB((sizeof(loader) + loader.cached_size) / 8));
+    // profiler.MemUsage("Loader Memory Usage", ToMB((sizeof(loader) + loader.cached_size) / 8));
     
     bool change = true;
 
@@ -149,130 +157,129 @@ int application(int argc, char** argv)
 
         // update memory profiler
         profiler.MemUsage("Application Memory Usage", ToMB(GetCurrentRss()));
-        profiler.MemUsage("Display Memory Usage", ToMB((sizeof(display) + display.buffer_size) / 8));
+        // profiler.MemUsage("Display Memory Usage", ToMB((sizeof(display) + display.buffer_size) / 8));
         profiler.MemUsage("Ocio Module Memory Usage", ToMB((sizeof(ocio) + ocio.GetSize()) / 8));
-        profiler.MemUsage("Loader Memory Usage", ToMB((sizeof(loader) + loader.cached_size) / 8));
+        // profiler.MemUsage("Loader Memory Usage", ToMB((sizeof(loader) + loader.cached_size) / 8));
 
-        loader.frame = playbar.playbar_frame;
         uint16_t frame_index = playbar.playbar_frame;
 
         
-        if (loader.has_been_initialized > 0 && playbar.update > 0 ||
-            loader.has_been_initialized > 0 && change)
-        {
-            if (settings.settings.use_cache) // cache loading
-            {
-                if (playbar.play < 1)
-                {
-                    loader.work_for_cache = false;
-                    auto imgload_start = profiler.Start();
-                    loader.is_playing = 0;
+        // if (loader.has_been_initialized > 0 && playbar.update > 0 ||
+        //     loader.has_been_initialized > 0 && change)
+        // {
+        //     if (settings.settings.use_cache) // cache loading
+        //     {
+        //         if (playbar.play < 1)
+        //         {
+        //             loader.work_for_cache = false;
+        //             auto imgload_start = profiler.Start();
+        //             loader.is_playing = 0;
 
-                    if (loader.cached[playbar.playbar_frame] < 1)
-                    {
-                        void* address = loader.UnloadImage();
+        //             if (loader.cached[playbar.playbar_frame] < 1)
+        //             {
+        //                 void* address = loader.UnloadImage();
 
-                        if (address == nullptr) address = loader.memory_arena;
+        //                 if (address == nullptr) address = loader.memory_arena;
                         
-                        loader.LoadImage(frame_index, address);
-                    }
+        //                 loader.LoadImage(frame_index, address);
+        //             }
 
-                    auto imgload_end = profiler.End();
+        //             auto imgload_end = profiler.End();
 
-                    profiler.Time("Image Loading Time", imgload_start, imgload_end);
+        //             profiler.Time("Image Loading Time", imgload_start, imgload_end);
 
-                    display.Update(loader, ocio, frame_index);
+        //             display.Update(loader, ocio, frame_index);
 
-                    if (settings.settings.parade)
-                    {
-                        auto plotstart = profiler.Start();
-                        display.GetDisplayPixels();
-                        // plot.Update(display.buffer);
-                        auto plotend = profiler.End();
-                        profiler.Time("Plot Time", plotstart, plotend);
-                    }
+        //             if (settings.settings.parade)
+        //             {
+        //                 auto plotstart = profiler.Start();
+        //                 display.GetDisplayPixels();
+        //                 // plot.Update(display.buffer);
+        //                 auto plotend = profiler.End();
+        //                 profiler.Time("Plot Time", plotstart, plotend);
+        //             }
 
-                    change = false;
-                }
-                else
-                {
-                    auto imgload_start = profiler.Start();
-                    loader.is_playing = 1;
+        //             change = false;
+        //         }
+        //         else
+        //         {
+        //             auto imgload_start = profiler.Start();
+        //             loader.is_playing = 1;
 
-                    if (loader.cached[(playbar.playbar_frame + 1) % loader.count] < 1) // emergency load
-                    {
-                        loader.mtx.lock();
-                        loader.work_for_cache = 1;
-                        loader.urgent_load = 1;
-                        loader.cache_load_frame = playbar.playbar_frame;
-                        loader.mtx.unlock();
-                        loader.load_into_cache.notify_all();
+        //             if (loader.cached[(playbar.playbar_frame + 1) % loader.count] < 1) // emergency load
+        //             {
+        //                 loader.mtx.lock();
+        //                 loader.work_for_cache = 1;
+        //                 loader.urgent_load = 1;
+        //                 loader.cache_load_frame = playbar.playbar_frame;
+        //                 loader.mtx.unlock();
+        //                 loader.load_into_cache.notify_all();
 
-                        // wait for a few ms to be make sure some frames are loaded
-                        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-                    }
-                    else if (loader.cached[(playbar.playbar_frame + (loader.cache_size_count / 2)) % loader.count] < 1) // "casual" load 
-                    {
-                        loader.mtx.lock();
-                        loader.work_for_cache = 1;
-                        loader.cache_load_frame = playbar.playbar_frame;
-                        loader.mtx.unlock();
-                        loader.load_into_cache.notify_all();
-                    }
-                    if (loader.is_playloader_working < 1)
-                    {
-                        loader.stop_playloader = 0;
-                        loader.LaunchPlayerWorker();
-                    }
-                    auto imgload_end = profiler.End();
+        //                 // wait for a few ms to be make sure some frames are loaded
+        //                 std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        //             }
+        //             else if (loader.cached[(playbar.playbar_frame + (loader.cache_size_count / 2)) % loader.count] < 1) // "casual" load 
+        //             {
+        //                 loader.mtx.lock();
+        //                 loader.work_for_cache = 1;
+        //                 loader.cache_load_frame = playbar.playbar_frame;
+        //                 loader.mtx.unlock();
+        //                 loader.load_into_cache.notify_all();
+        //             }
+        //             if (loader.is_playloader_working < 1)
+        //             {
+        //                 loader.stop_playloader = 0;
+        //                 loader.LaunchPlayerWorker();
+        //             }
+        //             auto imgload_end = profiler.End();
 
-                    profiler.Time("Image Loading Time", imgload_start, imgload_end);
+        //             profiler.Time("Image Loading Time", imgload_start, imgload_end);
 
-                    display.Update(loader, ocio, frame_index);
+        //             display.Update(loader, ocio, frame_index);
                     
-                    if (settings.settings.parade)
-                    {
-                        auto plotstart = profiler.Start();
-                        display.GetDisplayPixels();
-                        // plot.Update(display.buffer);
-                        auto plotend = profiler.End();
-                        profiler.Time("Plot Time", plotstart, plotend);
-                    }
+        //             if (settings.settings.parade)
+        //             {
+        //                 auto plotstart = profiler.Start();
+        //                 display.GetDisplayPixels();
+        //                 // plot.Update(display.buffer);
+        //                 auto plotend = profiler.End();
+        //                 profiler.Time("Plot Time", plotstart, plotend);
+        //             }
 
-                    change = false;
-                }
-            }
-            else // no cache allowed
-            {
-                if (loader.stop_playloader > 0) loader.stop_playloader = 1;
+        //             change = false;
+        //         }
+        //     }
+        //     else // no cache allowed
+        //     {
+        //         if (loader.stop_playloader > 0) loader.stop_playloader = 1;
 
-                auto imgload_start = profiler.Start();
-                loader.is_playing = 0;
+        //         auto imgload_start = profiler.Start();
+        //         loader.is_playing = 0;
 
-                if (loader.cached[frame_index] == 0)
-                {
-                    void* address = loader.UnloadImage();
-                    loader.LoadImage(frame_index, address);
-                }
+        //         if (loader.cached[frame_index] == 0)
+        //         {
+        //             void* address = loader.UnloadImage();
+        //             loader.LoadImage(frame_index, address);
+        //         }
 
-                auto imgload_end = profiler.End();
+        //         auto imgload_end = profiler.End();
 
-                profiler.Time("Image Loading Time", imgload_start, imgload_end);
+        //         profiler.Time("Image Loading Time", imgload_start, imgload_end);
 
-                display.Update(loader, ocio, frame_index);
+        //         display.Update(loader, ocio, frame_index);
 
-                if (settings.settings.parade)
-                {
-                    display.GetDisplayPixels();
-                    auto plotstart = profiler.Start();
-                    // plot.Update(display.buffer);
-                    auto plotend = profiler.End();
-                    profiler.Time("Plot Time", plotstart, plotend);
-                }
+        //         if (settings.settings.parade)
+        //         {
+        //             display.GetDisplayPixels();
+        //             auto plotstart = profiler.Start();
+        //             // plot.Update(display.buffer);
+        //             auto plotend = profiler.End();
+        //             profiler.Time("Plot Time", plotstart, plotend);
+        //         }
 
-                change = false;
-            }
-        }
+        //         change = false;
+        //     }
+        // }
 
         glfwPollEvents();
 
@@ -287,23 +294,22 @@ int application(int argc, char** argv)
         // ImPlot::ShowDemoWindow();
 
         // display
-        display.Draw(loader, frame_index);
+        // display.Draw(loader, frame_index);
 
         // settings windows
-        settings.draw(playbar, &profiler, ocio, loader);
+        // settings.Draw(playbar, &profiler, ocio, loader);
 
         // menubar
-        menubar.draw(settings, loader, display, playbar, ocio, profiler, plot, change);
+        // menubar.Draw(settings, loader, display, playbar, ocio, profiler, change);
         
         // playbar 
         ImGui::SetNextWindowBgAlpha(settings.settings.interface_windows_bg_alpha);
-        playbar.draw(loader.cached);
+        //playbar.draw(loader.cached);
 
         // plot
         if (settings.settings.parade)
         {
             auto plot_draw_start = profiler.Start();
-            plot.Parade();
             auto plot_draw_end = profiler.End();
             profiler.Time("Plot Drawing Time", plot_draw_start, plot_draw_end);
         }
@@ -330,20 +336,6 @@ int application(int argc, char** argv)
 
         glfwSwapBuffers(window);
     }
-
-    // make sure to join remaining thread if it has not been     
-    loader.mtx.lock();
-    loader.stop_playloader = 1;
-    loader.mtx.unlock();
-    loader.load_into_cache.notify_all();
-
-    if(loader.has_finished > 0 || loader.is_playloader_working > 0) loader.JoinWorker();
-
-    loader.Release();
-    display.Release();
-    ocio.Release();
-    settings.Release();
-    plot.Release();
 
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();

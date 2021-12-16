@@ -80,23 +80,23 @@ namespace Core
 
 	void Image::LoadPng(uint8_t* __restrict buffer) const noexcept
 	{
-		auto in = OIIO::ImageInput::open(this->m_Path);
-		in->read_image(0, -1, OIIO::TypeDesc::UINT8, (uint8_t*)buffer);
-		in->close();
+		// auto in = OIIO::ImageInput::open(this->m_Path);
+		// in->read_image(OIIO::TypeDesc::UINT8, buffer);
+		// in->close();
 	}
 
 	void Image::LoadJpg(uint8_t* __restrict buffer) const noexcept
 	{
-		auto in = OIIO::ImageInput::open(this->m_Path);
-		in->read_image(0, -1, OIIO::TypeDesc::UINT8, (uint8_t*)buffer);
-		in->close();
+		// auto in = OIIO::ImageInput::open(this->m_Path);
+		// in->read_image(0, -1, OIIO::TypeDesc::UINT8, (uint8_t*)buffer);
+		// in->close();
 	}
 
 	void Image::LoadOther(half* __restrict buffer) const noexcept
 	{
-		auto in = OIIO::ImageInput::open(this->m_Path);
-		in->read_image(0, -1, OIIO::TypeDesc::HALF, (half*)buffer);
-		in->close();
+		// auto in = OIIO::ImageInput::open(this->m_Path);
+		// in->read_image(0, -1, OIIO::TypeDesc::HALF, (half*)buffer);
+		// in->close();
 	}
 
 	void Image::Load(void* __restrict buffer, Profiler* prof) noexcept
