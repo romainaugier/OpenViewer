@@ -71,80 +71,81 @@ namespace Core
 
 			if(Utils::EndsWith(fp, ".exr"))
 			{
-				m_Type = FileType_Exr;
-				m_Format = Format_RGBA_HALF;
-				m_GLInternalFormat = GL_RGBA32F;
-				m_GLFormat = GL_RGBA;
-				m_GLType = GL_HALF_FLOAT;
-				m_Xres = spec.full_width;
-				m_Yres = spec.full_height;
-				m_Channels = spec.nchannels + 1;
-				m_Size = m_Xres * m_Yres * m_Channels;
-				m_Stride = m_Size * Size::Size16;
+				this->m_Type = FileType_Exr;
+				this->m_Format = Format_RGBA_HALF;
+				this->m_GLInternalFormat = GL_RGBA32F;
+				this->m_GLFormat = GL_RGBA;
+				this->m_GLType = GL_HALF_FLOAT;
+				this->m_Xres = spec.full_width;
+				this->m_Yres = spec.full_height;
+				this->m_Channels = spec.nchannels + 1;
+				this->m_Size = m_Xres * m_Yres * m_Channels;
+				this->m_Stride = m_Size * Size::Size32;
 			}
 			else if(Utils::EndsWith(fp, ".png"))
 			{
-				m_Type = FileType_Other;
-				m_Format = Format_RGB_U8;
-				m_GLInternalFormat = GL_RGBA32F;
-				m_GLFormat = GL_RGB;
-				m_GLType = GL_UNSIGNED_BYTE;
-				m_Xres = spec.width;
-				m_Yres = spec.height;
-				m_Channels = spec.nchannels;
-				m_Size = m_Xres * m_Yres * m_Channels;
-				m_Stride = m_Size * Size::Size8;
+				this->m_Type = FileType_Png;
+				this->m_Format = Format_RGB_U8;
+				this->m_GLInternalFormat = GL_RGB32F;
+				this->m_GLFormat = GL_RGB;
+				this->m_GLType = GL_UNSIGNED_BYTE;
+				this->m_Xres = spec.width;
+				this->m_Yres = spec.height;
+				this->m_Channels = spec.nchannels;
+				this->m_Size = m_Xres * m_Yres * m_Channels;
+				this->m_Stride = m_Size * Size::Size8;
 			}
 			else if(Utils::EndsWith(fp, ".jpg") || Utils::EndsWith(fp, ".jpeg"))
 			{
-				m_Type = FileType_Other;
-				m_Format = Format_RGB_U8;
-				m_GLInternalFormat = GL_RGB32F;
-				m_GLFormat = GL_RGB;
-				m_GLType = GL_UNSIGNED_BYTE;
-				m_Xres = spec.width;
-				m_Yres = spec.height;
-				m_Channels = spec.nchannels;
-				m_Size = m_Xres * m_Yres * m_Channels;
-				m_Stride = m_Size * Size::Size8;
+				this->m_Type = FileType_Other;
+				this->m_Format = Format_RGB_U8;
+				this->m_GLInternalFormat = GL_RGB32F;
+				this->m_GLFormat = GL_RGB;
+				this->m_GLType = GL_UNSIGNED_BYTE;
+				this->m_Xres = spec.width;
+				this->m_Yres = spec.height;
+				this->m_Channels = spec.nchannels;
+				this->m_Size = m_Xres * m_Yres * m_Channels;
+				this->m_Stride = m_Size * Size::Size8;
 			}
 			else if(Utils::EndsWith(fp, ".hdr"))
 			{
-				m_Type = FileType_Hdr;
-				m_Format = Format_RGB_FLOAT;
-				m_GLInternalFormat = GL_RGB32F;
-				m_GLFormat = GL_RGB;
-				m_GLType = GL_FLOAT;
-				m_Xres = spec.width;
-				m_Yres = spec.height;
-				m_Channels = spec.nchannels;
-				m_Size = m_Xres * m_Yres * m_Channels;
-				m_Stride = m_Size * Size::Size32;
+				this->m_Type = FileType_Hdr;
+				this->m_Format = Format_RGB_FLOAT;
+				this->m_GLInternalFormat = GL_RGB32F;
+				this->m_GLFormat = GL_RGB;
+				this->m_GLType = GL_FLOAT;
+				this->m_Xres = spec.width;
+				this->m_Yres = spec.height;
+				this->m_Channels = spec.nchannels;
+				this->m_Size = m_Xres * m_Yres * m_Channels;
+				this->m_Stride = m_Size * Size::Size32;
 			}
 			else if(Utils::EndsWith(fp, ".tiff"))
 			{
-				m_Type = FileType_Tiff;
-				m_Format = Format_RGB_HALF;
-				m_GLInternalFormat = GL_RGBA32F;
-				m_GLFormat = GL_RGBA;
-				m_GLType = GL_HALF_FLOAT;
-				m_Xres = spec.width;
-				m_Yres = spec.height;
-				m_Channels = spec.nchannels;
-				m_Size = m_Xres * m_Yres * m_Channels;
-				m_Stride = m_Size * Size::Size16;
+				this->m_Type = FileType_Tiff;
+				this->m_Format = Format_RGB_HALF;
+				this->m_GLInternalFormat = GL_RGBA32F;
+				this->m_GLFormat = GL_RGBA;
+				this->m_GLType = GL_HALF_FLOAT;
+				this->m_Xres = spec.width;
+				this->m_Yres = spec.height;
+				this->m_Channels = spec.nchannels;
+				this->m_Size = m_Xres * m_Yres * m_Channels;
+				this->m_Stride = this->m_Size * Size::Size16;
 			}
 			else
 			{
-				m_Type = FileType_Other;
-				m_Format = Format_RGB_HALF;
-				m_GLInternalFormat = GL_RGB32F;
-				m_GLFormat = GL_RGB;
-				m_GLType = GL_HALF_FLOAT;
-				m_Xres = spec.width;
-				m_Yres = spec.height;
-				m_Channels = spec.nchannels;
-				m_Size = m_Xres * m_Yres * m_Channels;
+				this->m_Type = FileType_Other;
+				this->m_Format = Format_RGB_HALF;
+				this->m_GLInternalFormat = GL_RGB32F;
+				this->m_GLFormat = GL_RGB;
+				this->m_GLType = GL_HALF_FLOAT;
+				this->m_Xres = spec.width;
+				this->m_Yres = spec.height;
+				this->m_Channels = spec.nchannels;
+				this->m_Size = m_Xres * m_Yres * m_Channels;
+				this->m_Stride = this->m_Size * Size::Size16;
 			}
 
 			in->close();

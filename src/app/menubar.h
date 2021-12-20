@@ -22,8 +22,7 @@ namespace Interface
 		bool m_HasOpenedIFD = false;
 
 		void Draw(Settings_Windows& currentSettings, 
-				  Core::Loader& loader, 
-				  Display& display, 
+				  Application& app,
 				  ImPlaybar& playbar, 
 				  Core::Ocio& ocio, 
 				  Profiler& prof, 

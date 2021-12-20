@@ -90,7 +90,7 @@ private:
     {
         if (lvl == LogLevel_Error) SetConsoleTextAttribute(winConsole, FOREGROUND_RED);
         if (lvl == LogLevel_Warning) SetConsoleTextAttribute(winConsole, FOREGROUND_RED | FOREGROUND_GREEN);
-        if (lvl == LogLevel_Diagnostic) SetConsoleTextAttribute(winConsole, FOREGROUND_GREEN);
+        if (lvl == LogLevel_Diagnostic || lvl == LogLevel_Debug) SetConsoleTextAttribute(winConsole, FOREGROUND_GREEN);
     }
 
     void ResetConsoleColor() const noexcept

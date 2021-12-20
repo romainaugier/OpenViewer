@@ -7,8 +7,7 @@
 namespace Interface
 {
 	void Menubar::Draw(Settings_Windows& currentSettings, 
-				       Core::Loader& loader, 
-				       Display& display, 
+				       Application& app,
 				       ImPlaybar& playbar, 
 				       Core::Ocio& ocio, 
 				       Profiler& prof, 
@@ -45,22 +44,24 @@ namespace Interface
 						const auto& res = ifd::FileDialog::Instance().GetResults();
 						const std::string fp = res[0].u8string();
 
-						if (loader.m_HasBeenInitialized)
+						Display* currentActiveDisplay = app.m_Displays[app.m_ActiveDisplayID];
+
+						if(currentActiveDisplay->m_Loader->m_HasBeenInitialized)
 						{
-							loader.Release();
-							display.Release();
+							currentActiveDisplay->Release();
+							currentActiveDisplay->m_Loader->Release();
 						}
 
-						loader.Initialize(fp);
-						display.Initialize(ocio);
+						currentActiveDisplay->m_Loader->Initialize(fp);
+						currentActiveDisplay->Initialize(ocio);
 
-						playbar.playbar_range = ImVec2(0.0f, loader.m_ImageCount + 1.0f);
+						playbar.playbar_range = ImVec2(0.0f, currentActiveDisplay->m_Loader->m_ImageCount + 1.0f);
 						playbar.play = 0;
 						playbar.playbar_frame = 0;
 
 						change = true;
 						ocio.UpdateProcessor();
-						display.Update(ocio, playbar.playbar_frame);
+						currentActiveDisplay->Update(ocio, playbar.playbar_frame);
 					}
 
 					ifd::FileDialog::Instance().Close();
@@ -73,24 +74,26 @@ namespace Interface
 						const auto& res = ifd::FileDialog::Instance().GetResult();
 						const std::string fp = res.u8string();
 
-						if (loader.m_HasBeenInitialized > 0)
+						Display* currentActiveDisplay = app.m_Displays[app.m_ActiveDisplayID];
+
+						if(currentActiveDisplay->m_Loader->m_HasBeenInitialized)
 						{
-							loader.Release();
-							display.Release();
+							currentActiveDisplay->Release();
+							currentActiveDisplay->m_Loader->Release();
 						}
-		
-						uint64_t cache_size = static_cast<uint64_t>(currentSettings.settings.cache_size) * 1000000;
 
-						loader.Initialize(fp, cache_size, true);
-						display.Initialize(ocio);
+						uint64_t cache_size = static_cast<uint64_t>(currentSettings.settings.m_CacheSize);
 
-						playbar.playbar_range = ImVec2(0.0f, loader.m_ImageCount + 1.0f);
+						currentActiveDisplay->m_Loader->Initialize(fp, currentSettings.settings.m_UseCache, cache_size);
+						currentActiveDisplay->Initialize(ocio);
+
+						playbar.playbar_range = ImVec2(0.0f, currentActiveDisplay->m_Loader->m_ImageCount + 1.0f);
 						playbar.play = 0;
 						playbar.playbar_frame = 0;
 
 						change = true;
 						ocio.UpdateProcessor();
-						display.Update(ocio, playbar.playbar_frame);
+						currentActiveDisplay->Update(ocio, playbar.playbar_frame);
 					}
 
 					ifd::FileDialog::Instance().Close();

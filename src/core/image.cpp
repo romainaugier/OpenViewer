@@ -68,11 +68,13 @@ namespace Core
 		// in case the data window is smaller than the display window
 		// we fill empty pixels everywhere and then read the image pixels
 		// to avoid non initialized values in memory
-		if (data.min.x > display.min.x || data.max.x < display.max.x || 
+		if (data.min.x > display.min.x || data.max.x < display.max.x ||
 			data.min.y > display.min.y || data.max.y < display.min.y)
 		{
 			memset(&buffer[0], static_cast<half>(0.0f), this->m_Xres * this->m_Yres * this->m_Channels);
 		}
+		
+		memset(&buffer[0], 0, this->m_Xres * this->m_Yres * this->m_Channels);
 
 		in.setFrameBuffer((Imf::Rgba*)buffer, 1, dim.x);
 		in.readPixels(data.min.y, data.max.y);
@@ -80,23 +82,23 @@ namespace Core
 
 	void Image::LoadPng(uint8_t* __restrict buffer) const noexcept
 	{
-		// auto in = OIIO::ImageInput::open(this->m_Path);
-		// in->read_image(OIIO::TypeDesc::UINT8, buffer);
-		// in->close();
+		auto in = OIIO::ImageInput::open(this->m_Path);
+		in->read_image(0, -1, OIIO::TypeDesc::UINT8, buffer);
+		in->close();
 	}
 
 	void Image::LoadJpg(uint8_t* __restrict buffer) const noexcept
 	{
-		// auto in = OIIO::ImageInput::open(this->m_Path);
-		// in->read_image(0, -1, OIIO::TypeDesc::UINT8, (uint8_t*)buffer);
-		// in->close();
+		auto in = OIIO::ImageInput::open(this->m_Path);
+		in->read_image(0, -1, OIIO::TypeDesc::UINT8, (uint8_t*)buffer);
+		in->close();
 	}
 
 	void Image::LoadOther(half* __restrict buffer) const noexcept
 	{
-		// auto in = OIIO::ImageInput::open(this->m_Path);
-		// in->read_image(0, -1, OIIO::TypeDesc::HALF, (half*)buffer);
-		// in->close();
+		auto in = OIIO::ImageInput::open(this->m_Path);
+		in->read_image(0, -1, OIIO::TypeDesc::HALF, (half*)buffer);
+		in->close();
 	}
 
 	void Image::Load(void* __restrict buffer, Profiler* prof) noexcept

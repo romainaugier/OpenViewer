@@ -17,7 +17,7 @@ namespace Interface
 		settings.configs.push_back(path);
 	}
 
-	void Settings_Windows::Draw(ImPlaybar& playbar, Profiler* prof, Core::Ocio& ocio, Core::Loader& loader) noexcept
+	void Settings_Windows::Draw(ImPlaybar& playbar, Profiler* prof, Core::Ocio& ocio, Application& app) noexcept
 	{	
 		if (p_open_playback_window)
 		{
@@ -97,82 +97,87 @@ namespace Interface
 
 				if (ImGui::CollapsingHeader("Cache"))
 				{
-					ImGui::Checkbox("Use Cache", &settings.use_cache);
+					ImGui::Checkbox("Use Cache", &settings.m_UseCache);
 					if (ImGui::IsItemEdited())
 					{
-						if (settings.use_cache)
+						// If we use the cache, and the loader is already initialized, just initialize the cache
+						if (settings.m_UseCache)
 						{
-							if (loader.m_HasBeenInitialized)
+							for (auto& [id, display] : app.m_Displays)
 							{
-								std::this_thread::sleep_for(std::chrono::milliseconds(100));
+								if (display->m_Loader->m_HasBeenInitialized)
+								{
+									std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-								playbar.play = 0;
-								playbar.playbar_frame = 0;
-								loader.m_UseCache = true;
-								loader.m_Cache->m_BytesCapacity = static_cast<uint64_t>(settings.cache_size) * 1000000;
-							}
-							else
-							{
-								loader.m_UseCache = true;
+									playbar.play = 0;
+									playbar.playbar_frame = 0;
+									display->m_Loader->m_UseCache = true;
+									display->m_Loader->m_Cache->Initialize(settings.m_CacheSize, display->m_Logger);
+								}
+								else
+								{
+									display->m_Loader->m_UseCache = true;
+								}
 							}
 						}
-						// else
-						// {
-						// 	if (loader.has_been_initialized > 0)
-						// 	{
-						// 		loader.mtx.lock();
-						// 		loader.stop_playloader = 1;
-						// 		loader.is_playloader_working = 0;
-						// 		loader.mtx.unlock();
-						// 		loader.load_into_cache.notify_all();
-
-						// 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-						// 		playbar.play = 0;
-						// 		playbar.playbar_frame = 0;
-						// 		loader.use_cache = 0;
-						// 		loader.cache_size = static_cast<uint64_t>(settings.cache_size) * 1000000;
-						// 		loader.ReleaseCache();
-						// 		loader.ReallocateCache(false);
-						// 		loader.LoadImage(0, loader.memory_arena);
-						// 	}
-						// 	else
-						// 	{
-						// 		loader.use_cache = 0;
-						// 	}
-						// }
+						else
+						{
+							for (auto& [id, display] : app.m_Displays)
+							{
+								if (display->m_Loader->m_HasBeenInitialized)
+								{
+									display->m_Loader->m_UseCache = false;
+									display->m_Loader->m_Cache->Release();
+								}
+								else
+								{
+									display->m_Loader->m_UseCache = false;
+								}
+							}
+						}
 					}
 					
-					ImGui::Text("Cache Size (MB)");
-					ImGui::SameLine();
-					ImGui::SetNextItemWidth(100.0f);
-					ImGui::InputInt("", &settings.cache_size, 0);
-					ImGui::SameLine();
-					if (ImGui::SmallButton("Set"))
+					if (settings.m_UseCache)
 					{
-						// if (settings.use_cache && loader.has_been_initialized > 0)
-						// {
-						// 	loader.mtx.lock();
-						// 	loader.stop_playloader = 1;
-						// 	loader.is_playloader_working = 0;
-						// 	loader.mtx.unlock();
-						// 	loader.load_into_cache.notify_all();
-							
-						// 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
-							
-						// 	playbar.play = 0;
-						// 	playbar.playbar_frame = 0;
-						// 	loader.cache_size = static_cast<uint64_t>(settings.cache_size) * 1000000;
-						// 	loader.ReleaseCache();
-						// 	loader.ReallocateCache(true);
-						// 	loader.LaunchSequenceWorker(true);
-						// }
-						// else
-						// {
-						// 	loader.cache_size = static_cast<uint64_t>(settings.cache_size) * 1000000;
-						// }
+						ImGui::Text("Number of displays : %d", app.m_DisplayCount);
+						
+						ImGui::Text("Total Cache Size (MB)");
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(100.0f);
+						ImGui::InputInt("", &settings.m_CacheSize, 0);
+						ImGui::SameLine();
+						if (ImGui::SmallButton("Set"))
+						{
+							// if (settings.use_cache && loader.has_been_initialized > 0)
+							// {
+							// 	loader.mtx.lock();
+							// 	loader.stop_playloader = 1;
+							// 	loader.is_playloader_working = 0;
+							// 	loader.mtx.unlock();
+							// 	loader.load_into_cache.notify_all();
+								
+							// 	std::this_thread::sleep_for(std::chrono::milliseconds(100));
+								
+							// 	playbar.play = 0;
+							// 	playbar.playbar_frame = 0;
+							// 	loader.cache_size = static_cast<uint64_t>(settings.cache_size) * 1000000;
+							// 	loader.ReleaseCache();
+							// 	loader.ReallocateCache(true);
+							// 	loader.LaunchSequenceWorker(true);
+							// }
+							// else
+							// {
+							// 	loader.cache_size = static_cast<uint64_t>(settings.cache_size) * 1000000;
+							// }
+						}
+
+						ImGui::Text("Cache Usage");
+						ImGui::SameLine();
+						ImGui::SetNextItemWidth(50.0f);
+						ImGui::ProgressBar(0.5f);
 					}
 				}
+
 
 				if (ImGui::CollapsingHeader("Profiling"))
 				{

@@ -23,6 +23,7 @@ namespace Interface
 					 image.m_GLFormat, 
 					 image.m_GLType, 
 					 nullptr);
+
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -73,7 +74,13 @@ namespace Interface
 	// Initializes the gl texture that will display the images
 	void Display::Initialize(Core::Ocio& ocio) noexcept
 	{
-		InitializeOpenGL(this->m_Loader->m_Images[0]);
+		this->m_Logger->Log(LogLevel_Debug, "Initializing display");
+		
+		const Core::Image* initImage = &this->m_Loader->m_Images[0];
+		this->m_Width = initImage->m_Xres;
+		this->m_Height = initImage->m_Yres;
+
+		InitializeOpenGL(*initImage);
 
 		// Generate the display texture
 		glGenTextures(1, &this->m_DisplayTexture);
@@ -93,7 +100,7 @@ namespace Interface
 					 0, 
 					 this->m_Loader->m_Images[0].m_GLFormat, 
 					 this->m_Loader->m_Images[0].m_GLType, 
-					 this->m_Loader->m_Cache->m_Items[0].m_Ptr);
+					 this->m_Loader->m_Cache->m_Items[1].m_Ptr); // The first item starts at 1, index 0 is to signal it is not cached
 
 		// OCIO GPU Processing
 		if (ocio.use_gpu > 0)
@@ -154,8 +161,9 @@ namespace Interface
 		// Get the different image infos we need to load it
 		const uint16_t currentImageXRes = this->m_Loader->m_Images[frameIndex].m_Xres;
 		const uint16_t currentImageYRes = this->m_Loader->m_Images[frameIndex].m_Yres;
-		const int64_t currentImageSize = this->m_Loader->m_Images[frameIndex].m_Size;
-		const void* currentImageCacheAddress = this->m_Loader->m_Cache->m_Items[frameIndex].m_Ptr;
+		const uint64_t currentImageSize = this->m_Loader->m_Images[frameIndex].m_Size;
+		const uint16_t currentImageCacheIndex = this->m_Loader->m_Images[frameIndex].m_CacheIndex;
+		const void* currentImageCacheAddress = this->m_Loader->m_Cache->m_Items[currentImageCacheIndex].m_Ptr;
 
 		// Error check
 		if (currentImageCacheAddress == nullptr)

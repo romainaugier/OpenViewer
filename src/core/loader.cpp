@@ -95,11 +95,12 @@ namespace Core
 
 		const uint64_t curImgSize = this->m_Images[this->m_ImageCount - 1].m_Stride;
 
-		this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loaded %s", imagePath.c_str());
+		this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loaded %s (%lld)", imagePath.c_str(), curImgSize);
 
 		// Allocate the cache for the single image
 		this->m_UseCache = false;
-		this->m_Cache->Initialize(curImgSize, this->m_Logger);
+		this->m_Cache->Initialize(curImgSize, this->m_Logger, true);
+		this->m_Cache->Add(&this->m_Images[this->m_ImageCount - 1]);
 
 		// Load the image
 		this->LoadImage(0);
@@ -115,7 +116,7 @@ namespace Core
 		}
 		else
 		{
-			this->m_Images[index].Load(this->m_Cache->m_MemoryArena, this->m_Profiler);
+			this->m_Images[index].Load(this->m_Cache->m_Items[1].m_Ptr, this->m_Profiler);
 		}
 	}
 

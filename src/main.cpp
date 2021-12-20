@@ -3,7 +3,7 @@
 // All rights reserved.
 
 
-#include "app/app.h"
+#include "app/mainapp.h"
 
 int main(int argc, char** argv)
 {

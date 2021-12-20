@@ -64,7 +64,7 @@ namespace Core
         uint16_t m_Capacity = 0;
 
         // Initializes the cache, the size needs to be expressed in MB
-        void Initialize(const size_t size, Logger* logger) noexcept;
+        void Initialize(const size_t size, Logger* logger, const bool isImgCache = false) noexcept;
 
         // Adds an image to the cache, and it will remove one at the beginning (or more) is the cache is full
         uint16_t Add(Image* item) noexcept;
