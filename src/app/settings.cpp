@@ -25,7 +25,7 @@ namespace Interface
 
 			ImGui::Begin("Playback Settings", &p_open_playback_window);
 			{
-				ImGui::InputInt("FPS", &playbar.playbar_framerate);
+				ImGui::InputInt("FPS", (int*)&playbar.m_FrameRate);
 			}
 			ImGui::End();
 		}
@@ -109,8 +109,8 @@ namespace Interface
 								{
 									std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-									playbar.play = 0;
-									playbar.playbar_frame = 0;
+									playbar.m_Play = false;
+									playbar.m_Frame = 0;
 									display->m_Loader->m_UseCache = true;
 									display->m_Loader->m_Cache->Initialize(settings.m_CacheSize, display->m_Logger);
 								}

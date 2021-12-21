@@ -15,26 +15,30 @@
 #include "math.h"
 #include <vector>
 
-struct ImPlaybar
-{
-	ImVec2 playbar_range;
-	uint16_t playbar_frame = 0;
-	int playbar_framerate = 24;
-	unsigned int play : 1;
-	unsigned int update : 1;
+#define LIGHTGRAY IM_COL32(128, 128, 128, 255)
+#define DARKGRAY IM_COL32(10, 10, 10, 40)
+#define LIGHTBLUE IM_COL32(120, 150, 200, 255)
 
-	ImPlaybar(ImVec2 range) : 
-		playbar_range(range)
+namespace Interface
+{
+	struct ImPlaybar
 	{
-		play = 0;
-		update = 0;
+		ImVec2 m_Range;
+		uint16_t m_Frame = 0;
+		uint8_t m_FrameRate = 24;
+		bool m_Play = false;
+		bool m_Update = false;
+
+		ImPlaybar(ImVec2 range) : 
+			m_Range(range)
+		{}
+
+		void Draw() noexcept;
+	};
+
+	inline bool Hover(ImVec2 min, ImVec2 max, ImVec2 pos) noexcept
+	{
+		if (pos.x > min.x && pos.y > min.y && pos.x < max.x && pos.y < max.y) return true;
+		else return false;
 	}
-
-	void draw(std::vector<char>& cached) noexcept;
-};
-
-inline bool hover(ImVec2 min, ImVec2 max, ImVec2 pos)
-{
-	if (pos.x > min.x && pos.y > min.y && pos.x < max.x && pos.y < max.y) return true;
-	else return false;
-}
+} // End namespace Interface

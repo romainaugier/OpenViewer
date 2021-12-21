@@ -55,13 +55,13 @@ namespace Interface
 						currentActiveDisplay->m_Loader->Initialize(fp);
 						currentActiveDisplay->Initialize(ocio);
 
-						playbar.playbar_range = ImVec2(0.0f, currentActiveDisplay->m_Loader->m_ImageCount + 1.0f);
-						playbar.play = 0;
-						playbar.playbar_frame = 0;
+						playbar.m_Range = ImVec2(0.0f, currentActiveDisplay->m_Loader->m_ImageCount + 1.0f);
+						playbar.m_Play = false;
+						playbar.m_Frame = 0;
 
 						change = true;
 						ocio.UpdateProcessor();
-						currentActiveDisplay->Update(ocio, playbar.playbar_frame);
+						currentActiveDisplay->Update(ocio, 0);
 					}
 
 					ifd::FileDialog::Instance().Close();
@@ -87,13 +87,13 @@ namespace Interface
 						currentActiveDisplay->m_Loader->Initialize(fp, currentSettings.settings.m_UseCache, cache_size);
 						currentActiveDisplay->Initialize(ocio);
 
-						playbar.playbar_range = ImVec2(0.0f, currentActiveDisplay->m_Loader->m_ImageCount + 1.0f);
-						playbar.play = 0;
-						playbar.playbar_frame = 0;
+						playbar.m_Range = ImVec2(0.0f, currentActiveDisplay->m_Loader->m_ImageCount + 1.0f);
+						playbar.m_Play = false;
+						playbar.m_Frame = 0;
 
 						change = true;
 						ocio.UpdateProcessor();
-						currentActiveDisplay->Update(ocio, playbar.playbar_frame);
+						currentActiveDisplay->Update(ocio, 0);
 					}
 
 					ifd::FileDialog::Instance().Close();

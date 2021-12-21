@@ -109,7 +109,7 @@ int application(int argc, char** argv)
     }
 
     // initialize windows
-    ImPlaybar playbar(ImVec2(0.0f, playbarCount + 1.0f));
+    Interface::ImPlaybar playbar(ImVec2(0.0f, playbarCount + 200.0f));
 
     settings.GetOcioConfig(ocio);
     
@@ -156,7 +156,7 @@ int application(int argc, char** argv)
         profiler.MemUsage("Ocio Module Memory Usage", ToMB((sizeof(ocio) + ocio.GetSize()) / 8));
         // profiler.MemUsage("Loader Memory Usage", ToMB((sizeof(loader) + loader.cached_size) / 8));
 
-        uint16_t frame_index = playbar.playbar_frame;
+        uint16_t frame_index = playbar.m_Frame;
 
 
         
@@ -307,7 +307,7 @@ int application(int argc, char** argv)
     
         // playbar 
         ImGui::SetNextWindowBgAlpha(settings.settings.interface_windows_bg_alpha);
-        //playbar.draw(loader.cached);
+        playbar.Draw();
 
         // plot
         if (settings.settings.parade)
