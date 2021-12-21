@@ -10,10 +10,12 @@
 namespace Interface
 {
     using Displays = std::unordered_map<uint8_t, Display*>;
+    using WindowsToShow = std::unordered_map<std::string, bool>;
 
     struct Application
     {
         Displays m_Displays;
+        WindowsToShow m_Windows;
 
         Logger* m_Logger = nullptr;
 

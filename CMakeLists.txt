@@ -2,6 +2,7 @@
 
 cmake_minimum_required(VERSION 3.15)
 
+
 # Vcpkg
 if(DEFINED CMAKE_TOOLCHAIN_FILE)
 	if(EXISTS "${CMAKE_TOOLCHAIN_FILE}")

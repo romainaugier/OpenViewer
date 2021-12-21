@@ -9,6 +9,7 @@
 #include "ImFileDialog.h"
 #include "display.h"
 #include "implaybar.h"
+#include "imginfos.h"
 #include "core/ocio.h"
 
 #include "stdio.h"

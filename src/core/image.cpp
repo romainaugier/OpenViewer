@@ -101,16 +101,16 @@ namespace Core
 		in->close();
 	}
 
-	void Image::Load(void* __restrict buffer, Profiler* prof) noexcept
+	void Image::Load(void* __restrict buffer, Profiler* prof) const noexcept
 	{
-		auto load_timer_start = prof->Start();
+		const auto load_timer_start = prof->Start();
 
 		if (this->m_Type & FileType_Exr) LoadExr((half*)buffer);
 		else if (this->m_Type& FileType_Jpg) LoadJpg((uint8_t*)buffer);
 		else if (this->m_Type & FileType_Png) LoadPng((uint8_t*)buffer);
 		else if (this->m_Type & FileType_Other) LoadOther((half*)buffer);
 
-		auto load_timer_end = prof->End();
+		const auto load_timer_end = prof->End();
 		prof->Time("Image Loading Time", load_timer_start, load_timer_end);
 	}
 } // End namespace Core

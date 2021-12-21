@@ -9,5 +9,8 @@ namespace Interface
     Application::Application(Logger* logger)
     {
         this->m_Logger = logger;
+
+        this->m_Windows["Image Infos"] = false;
+        this->m_Windows["Sequence Infos"] = false;
     }
 }

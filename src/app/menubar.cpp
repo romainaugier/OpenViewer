@@ -117,6 +117,14 @@ namespace Interface
 					ImGui::EndMenu();
 				}
 
+				if (ImGui::BeginMenu("Infos"))
+				{
+					if (ImGui::MenuItem("Sequence Infos")) {}
+					if (ImGui::MenuItem("Image Infos")) { app.m_Windows["Image Infos"] = true; }
+					
+					ImGui::EndMenu();
+				}
+
 				if (ImGui::BeginMenu("Settings"))
 				{
 					if (ImGui::MenuItem("Playback")) { currentSettings.p_open_playback_window = true; }

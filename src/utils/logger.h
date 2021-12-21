@@ -170,7 +170,7 @@ inline static void Assert(int expression) noexcept
 
 inline static void StaticDebugConsoleLog(const char* fmt, ...) noexcept
 {
-//#ifdef NDEBUG
+#ifdef DEBUG
     char cur_time[1024];
     time_t current_time;
     time(&current_time);
@@ -183,5 +183,5 @@ inline static void StaticDebugConsoleLog(const char* fmt, ...) noexcept
     vsnprintf(buffer, 1024, fmt, args);
     va_end(args);
     printf("[NDEBUG] %s : %s\n", cur_time, buffer);
-//#endif
+#endif
 }

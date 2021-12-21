@@ -28,6 +28,7 @@ static void glfw_error_callback(int error, const char* description)
 
 #include "menubar.h"
 #include "display.h"
+#include "imginfos.h"
 #include "core/loader.h"
 #include "core/parser.h"
 

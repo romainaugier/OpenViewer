@@ -42,14 +42,17 @@ namespace Interface
 		uint16_t m_Height;
 
 		uint8_t m_MipMapIndex;
+		uint8_t m_DisplayID = 0;
 
 		bool m_IsOpen = true;
+		bool m_IsActive = false;
 
-		Display(Profiler* profiler, Logger* logger)
+		Display(Profiler* profiler, Logger* logger, const uint8_t id)
 		{
-			m_Profiler = profiler;
-			m_Logger = logger;
-			m_Loader = new Core::Loader(logger, profiler);
+			this->m_Profiler = profiler;
+			this->m_Logger = logger;
+			this->m_Loader = new Core::Loader(logger, profiler);
+			this->m_DisplayID = id;
 		}
 
 		void Initialize(Core::Ocio& ocio) noexcept;

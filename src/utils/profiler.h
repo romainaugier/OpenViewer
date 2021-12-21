@@ -36,11 +36,11 @@ struct Profiler
 		return std::chrono::system_clock::now();
 	}
 
-	OPENVIEWER_FORCEINLINE void Time(std::string name,
-									 std::chrono::time_point<std::chrono::system_clock>& start, 
-			  						 std::chrono::time_point<std::chrono::system_clock>& end) noexcept
+	OPENVIEWER_FORCEINLINE void Time(const std::string name,
+									 const std::chrono::time_point<std::chrono::system_clock>& start, 
+			  						 const std::chrono::time_point<std::chrono::system_clock>& end) noexcept
 	{
-		float time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+		const float time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 		
 		if(times.find(name) != times.end()) times[name] = time;
 		else times.emplace(name, time);

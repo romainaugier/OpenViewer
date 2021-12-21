@@ -78,16 +78,17 @@ namespace Core
 				this->m_GLType = GL_HALF_FLOAT;
 				this->m_Xres = spec.full_width;
 				this->m_Yres = spec.full_height;
-				this->m_Channels = spec.nchannels + 1;
+				this->m_Channels = spec.nchannels;
 				this->m_Size = m_Xres * m_Yres * m_Channels;
-				this->m_Stride = m_Size * Size::Size32;
+				this->m_Stride = m_Size * Size::Size16;
 			}
 			else if(Utils::EndsWith(fp, ".png"))
 			{
+				const bool hasAlpha = spec.alpha_channel >= 0;
 				this->m_Type = FileType_Png;
-				this->m_Format = Format_RGB_U8;
-				this->m_GLInternalFormat = GL_RGB32F;
-				this->m_GLFormat = GL_RGB;
+				this->m_Format = hasAlpha ? Format_RGBA_U8 : Format_RGB_U8;
+				this->m_GLInternalFormat = hasAlpha ? GL_RGBA32F : GL_RGB32F;
+				this->m_GLFormat = hasAlpha ? GL_RGBA : GL_RGB;
 				this->m_GLType = GL_UNSIGNED_BYTE;
 				this->m_Xres = spec.width;
 				this->m_Yres = spec.height;
@@ -97,7 +98,7 @@ namespace Core
 			}
 			else if(Utils::EndsWith(fp, ".jpg") || Utils::EndsWith(fp, ".jpeg"))
 			{
-				this->m_Type = FileType_Other;
+				this->m_Type = FileType_Jpg;
 				this->m_Format = Format_RGB_U8;
 				this->m_GLInternalFormat = GL_RGB32F;
 				this->m_GLFormat = GL_RGB;
@@ -152,7 +153,7 @@ namespace Core
 		}
 
 		void Release() noexcept;
-		void Load(void* __restrict buffer, Profiler* prof) noexcept;
+		void Load(void* __restrict buffer, Profiler* prof) const noexcept;
 		void LoadExr(half* __restrict buffer) const noexcept;
 		void LoadPng(uint8_t* __restrict buffer) const noexcept;
 		void LoadJpg(uint8_t* __restrict buffer) const noexcept;

@@ -79,6 +79,7 @@ int application(int argc, char** argv)
     ocio.Initialize();
 
     Interface::Settings_Windows settings;
+    Interface::ImageInfo imageInfosWindow;
 
     uint16_t playbarCount = 1;
 
@@ -86,7 +87,7 @@ int application(int argc, char** argv)
     // We initialize a display to load and display its content
     if (parser.is_directory > 0)
     {
-        Interface::Display* newDisplay = new Interface::Display(&profiler, &logger);
+        Interface::Display* newDisplay = new Interface::Display(&profiler, &logger, 1);
 
         newDisplay->m_Loader->Initialize(parser.path, false, 0);
         newDisplay->Initialize(ocio);
@@ -97,7 +98,7 @@ int application(int argc, char** argv)
     }
     else if (parser.is_file > 0)
     {
-        Interface::Display* newDisplay = new Interface::Display(&profiler, &logger);
+        Interface::Display* newDisplay = new Interface::Display(&profiler, &logger, 1);
 
         newDisplay->m_Loader->Initialize(parser.path);
         newDisplay->Initialize(ocio);
@@ -285,7 +286,7 @@ int application(int argc, char** argv)
         ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 
         // demo window for ImGui
-        // if (show_demo_window) ImGui::ShowDemoWindow(&show_demo_window);
+        if (show_demo_window) ImGui::ShowDemoWindow(&show_demo_window);
         // ImPlot::ShowDemoWindow();
 
         // displays
@@ -293,6 +294,9 @@ int application(int argc, char** argv)
         {
             if (change) display->Update(ocio, 0);
             display->Draw(0);
+
+            // One info window per display
+            imageInfosWindow.Draw(display->m_Loader->m_Images[0], &app.m_Windows["Image Infos"]);
         }
 
         // settings windows
@@ -300,7 +304,7 @@ int application(int argc, char** argv)
 
         // menubar
         menubar.Draw(settings, app, playbar, ocio, profiler, change);
-        
+    
         // playbar 
         ImGui::SetNextWindowBgAlpha(settings.settings.interface_windows_bg_alpha);
         //playbar.draw(loader.cached);

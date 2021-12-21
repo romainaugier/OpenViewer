@@ -74,7 +74,7 @@ namespace Interface
 	// Initializes the gl texture that will display the images
 	void Display::Initialize(Core::Ocio& ocio) noexcept
 	{
-		this->m_Logger->Log(LogLevel_Debug, "Initializing display");
+		this->m_Logger->Log(LogLevel_Debug, "[DISPLAY] : Initializing display %d", this->m_DisplayID);
 		
 		const Core::Image* initImage = &this->m_Loader->m_Images[0];
 		this->m_Width = initImage->m_Xres;
@@ -243,10 +243,15 @@ namespace Interface
 
 		bool p_open = true;
 
-		ImGui::Begin("Display", &p_open, window_flags);
+		char displayName[64];
+		sprintf_s(displayName, "Display %d", this->m_DisplayID);
+
+		ImGui::Begin(displayName, &p_open, window_flags);
 		{
 			ImVec2 size = ImVec2(this->m_Loader->m_Images[frameIndex].m_Xres, 
 								 this->m_Loader->m_Images[frameIndex].m_Yres);
+
+			
 
 			static ImVec2 scrolling;
 			static float zoom = 1.0f;
