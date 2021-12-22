@@ -286,7 +286,7 @@ int application(int argc, char** argv)
         ImGui::DockSpaceOverViewport(ImGui::GetMainViewport());
 
         // demo window for ImGui
-        if (show_demo_window) ImGui::ShowDemoWindow(&show_demo_window);
+        // if (show_demo_window) ImGui::ShowDemoWindow(&show_demo_window);
         // ImPlot::ShowDemoWindow();
 
         // displays
@@ -306,7 +306,7 @@ int application(int argc, char** argv)
         menubar.Draw(settings, app, playbar, ocio, profiler, change);
     
         // playbar 
-        ImGui::SetNextWindowBgAlpha(settings.settings.interface_windows_bg_alpha);
+        playbar.Update();
         playbar.Draw();
 
         // plot
