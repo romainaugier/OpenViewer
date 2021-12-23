@@ -2,7 +2,6 @@
 // Copyright (c) 2021 Romain Augier
 // All rights reserved.
 
-
 #pragma once
 
 #include "imgui.h"

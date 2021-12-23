@@ -51,8 +51,7 @@ namespace Core
 		uint32_t m_Xres = 0;
 		uint32_t m_Yres = 0;
 		uint32_t m_Channels = 0;
-		
-		uint16_t m_CacheIndex = 0; // zero means it is not cached
+		uint32_t m_CacheIndex = 0; // zero means it is not cached
 		
 		FileType_ m_Type;
 		Format_ m_Format;

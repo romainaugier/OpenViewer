@@ -42,7 +42,7 @@ namespace Core
             m_Size(size) {}
     };
 
-    using ImageCacheMap = std::unordered_map<uint16_t, ImageCacheItem>;
+    using ImageCacheMap = std::unordered_map<uint32_t, ImageCacheItem>;
 
     struct ImageCache
     {
@@ -59,9 +59,9 @@ namespace Core
         uint64_t m_BytesSize = 0;
 
         // Buffer size, capacity and current index of allocation
-        uint16_t m_CurrentIndex = 1; // The index starts at 1, because we store the index in an unsigned 16 bits integer
-        uint16_t m_Size = 0;
-        uint16_t m_Capacity = 0;
+        uint32_t m_CurrentIndex = 1; // The index starts at 1, because we store the index in an unsigned 32 bits integer
+        uint32_t m_Size = 0;
+        uint32_t m_Capacity = 0;
 
         // Initializes the cache, the size needs to be expressed in MB
         void Initialize(const size_t size, Logger* logger, const bool isImgCache = false) noexcept;
@@ -70,7 +70,7 @@ namespace Core
         uint16_t Add(Image* item) noexcept;
 
         // Remove an image from the cache
-        void Remove(const uint16_t index) noexcept;
+        void Remove(const uint32_t index) noexcept;
 
         // Resizes the cache
         void Resize(const size_t newSize) noexcept;
