@@ -10,18 +10,22 @@
 namespace Interface
 {
     using Displays = std::unordered_map<uint8_t, Display*>;
-    using WindowsToShow = std::unordered_map<std::string, bool>;
 
     struct Application
     {
         Displays m_Displays;
-        WindowsToShow m_Windows;
 
+        Core::Loader* m_Loader = nullptr;
         Logger* m_Logger = nullptr;
 
         uint8_t m_ActiveDisplayID = 0;
         uint8_t m_DisplayCount = 0;
 
-        Application(Logger* logger);        
+        // Bool to control the state of the different windows
+        bool showImageInfosWindow = false;
+        bool showMediaInfosWindow = false;
+        bool showMediaExplorerWindow = false;
+
+        Application(Logger* logger, Core::Loader* loader);        
     };
 }

@@ -7,13 +7,21 @@
 int application(int argc, char** argv)
 {
     // Initialize the application
+    
+    // Logger
     Logger logger;
     logger.SetLevel(LogLevel_Debug);
-    logger.Log(LogLevel_Debug, "Initializing OpenViewer...");
+    logger.Log(LogLevel_Debug, "[APP] : Initializing OpenViewer...");
+    
+    // Profiler
+    Profiler profiler;
 
-    Interface::Application app(&logger);
+    // Loader/Cache
+    Core::Loader loader(&logger, &profiler);
 
-    // Setup window
+    Interface::Application app(&logger, &loader);
+
+    // Setup GLFW
     glfwSetErrorCallback(glfw_error_callback);
 
     if (!glfwInit())
@@ -25,7 +33,6 @@ int application(int argc, char** argv)
     const char* glsl_version = "#version 130";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-
 
     // Create window with graphics context
     GLFWwindow* window = glfwCreateWindow(1920, 1080, "OpenViewer", NULL, NULL);
@@ -50,14 +57,16 @@ int application(int argc, char** argv)
     ImPlot::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
 
-    // setup Dear ImGui style
+    // Setup Dear ImGui style
     ImGui::StyleColorsDark();
 
-    // docking
+    // Docking
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    
+    // MultiViewport
     //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
-    // style
+    // Style
     ImGuiStyle* style = &ImGui::GetStyle();
 
     // Setup Platform/Renderer bindings
@@ -69,15 +78,14 @@ int application(int argc, char** argv)
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.06f, 0.05f, 0.07f, 1.00f);
 
-    // initialize system
+    // Initialize parser to get command line arguments, if any
     Parser parser(argc, argv);
-    Profiler profiler;
 
-    // profiler.current_memory_usage = ToMB(GetCurrentRss());
-
+    // Initialize OCIO 
     Core::Ocio ocio(&logger);
     ocio.Initialize();
 
+    // Initialize the different windows
     Interface::Settings_Windows settings;
     Interface::ImageInfo imageInfosWindow;
 

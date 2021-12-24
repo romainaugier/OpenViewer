@@ -63,7 +63,7 @@ namespace Core
 
 		Image(const std::string& fp)
 		{
-			m_Path = fp;
+			this->m_Path = fp;
 			
 			auto in = OIIO::ImageInput::open(fp);
 			const OIIO::ImageSpec& spec = in->spec();

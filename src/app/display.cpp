@@ -76,7 +76,8 @@ namespace Interface
 	{
 		this->m_Logger->Log(LogLevel_Debug, "[DISPLAY] : Initializing display %d", this->m_DisplayID);
 		
-		const Core::Image* initImage = &this->m_Loader->m_Images[0];
+		// When we initialize a display, we have at least one media and one image loader
+		const Core::Image* initImage = &this->m_Loader->m_Medias[0].m_Images[0];
 		this->m_Width = initImage->m_Xres;
 		this->m_Height = initImage->m_Yres;
 
@@ -94,12 +95,12 @@ namespace Interface
 
 		glTexImage2D(GL_TEXTURE_2D, 
 					 0, 
-					 this->m_Loader->m_Images[0].m_GLInternalFormat, 
+					 initImage->m_GLInternalFormat, 
 					 this->m_Width, 
 					 this->m_Height, 
 					 0, 
-					 this->m_Loader->m_Images[0].m_GLFormat, 
-					 this->m_Loader->m_Images[0].m_GLType, 
+					 initImage->m_GLFormat, 
+					 initImage->m_GLType, 
 					 this->m_Loader->m_Cache->m_Items[1].m_Ptr); // The first item starts at 1, index 0 is to signal it is not cached
 
 		// OCIO GPU Processing
@@ -156,86 +157,97 @@ namespace Interface
 	}
 
 	// Updates the gl texture that displays the images
-	void Display::Update(Core::Ocio& ocio, const uint16_t frameIndex) noexcept
+	void Display::Update(Core::Ocio& ocio, const uint32_t frameIndex) noexcept
 	{
-		// Get the different image infos we need to load it
-		const uint16_t currentImageXRes = this->m_Loader->m_Images[frameIndex].m_Xres;
-		const uint16_t currentImageYRes = this->m_Loader->m_Images[frameIndex].m_Yres;
-		const uint64_t currentImageSize = this->m_Loader->m_Images[frameIndex].m_Size;
-		const uint16_t currentImageCacheIndex = this->m_Loader->m_Images[frameIndex].m_CacheIndex;
-		const void* currentImageCacheAddress = this->m_Loader->m_Cache->m_Items[currentImageCacheIndex].m_Ptr;
+		// Get the image to be displayed
+		Core::Image* currentImage = this->m_Loader->GetImage(frameIndex);
 
-		// Error check
-		if (currentImageCacheAddress == nullptr)
+		if (currentImage != nullptr)
 		{
-			StaticDebugConsoleLog("Display Error : Frame Index %d", frameIndex);
+			// Get the different image infos we need to load it
+			const uint16_t currentImageXRes = currentImage->m_Xres;
+			const uint16_t currentImageYRes = currentImage->m_Yres;
+			const uint64_t currentImageSize = currentImage->m_Size;
+			const uint16_t currentImageCacheIndex = currentImage->m_CacheIndex;
+			const void* currentImageCacheAddress = this->m_Loader->m_Cache->m_Items[currentImageCacheIndex].m_Ptr;
+
+			// Error check
+			if (currentImageCacheAddress == nullptr)
+			{
+				StaticDebugConsoleLog("Display Error : Frame Index %d", frameIndex);
+
+				return;
+			}
+
+			// Update the texture
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, this->m_DisplayTexture);
+			glTexSubImage2D(GL_TEXTURE_2D,
+							0, 0, 0,
+							currentImageXRes,
+							currentImageYRes,
+							currentImage->m_GLFormat,
+							currentImage->m_GLType,
+							currentImageCacheAddress);
+
+			// OCIO GPU Processing
+			if (ocio.use_gpu > 0)
+			{
+				auto ocio_start = this->m_Profiler->Start();
+
+				// Bind the framebuffer
+				BindFBO();
+				glViewport(0, 0, currentImageXRes, currentImageYRes);
+				glEnable(GL_DEPTH_TEST);
+
+				// Clear the framebuffer
+				glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+				ocio.Process(currentImageXRes, currentImageYRes);
+
+				// Draw the quad
+				glEnable(GL_TEXTURE_2D);
+
+				glPushMatrix();
+					glBegin(GL_QUADS);
+						glTexCoord2f(1.0f, 1.0f);
+						glVertex2f(1.0f, 1.0f);
+
+						glTexCoord2f(1.0f, 0.0f);
+						glVertex2f(1.0f, -1.0f);
+
+						glTexCoord2f(0.0f, 0.0f);
+						glVertex2f(-1.0f, -1.0f);
+
+						glTexCoord2f(0.0f, 1.0f);
+						glVertex2f(-1.0f, 1.0f);
+					glEnd();
+				glPopMatrix();
+
+				glDisable(GL_TEXTURE_2D);
+
+				// Unbind frame buffer object and clear
+				UnbindFBO();
+				glDisable(GL_DEPTH_TEST);
+
+				auto ocio_end = this->m_Profiler->End();
+				this->m_Profiler->Time("Ocio Transform Time", ocio_start, ocio_end);
+
+				// Unbind our texture
+				GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
+			}
+		}
+		else
+		{
+			this->m_Logger->Log(LogLevel_Warning, "[DISPLAY] : Internal error, invalid image. Skipping to next frame.");
 
 			return;
 		}
-
-		// Update the texture
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, this->m_DisplayTexture);
-		glTexSubImage2D(GL_TEXTURE_2D,
-						0, 0, 0,
-						currentImageXRes,
-						currentImageYRes,
-						this->m_Loader->m_Images[frameIndex].m_GLFormat,
-						this->m_Loader->m_Images[frameIndex].m_GLType,
-						currentImageCacheAddress);
-
-		// OCIO GPU Processing
-		if (ocio.use_gpu > 0)
-		{
-			auto ocio_start = this->m_Profiler->Start();
-
-			// Bind the framebuffer
-			BindFBO();
-			glViewport(0, 0, currentImageXRes, currentImageYRes);
-			glEnable(GL_DEPTH_TEST);
-
-			// Clear the framebuffer
-			glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			ocio.Process(currentImageXRes, currentImageYRes);
-
-			// Draw the quad
-			glEnable(GL_TEXTURE_2D);
-
-			glPushMatrix();
-				glBegin(GL_QUADS);
-					glTexCoord2f(1.0f, 1.0f);
-					glVertex2f(1.0f, 1.0f);
-
-					glTexCoord2f(1.0f, 0.0f);
-					glVertex2f(1.0f, -1.0f);
-
-					glTexCoord2f(0.0f, 0.0f);
-					glVertex2f(-1.0f, -1.0f);
-
-					glTexCoord2f(0.0f, 1.0f);
-					glVertex2f(-1.0f, 1.0f);
-				glEnd();
-			glPopMatrix();
-
-			glDisable(GL_TEXTURE_2D);
-
-			// Unbind frame buffer object and clear
-			UnbindFBO();
-			glDisable(GL_DEPTH_TEST);
-
-			auto ocio_end = this->m_Profiler->End();
-			this->m_Profiler->Time("Ocio Transform Time", ocio_start, ocio_end);
-
-			// Unbind our texture
-			GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
-		}
-		
 	}
 
 	// Main function that contains the window drawing 
-	void Display::Draw(uint16_t frameIndex) const noexcept
+	void Display::Draw(uint32_t frameIndex) const noexcept
 	{
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar |
 			ImGuiWindowFlags_NoScrollbar |
@@ -248,45 +260,51 @@ namespace Interface
 
 		ImGui::Begin(displayName, &p_open, window_flags);
 		{
-			ImVec2 size = ImVec2(this->m_Loader->m_Images[frameIndex].m_Xres, 
-								 this->m_Loader->m_Images[frameIndex].m_Yres);
+			// Get the image to be displayed
+			Core::Image* currentImage = this->m_Loader->GetImage(frameIndex);
 
-			
-
-			static ImVec2 scrolling;
-			static float zoom = 1.0f;
-			const ImVec4 tint(1.0f, 1.0f, 1.0f, 1.0f);
-			const ImVec4 borderColor(0.0f, 0.0f, 0.0f, 1.0f);
-
-			const bool isHovered = ImGui::IsWindowHovered();
-
-			ImGuiIO& io = ImGui::GetIO();
-
-			if (isHovered && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+			if (currentImage != nullptr)
 			{
-				scrolling.x += io.MouseDelta.x;
-				scrolling.y += io.MouseDelta.y;
+				ImVec2 size = ImVec2(this->m_Loader->m_Images[frameIndex].m_Xres, 
+									this->m_Loader->m_Images[frameIndex].m_Yres);
+
+				static ImVec2 scrolling;
+				static float zoom = 1.0f;
+				const ImVec4 tint(1.0f, 1.0f, 1.0f, 1.0f);
+				const ImVec4 borderColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+				const bool isHovered = ImGui::IsWindowHovered();
+
+				ImGuiIO& io = ImGui::GetIO();
+
+				if (isHovered && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+				{
+					scrolling.x += io.MouseDelta.x;
+					scrolling.y += io.MouseDelta.y;
+				}
+
+				const float mouseWheel = io.MouseWheel;
+
+				if (isHovered && mouseWheel != 0.0f)
+				{
+					zoom += mouseWheel * 0.1f;
+				}
+
+				ImGui::SetCursorPos((ImGui::GetWindowSize() - size * zoom) * 0.5f + scrolling);
+				ImGui::Image((void*)(intptr_t)this->m_ColorBuffer, size * zoom, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), tint, borderColor);
 			}
-
-			const float mouseWheel = io.MouseWheel;
-
-			if (isHovered && mouseWheel != 0.0f)
+			else
 			{
-				zoom += mouseWheel * 0.1f;
-			}
+				this->m_Logger->Log(LogLevel_Warning, "[DISPLAY] : Internal error, invalid image. Skipping to next frame.");
 
-			ImGui::SetCursorPos((ImGui::GetWindowSize() - size * zoom) * 0.5f + scrolling);
-			ImGui::Image((void*)(intptr_t)this->m_ColorBuffer, size * zoom, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), tint, borderColor);
+				return;
+			}
 		}
 		ImGui::End();
 	}
 
 	void Display::Release() noexcept
 	{
-		// Release the loader
-		this->m_Loader->Release();
-		delete this->m_Loader;
-
 		// delete the gl buffers
 		glDeleteFramebuffers(1, &this->m_FBO);
 		glDeleteRenderbuffers(1, &this->m_RBO);

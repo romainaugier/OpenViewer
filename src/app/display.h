@@ -46,11 +46,11 @@ namespace Interface
 		bool m_IsOpen = true;
 		bool m_IsActive = false;
 
-		Display(Profiler* profiler, Logger* logger, const uint8_t id)
+		Display(Profiler* profiler, Logger* logger, Core::Loader* loader, const uint8_t id)
 		{
 			this->m_Profiler = profiler;
 			this->m_Logger = logger;
-			this->m_Loader = new Core::Loader(logger, profiler);
+			this->m_Loader = loader;
 			this->m_DisplayID = id;
 		}
 
@@ -60,8 +60,8 @@ namespace Interface
 		OPENVIEWER_FORCEINLINE void UnbindFBO() const noexcept;
 		OPENVIEWER_FORCEINLINE void BindRBO() const noexcept;
 		OPENVIEWER_FORCEINLINE void UnbindRBO() const noexcept;
-		void Update(Core::Ocio& ocio, const uint16_t frameIndex) noexcept;
-		void Draw(uint16_t frameIndex) const noexcept;
+		void Update(Core::Ocio& ocio, const uint32_t frameIndex) noexcept;
+		void Draw(uint32_t frameIndex) const noexcept;
 		void Release() noexcept;
 	};
 } // End namespace Interface

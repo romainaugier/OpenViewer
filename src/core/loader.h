@@ -35,7 +35,7 @@ namespace Core
 	{
 		std::vector<Media> m_Medias; // Contains the medias
 
-		std::vector<std::thread> m_Workers; // Contains workers that are used to load the different images
+		std::vector<std::thread> m_Workers; // Contains workers that are used to load the different images of the media being displayed
 
 		std::condition_variable m_CondVar;
 
@@ -44,6 +44,8 @@ namespace Core
 		Logger* m_Logger = nullptr;
 
 		Profiler* m_Profiler = nullptr;
+
+		uint16_t m_MediaCount = 0;
 
 		bool m_UseCache = false;
 		bool m_HasBeenInitialized = false;
@@ -56,15 +58,18 @@ namespace Core
 		void Initialize(const bool useCache, const size_t cacheSize) noexcept;
 
 		// Loads a media into the loader
-		void Load(const std::string& mediaPath, const bool directory) noexcept;
+		void Load(const std::string& mediaPath) noexcept;
+
+		// Returns a pointer to the image corresponding to the current frame
+		Image* GetImage(const uint32_t frameIndex) noexcept;
 		
 		// Loads an image to display it. If the cache is enabled, it will load it in the cache, otherwise loads it on the fly
-		void LoadImageToCache(const uint16_t index) noexcept;
+		void LoadImageToCache(const uint32_t index) noexcept;
 
 		// Loads a sequence of images in the cache to display it, starting from the given index until 
 		// it reaches startIndex + size
 		// If the given size is 0, it will load as much images as the cache can handle
-		void LoadSequenceToCache(const uint16_t startIndex, const uint16_t size = 0) noexcept;
+		void LoadSequenceToCache(const uint32_t startIndex, const uint32_t size = 0) noexcept;
 
 		// Deallocate resources and release the loader
 		void Release() noexcept;

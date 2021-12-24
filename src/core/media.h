@@ -19,8 +19,10 @@ namespace Core
     {
         std::vector<Image> m_Images; // Holds the images of the sequence 
 
-        ImVec2 m_Range;
-        ImVec2 m_TimelineRange;
+        ImVec2 m_Range = ImVec2(0, 0); // "Raw" range of the sequence
+        ImVec2 m_TimelineRange = ImVec2(0, 0); // Range in the timeline
+
+        bool m_IsActive = false; // The media is in the timeline, and so is/will be displayed
 
         uint32_t Size() const noexcept;
         bool InRange(const uint32_t index) const noexcept; 
