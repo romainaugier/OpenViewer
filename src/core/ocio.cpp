@@ -39,12 +39,12 @@ namespace Core
             {
                 config = OCIO::Config::CreateFromEnv();
 
-                logger->Log(LogLevel_Debug, "OCIO : Configuration loaded from file %s", config_path);
+                logger->Log(LogLevel_Debug, "[OCIO] : Configuration loaded from file %s", config_path);
             }
             catch(const std::exception& e)
             {
                 std::cerr << e.what() << '\n';
-                logger->Log(LogLevel_Warning, "%s. Using default shipped configuration.", e.what());
+                logger->Log(LogLevel_Warning, "[OCIO] : %s. Using default shipped configuration", e.what());
 
                 config = OCIO::Config::CreateFromFile(default_config_path);
                 config_path = default_config_path;
@@ -54,13 +54,13 @@ namespace Core
         {
             try
             {
-                logger->Log(LogLevel_Warning, "OCIO Environment variable can't be found. Using default shipped configuration.");
+                logger->Log(LogLevel_Warning, "[OCIO] : Environment variable can't be found. Using default shipped configuration");
                 config = OCIO::Config::CreateFromFile(default_config_path);
                 config_path = default_config_path;
             }
             catch(const std::exception& e)
             {
-                logger->Log(LogLevel_Error, "OCIO Error : %s", e.what());
+                logger->Log(LogLevel_Error, "[OCIO] : %s", e.what());
                 exit(1);
             }
         }
@@ -245,7 +245,7 @@ namespace Core
             config = OCIO::Config::CreateFromFile(config_path);
             config_path = config_path;
 
-            logger->Log(LogLevel_Debug, "OCIO : Configuration switched to %s.", config_path);
+            logger->Log(LogLevel_Debug, "[OCIO] : Configuration switched to %s", config_path);
 
             GetOcioActiveDisplays();
             current_display = displays[0];
@@ -261,7 +261,7 @@ namespace Core
         }
         catch (const std::exception& e)
         {
-            logger->Log(LogLevel_Warning, "%s. Keeping the current configuration.", e.what());
+            logger->Log(LogLevel_Warning, "[OCIO] : %s. Keeping the current configuration", e.what());
         }
         
     }
@@ -272,7 +272,7 @@ namespace Core
         const char* view = config->getView(display, current_view_idx);
         const char* role = config->getRoleColorSpace(current_role_idx);
 
-        logger->Log(LogLevel_Debug, "OCIO : Updating processor to use %s | %s | %s.", role, display, view);
+        logger->Log(LogLevel_Debug, "[OCIO] : Updating processor to use %s | %s | %s", role, display, view);
 
         // Create the view pipeline
         try
@@ -373,7 +373,7 @@ namespace Core
         }
         catch (OCIO::Exception& exception)
         {
-            logger->Log(LogLevel_Warning, "OCIO : %s", exception.what());
+            logger->Log(LogLevel_Warning, "[OCIO] : %s", exception.what());
 
             const char* display = config->getDefaultDisplay();
             const char* view = config->getDefaultView(display);
@@ -429,11 +429,11 @@ namespace Core
 
             // GPU
             if (use_gpu > 0) ogl_builder->useAllUniforms();
-            else logger->Log(LogLevel_Error, "OCIO CPU Processor has not been implemented yet.");
+            else logger->Log(LogLevel_Error, "[OCIO] : CPU Processor has not been implemented yet");
         }
         catch (OCIO::Exception& exception)
         {
-            logger->Log(LogLevel_Error, "OCIO : %s", exception.what());
+            logger->Log(LogLevel_Error, "[OCIO] : %s", exception.what());
         }
     }
 
@@ -468,6 +468,6 @@ namespace Core
             }
         }
 
-        logger->Log(LogLevel_Debug, "Released OCIO.");
+        logger->Log(LogLevel_Debug, "[OCIO] : Released OCIO");
     }
 } // End namespace Core

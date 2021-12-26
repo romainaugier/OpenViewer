@@ -11,4 +11,14 @@ namespace Interface
         this->m_Logger = logger;
         this->m_Loader = loader;
     }
+
+    void Application::Release() noexcept
+    {
+        for (auto& [id, display] : this->m_Displays)
+        {
+            display->Release();
+        }
+
+        this->m_Logger->Log(LogLevel_Debug, "[MAIN] : Released OpenViewer");
+    }
 }

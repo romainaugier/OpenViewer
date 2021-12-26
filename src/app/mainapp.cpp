@@ -11,7 +11,7 @@ int application(int argc, char** argv)
     // Logger
     Logger logger;
     logger.SetLevel(LogLevel_Debug);
-    logger.Log(LogLevel_Debug, "[APP] : Initializing OpenViewer...");
+    logger.Log(LogLevel_Debug, "[MAIN] : Initializing OpenViewer");
     
     // Profiler
     Profiler profiler;
@@ -26,7 +26,7 @@ int application(int argc, char** argv)
 
     if (!glfwInit())
     {
-        logger.Log(LogLevel_Error, "GLFW : Failed to initialize GLFW. Exiting application...");
+        logger.Log(LogLevel_Error, "[GLFW] : Failed to initialize GLFW. Exiting application");
         return 1;
     }
 
@@ -47,7 +47,7 @@ int application(int argc, char** argv)
 
     if (err)
     {
-        logger.Log(LogLevel_Error, "OPENGL Failed to initialize loader. Exiting application...");
+        logger.Log(LogLevel_Error, "[OPENGL] : Failed to initialize loader. Exiting application");
         return 1;
     }
 
@@ -95,29 +95,37 @@ int application(int argc, char** argv)
     // We initialize a display to load and display its content
     if (parser.is_directory > 0)
     {
-        Interface::Display* newDisplay = new Interface::Display(&profiler, &logger, 1);
+        Interface::Display* newDisplay = new Interface::Display(&profiler, &logger, &loader, 1);
 
-        newDisplay->m_Loader->Initialize(parser.path, false, 0);
+        loader.Load(parser.path);
+        loader.m_Medias[0].SetActive();
+        loader.m_Medias[0].m_TimelineRange = loader.m_Medias[0].m_Range;
+        loader.LoadImageToCache(0);
+        
+        playbarCount = loader.m_Medias[0].m_Range.y;
+
         newDisplay->Initialize(ocio);
-        playbarCount = newDisplay->m_Loader->m_ImageCount;
 
         app.m_Displays[++app.m_DisplayCount] = newDisplay;
         app.m_ActiveDisplayID = 1;
     }
     else if (parser.is_file > 0)
     {
-        Interface::Display* newDisplay = new Interface::Display(&profiler, &logger, 1);
+        Interface::Display* newDisplay = new Interface::Display(&profiler, &logger, &loader, 1);
 
-        newDisplay->m_Loader->Initialize(parser.path);
+        loader.Load(parser.path);
+        loader.m_Medias[0].SetActive();
+        loader.LoadImageToCache(0);
+        
         newDisplay->Initialize(ocio);
-        playbarCount = newDisplay->m_Loader->m_ImageCount;
+        playbarCount = 0;
 
         app.m_Displays[++app.m_DisplayCount] = newDisplay;
         app.m_ActiveDisplayID = 1;
     }
 
     // initialize windows
-    Interface::ImPlaybar playbar(ImVec2(0.0f, playbarCount + 200.0f));
+    Interface::ImPlaybar playbar(ImVec2(0.0f, playbarCount));
 
     settings.GetOcioConfig(ocio);
     
@@ -164,126 +172,12 @@ int application(int argc, char** argv)
         profiler.MemUsage("Ocio Module Memory Usage", ToMB((sizeof(ocio) + ocio.GetSize()) / 8));
         // profiler.MemUsage("Loader Memory Usage", ToMB((sizeof(loader) + loader.cached_size) / 8));
 
-        uint16_t frame_index = playbar.m_Frame;
+        uint32_t frameIndex = playbar.m_Frame;
 
-
-        
-        // if (loader.has_been_initialized > 0 && playbar.update > 0 ||
-        //     loader.has_been_initialized > 0 && change)
-        // {
-        //     if (settings.settings.m_UseCache) // cache loading
-        //     {
-        //         if (playbar.play < 1)
-        //         {
-        //             loader.work_for_cache = false;
-        //             auto imgload_start = profiler.Start();
-        //             loader.is_playing = 0;
-
-        //             if (loader.cached[playbar.playbar_frame] < 1)
-        //             {
-        //                 void* address = loader.UnloadImage();
-
-        //                 if (address == nullptr) address = loader.memory_arena;
-                        
-        //                 loader.LoadImage(frame_index, address);
-        //             }
-
-        //             auto imgload_end = profiler.End();
-
-        //             profiler.Time("Image Loading Time", imgload_start, imgload_end);
-
-        //             display.Update(loader, ocio, frame_index);
-
-        //             if (settings.settings.parade)
-        //             {
-        //                 auto plotstart = profiler.Start();
-        //                 display.GetDisplayPixels();
-        //                 // plot.Update(display.buffer);
-        //                 auto plotend = profiler.End();
-        //                 profiler.Time("Plot Time", plotstart, plotend);
-        //             }
-
-        //             change = false;
-        //         }
-        //         else
-        //         {
-        //             auto imgload_start = profiler.Start();
-        //             loader.is_playing = 1;
-
-        //             if (loader.cached[(playbar.playbar_frame + 1) % loader.count] < 1) // emergency load
-        //             {
-        //                 loader.mtx.lock();
-        //                 loader.work_for_cache = 1;
-        //                 loader.urgent_load = 1;
-        //                 loader.cache_load_frame = playbar.playbar_frame;
-        //                 loader.mtx.unlock();
-        //                 loader.load_into_cache.notify_all();
-
-        //                 // wait for a few ms to be make sure some frames are loaded
-        //                 std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        //             }
-        //             else if (loader.cached[(playbar.playbar_frame + (loader.cache_size_count / 2)) % loader.count] < 1) // "casual" load 
-        //             {
-        //                 loader.mtx.lock();
-        //                 loader.work_for_cache = 1;
-        //                 loader.cache_load_frame = playbar.playbar_frame;
-        //                 loader.mtx.unlock();
-        //                 loader.load_into_cache.notify_all();
-        //             }
-        //             if (loader.is_playloader_working < 1)
-        //             {
-        //                 loader.stop_playloader = 0;
-        //                 loader.LaunchPlayerWorker();
-        //             }
-        //             auto imgload_end = profiler.End();
-
-        //             profiler.Time("Image Loading Time", imgload_start, imgload_end);
-
-        //             display.Update(loader, ocio, frame_index);
-                    
-        //             if (settings.settings.parade)
-        //             {
-        //                 auto plotstart = profiler.Start();
-        //                 display.GetDisplayPixels();
-        //                 // plot.Update(display.buffer);
-        //                 auto plotend = profiler.End();
-        //                 profiler.Time("Plot Time", plotstart, plotend);
-        //             }
-
-        //             change = false;
-        //         }
-        //     }
-        //     else // no cache allowed
-        //     {
-        //         if (loader.stop_playloader > 0) loader.stop_playloader = 1;
-
-        //         auto imgload_start = profiler.Start();
-        //         loader.is_playing = 0;
-
-        //         if (loader.cached[frame_index] == 0)
-        //         {
-        //             void* address = loader.UnloadImage();
-        //             loader.LoadImage(frame_index, address);
-        //         }
-
-        //         auto imgload_end = profiler.End();
-
-        //         profiler.Time("Image Loading Time", imgload_start, imgload_end);
-
-        //         display.Update(loader, ocio, frame_index);
-
-        //         if (settings.settings.parade)
-        //         {
-        //             display.GetDisplayPixels();
-        //             auto plotstart = profiler.Start();
-        //             // plot.Update(display.buffer);
-        //             auto plotend = profiler.End();
-        //             profiler.Time("Plot Time", plotstart, plotend);
-        //         }
-
-        //         change = false;
-        //     }
-        // }
+        if (playbar.m_Update)
+        {
+            loader.LoadImageToCache(frameIndex);
+        }
 
         glfwPollEvents();
 
@@ -300,11 +194,11 @@ int application(int argc, char** argv)
         // displays
         for(auto[id, display] : app.m_Displays)
         {
-            if (change) display->Update(ocio, 0);
-            display->Draw(0);
+            if (change || playbar.m_Update) display->Update(ocio, frameIndex);
+            display->Draw(frameIndex);
 
             // One info window per display
-            imageInfosWindow.Draw(display->m_Loader->m_Images[0], &app.m_Windows["Image Infos"]);
+            imageInfosWindow.Draw(*app.m_Loader->GetImage(frameIndex), &app.showImageInfosWindow);
         }
 
         // settings windows
@@ -346,6 +240,11 @@ int application(int argc, char** argv)
 
         glfwSwapBuffers(window);
     }
+
+    // Release everything
+    ocio.Release();
+    loader.Release();
+    app.Release();
 
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();

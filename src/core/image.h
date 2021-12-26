@@ -77,8 +77,8 @@ namespace Core
 				this->m_GLType = GL_HALF_FLOAT;
 				this->m_Xres = spec.full_width;
 				this->m_Yres = spec.full_height;
-				this->m_Channels = spec.nchannels;
-				this->m_Size = m_Xres * m_Yres * m_Channels;
+				this->m_Channels = spec.nchannels < 4 ? 4 : spec.nchannels;
+				this->m_Size = this->m_Xres * this->m_Yres * (this->m_Channels > 4 ? 4 : this->m_Channels);
 				this->m_Stride = m_Size * Size::Size16;
 			}
 			else if(Utils::EndsWith(fp, ".png"))

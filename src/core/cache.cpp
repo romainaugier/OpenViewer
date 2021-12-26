@@ -8,19 +8,21 @@ namespace Core
 {
     void ImageCache::Initialize(const size_t size, Logger* logger, const bool isImgCache) noexcept
     {
-        this->m_Capacity = size;
+        this->m_HasBeenInitialized = true;
+        this->m_Capacity = 0;
+
         // Size needs to be specified in MB 
-        this->m_BytesCapacity = isImgCache ? size : size * 1000000;
+        this->m_BytesCapacity = isImgCache ? size * 1000000 : size;
         this->m_Logger = logger;
 
-        const char* memUnit = isImgCache ? "bytes" : "MB";
-
-        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Initializing Image Cache (%d %s)", size, memUnit);
+        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Initializing Image Cache (%.2f MB)", isImgCache ? 
+                                                                                            static_cast<float>(size) :
+                                                                                            static_cast<float>(size) / 1000000.0f);
 
         this->m_MemoryArena = OvAlloc(this->m_BytesCapacity, 32);
     }
 
-    uint16_t ImageCache::Add(Image* image) noexcept
+    uint32_t ImageCache::Add(Image* image) noexcept
     {
         this->m_Mtx.lock();
 
@@ -58,9 +60,9 @@ namespace Core
         // we have enough space to store the image
         else
         {
-            uint16_t traversingIdx = 1;
+            uint32_t traversingIdx = 1;
             uint64_t cleanedByteSize = 0;
-            uint16_t cleanIndex = 1;
+            uint32_t cleanIndex = 1;
             void* cleanAddress = nullptr;
 
             while (true)
@@ -127,16 +129,15 @@ namespace Core
         }
     }
 
-    void ImageCache::Remove(const uint16_t index) noexcept
+    void ImageCache::Remove(const uint32_t index) noexcept
     {
         // TODO
     }
     
-    void ImageCache::Resize(const size_t newSize) noexcept
+    void ImageCache::Resize(const size_t newSize, const bool sizeInMB) noexcept
     {
         // Size is given in MB
-        
-        const uint64_t newSizeBytes = newSize * 1000000;
+        const uint64_t newSizeBytes = sizeInMB ? newSize * 1000000 : newSize;
         
         if(newSizeBytes < this->m_BytesCapacity) return;
         else
@@ -149,7 +150,9 @@ namespace Core
             this->m_BytesCapacity = newSizeBytes;
         }
 
-        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Image Cache resized (%d MB)", newSize);
+        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Image Cache resized (%.2f MB)", sizeInMB ? 
+                                                                                       static_cast<float>(newSize) :
+                                                                                       static_cast<float>(newSize) / 1000000.0f);
     }
     
     void ImageCache::Release() noexcept
@@ -159,5 +162,7 @@ namespace Core
             OvFree(this->m_MemoryArena);
             this->m_MemoryArena = nullptr;
         }
+
+        this->m_HasBeenInitialized = false;
     }
 } // end namespace Core

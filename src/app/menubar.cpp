@@ -52,10 +52,10 @@ namespace Interface
 							currentActiveDisplay->m_Loader->Release();
 						}
 
-						currentActiveDisplay->m_Loader->Initialize(fp);
+						app.m_Loader->Load(fp);
 						currentActiveDisplay->Initialize(ocio);
 
-						playbar.m_Range = ImVec2(0.0f, currentActiveDisplay->m_Loader->m_ImageCount + 1.0f);
+						// playbar.m_Range = ImVec2(0.0f, currentActiveDisplay->m_Loader->m_ImageCount + 1.0f);
 						playbar.m_Play = false;
 						playbar.m_Frame = 0;
 
@@ -84,10 +84,10 @@ namespace Interface
 
 						uint64_t cache_size = static_cast<uint64_t>(currentSettings.settings.m_CacheSize);
 
-						currentActiveDisplay->m_Loader->Initialize(fp, currentSettings.settings.m_UseCache, cache_size);
+						app.m_Loader->Load(fp);
 						currentActiveDisplay->Initialize(ocio);
 
-						playbar.m_Range = ImVec2(0.0f, currentActiveDisplay->m_Loader->m_ImageCount + 1.0f);
+						// playbar.m_Range = ImVec2(0.0f, currentActiveDisplay->m_Loader->m_ImageCount + 1.0f);
 						playbar.m_Play = false;
 						playbar.m_Frame = 0;
 
@@ -119,8 +119,8 @@ namespace Interface
 
 				if (ImGui::BeginMenu("Infos"))
 				{
-					if (ImGui::MenuItem("Sequence Infos")) {}
-					if (ImGui::MenuItem("Image Infos")) { app.m_Windows["Image Infos"] = true; }
+					if (ImGui::MenuItem("Sequence Infos")) { app.showMediaInfosWindow = true; }
+					if (ImGui::MenuItem("Image Infos")) { app.showImageInfosWindow = true; }
 					
 					ImGui::EndMenu();
 				}

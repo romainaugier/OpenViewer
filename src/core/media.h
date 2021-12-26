@@ -26,5 +26,7 @@ namespace Core
 
         uint32_t Size() const noexcept;
         bool InRange(const uint32_t index) const noexcept; 
+        void SetActive() noexcept;
+        void SetInactive() noexcept;
     };
 }

@@ -168,7 +168,7 @@ namespace Interface
 			const uint16_t currentImageXRes = currentImage->m_Xres;
 			const uint16_t currentImageYRes = currentImage->m_Yres;
 			const uint64_t currentImageSize = currentImage->m_Size;
-			const uint16_t currentImageCacheIndex = currentImage->m_CacheIndex;
+			const uint16_t currentImageCacheIndex = this->m_Loader->m_UseCache ? currentImage->m_CacheIndex : 1;
 			const void* currentImageCacheAddress = this->m_Loader->m_Cache->m_Items[currentImageCacheIndex].m_Ptr;
 
 			// Error check
@@ -265,8 +265,8 @@ namespace Interface
 
 			if (currentImage != nullptr)
 			{
-				ImVec2 size = ImVec2(this->m_Loader->m_Images[frameIndex].m_Xres, 
-									this->m_Loader->m_Images[frameIndex].m_Yres);
+				ImVec2 size = ImVec2(currentImage->m_Xres, 
+									 currentImage->m_Yres);
 
 				static ImVec2 scrolling;
 				static float zoom = 1.0f;
@@ -312,5 +312,7 @@ namespace Interface
 		// delete the gl textures
 		glDeleteTextures(1, &this->m_DisplayTexture);
 		glDeleteTextures(1, &this->m_ColorBuffer);
+
+		this->m_Logger->Log(LogLevel_Debug, "[DISPLAY] : Released display %d", this->m_DisplayID);
 	}
 } // End namespace Interface

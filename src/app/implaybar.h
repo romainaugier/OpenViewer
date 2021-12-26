@@ -35,7 +35,7 @@ namespace Interface
 		uint8_t m_FrameRate = 24;
 		
 		bool m_Play = false;
-		bool m_Update = false;
+		bool m_Update = true;
 
 		ImPlaybar(ImVec2 range) : 
 			m_Range(range)

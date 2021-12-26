@@ -40,6 +40,8 @@ namespace Core
 
 			uint32_t itemCount = Utils::FileCountInDirectory(mediaPath);
 
+			uint64_t biggestImageByteSize = 0;
+
 			newTmpMedia.m_Images.reserve(itemCount);
 
 			for (const auto& item : std::filesystem::directory_iterator(mediaPath))
@@ -52,11 +54,35 @@ namespace Core
 
 					this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loaded : %s", itemPath.c_str());
 
+					// If images in the sequence are of different sizes, get the biggest image of the sequence to 
+					// update the cache
+					biggestImageByteSize = biggestImageByteSize < newTmpMedia.m_Images[newTmpMedia.m_Range.y].m_Stride ? 
+																  newTmpMedia.m_Images[newTmpMedia.m_Range.y].m_Stride : 
+																  biggestImageByteSize;
+
 					++newTmpMedia.m_Range.y;
 				}
 				else
 				{
 					this->m_Logger->Log(LogLevel_Debug, "[LOADER] : File : %s is invalid, discarded", item.path().c_str());
+				}
+			}
+
+			// Initialize the cache if it has not been, else resize the cache if needed (by cache I mean the minimal cache needed to display 
+			// at least one image). We resize the minimal cache to the size of the biggest image in all the medias. It avoids allocations/deallocations
+			// during reading
+			if (!this->m_UseCache)
+			{
+				if (this->m_Cache->m_HasBeenInitialized)
+				{
+					// Cache will detect automatically if it needs to be resized
+					this->m_Cache->Resize(biggestImageByteSize, false);
+					this->m_Cache->Add(&newTmpMedia.m_Images[0]);
+				}
+				else
+				{
+					this->m_Cache->Initialize(biggestImageByteSize, this->m_Logger, false);
+					this->m_Cache->Add(&newTmpMedia.m_Images[0]);
 				}
 			}
 
@@ -75,6 +101,24 @@ namespace Core
 			newTmpMedia.m_Images.emplace_back(mediaPath);
 
 			this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loaded : %s", mediaPath.c_str());
+
+			// Same as in the sequence loading
+			if (!this->m_UseCache)
+			{
+				const uint64_t loadedImgByteSize = newTmpMedia.m_Images[0].m_Stride;
+
+				if (this->m_Cache->m_HasBeenInitialized)
+				{
+					// Cache will detect automatically if it needs to be resized
+					this->m_Cache->Resize(loadedImgByteSize, false);
+					this->m_Cache->Add(&newTmpMedia.m_Images[0]);
+				}
+				else
+				{
+					this->m_Cache->Initialize(loadedImgByteSize, this->m_Logger, false);
+					this->m_Cache->Add(&newTmpMedia.m_Images[0]);
+				}
+			}
 
 			// Move the media into the media vector of the loader
 			this->m_Medias.push_back(std::move(newTmpMedia));
@@ -145,7 +189,7 @@ namespace Core
 		}
 	}
 
-	void Loader::LoadSequenceToCache(const uint32_t startIndex, const uint32_t size = 0) noexcept
+	void Loader::LoadSequenceToCache(const uint32_t startIndex, const uint32_t size) noexcept
 	{
 		
 	}
@@ -168,5 +212,7 @@ namespace Core
 
 		this->m_Workers.clear();
 		this->m_Workers.resize(0);
+
+		this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Released loader");
 	}
 }

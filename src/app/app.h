@@ -26,6 +26,8 @@ namespace Interface
         bool showMediaInfosWindow = false;
         bool showMediaExplorerWindow = false;
 
-        Application(Logger* logger, Core::Loader* loader);        
+        Application(Logger* logger, Core::Loader* loader);     
+
+        void Release() noexcept;   
     };
 }
