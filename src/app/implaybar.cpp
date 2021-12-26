@@ -12,6 +12,14 @@ namespace Interface
 
 	void ImPlaybar::Update() noexcept
 	{
+		// Update cache indices
+		for (uint32_t i = this->m_Range.x; i < this->m_Range.y; i++)
+		{
+			const Core::Image* tmpImage = this->m_Loader->GetImage(i);
+
+			this->m_CachedIndices[i] = tmpImage->m_CacheIndex > 0 ? 1 : 0;
+		}
+
 		if (this->m_Play)
 		{
 			const uint32_t framecount = ImGui::GetFrameCount();
@@ -68,7 +76,7 @@ namespace Interface
 			const float step = timelineSize.x / (this->m_Range.y - 1.0f);
 
 			// Separating lines and frame number indicators
-			for (float x = 0.0f; x < (this->m_Range.y); x++)
+			for (float x = this->m_Range.x; x < (this->m_Range.y); x++)
 			{
 				float thickness = 1.0f;
 				float height = (timelineP0.y + 10.0f);
@@ -85,6 +93,14 @@ namespace Interface
 				}
 
 				drawList->AddLine(ImVec2(timelineP0.x + (step * x) + 2.0f, timelineP0.y), ImVec2(timelineP0.x + (step * x) + 2.0f, height), LIGHTGRAY, thickness);
+
+				if (this->m_CachedIndices[static_cast<int>(x)])
+				{
+					drawList->AddQuadFilled(ImVec2(timelineP0.x + (step * x) + 2.0f, timelineP1.y - 10.0f),
+											ImVec2(timelineP0.x + (step * (x + 1.0f)) + 2.0f, timelineP1.y - 10.0f),
+											ImVec2(timelineP0.x + (step * (x + 1.0f)) + 2.0f, timelineP1.y),
+											ImVec2(timelineP0.x + (step * x) + 2.0f, timelineP1.y), LIGHTGREEN);
+				}
 			}	
 
 			// Cursor

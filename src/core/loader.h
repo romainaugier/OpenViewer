@@ -39,17 +39,25 @@ namespace Core
 
 		std::condition_variable m_CondVar;
 
+		std::mutex m_Mutex;
+
 		ImageCache* m_Cache = nullptr;
 
 		Logger* m_Logger = nullptr;
 
 		Profiler* m_Profiler = nullptr;
 
+		uint32_t m_BgLoadFrameIndex = 0; // Frame from where to start the bg loading
+
 		uint16_t m_MediaCount = 0;
+
+		uint8_t m_BgLoadChunkSize = 8; // Number of images to load in the cache at the same time in the background
 
 		bool m_UseCache = false;
 		bool m_HasBeenInitialized = false;
 		bool m_IsWorking = false; // State for the worker thread doing the load job
+		bool m_NeedBgLoad = false; // Notify the background loader we need it to work
+		bool m_StopBgLoad = false; // Stop the background loader
 
 		// Simple constructor to initialize the logger/profiler
 		Loader(Logger* logger, Profiler* profiler);
@@ -70,6 +78,12 @@ namespace Core
 		// it reaches startIndex + size
 		// If the given size is 0, it will load as much images as the cache can handle
 		void LoadSequenceToCache(const uint32_t startIndex, const uint32_t size = 0) noexcept;
+
+		// Background loading function that loads the images to the cache as a background task
+		void BackgroundLoad() noexcept;
+
+		// Launch the worker that loads images to the cache in background
+		void LaunchCacheLoader() noexcept;
 
 		// Deallocate resources and release the loader
 		void Release() noexcept;

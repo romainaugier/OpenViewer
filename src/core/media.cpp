@@ -13,7 +13,7 @@ namespace Core
 
     bool Media::InRange(const uint32_t index) const noexcept
     {
-        return index >= this->m_TimelineRange.x && index <= this->m_TimelineRange.y;
+        return index >= this->m_TimelineRange.x && index < this->m_TimelineRange.y;
     }
 
     void Media::SetActive() noexcept

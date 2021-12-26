@@ -30,25 +30,29 @@ namespace Core
 
 	void Loader::Load(const std::string& mediaPath) noexcept
 	{
-		this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loading media %s", mediaPath.c_str());
+		const std::string cleanMediaPath = Utils::CleanOSPath(mediaPath);
 
-		if (std::filesystem::is_directory(mediaPath))
+		this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loading media %s", cleanMediaPath.c_str());
+
+		if (std::filesystem::is_directory(cleanMediaPath))
 		{
 			this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Directory detected, loading image sequence");
 
 			Media newTmpMedia;
 
-			uint32_t itemCount = Utils::FileCountInDirectory(mediaPath);
+			uint32_t itemCount = Utils::FileCountInDirectory(cleanMediaPath);
 
 			uint64_t biggestImageByteSize = 0;
 
 			newTmpMedia.m_Images.reserve(itemCount);
 
-			for (const auto& item : std::filesystem::directory_iterator(mediaPath))
+			for (const auto& item : std::filesystem::directory_iterator(cleanMediaPath))
 			{
 				if (item.is_regular_file())
 				{
-					const std::string itemPath = item.path().u8string();
+					std::string itemPath = item.path().u8string();
+
+					Utils::CleanOSPath(itemPath);
 
 					newTmpMedia.m_Images.emplace_back(itemPath);
 
@@ -77,12 +81,10 @@ namespace Core
 				{
 					// Cache will detect automatically if it needs to be resized
 					this->m_Cache->Resize(biggestImageByteSize, false);
-					this->m_Cache->Add(&newTmpMedia.m_Images[0]);
 				}
 				else
 				{
 					this->m_Cache->Initialize(biggestImageByteSize, this->m_Logger, false);
-					this->m_Cache->Add(&newTmpMedia.m_Images[0]);
 				}
 			}
 
@@ -92,15 +94,15 @@ namespace Core
 			this->m_Medias.push_back(std::move(newTmpMedia));
 			++this->m_MediaCount;
 		}
-		else if (std::filesystem::is_regular_file(mediaPath))
+		else if (std::filesystem::is_regular_file(cleanMediaPath))
 		{
 			this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Single image detected, loading single image");
 
 			Media newTmpMedia;
 
-			newTmpMedia.m_Images.emplace_back(mediaPath);
+			newTmpMedia.m_Images.emplace_back(cleanMediaPath);
 
-			this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loaded : %s", mediaPath.c_str());
+			this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loaded : %s", cleanMediaPath.c_str());
 
 			// Same as in the sequence loading
 			if (!this->m_UseCache)
@@ -111,12 +113,10 @@ namespace Core
 				{
 					// Cache will detect automatically if it needs to be resized
 					this->m_Cache->Resize(loadedImgByteSize, false);
-					this->m_Cache->Add(&newTmpMedia.m_Images[0]);
 				}
 				else
 				{
 					this->m_Cache->Initialize(loadedImgByteSize, this->m_Logger, false);
-					this->m_Cache->Add(&newTmpMedia.m_Images[0]);
 				}
 			}
 
@@ -126,7 +126,7 @@ namespace Core
 		}
 		else
 		{
-			this->m_Logger->Log(LogLevel_Error, "[LOADER] : Path : %s is invalid", mediaPath.c_str());
+			this->m_Logger->Log(LogLevel_Error, "[LOADER] : Path : %s is invalid", cleanMediaPath.c_str());
 		}
 	}
 
@@ -150,7 +150,11 @@ namespace Core
 
 	void Loader::LoadImageToCache(const uint32_t index) noexcept
 	{
-		if(this->m_UseCache)
+		const Image* tmpImg = this->GetImage(index);
+
+		if (tmpImg->m_CacheIndex > 0) return;
+
+		if (this->m_UseCache)
 		{
 			for (auto& media : this->m_Medias)
 			{
@@ -181,6 +185,10 @@ namespace Core
 				{
 					const uint32_t imageIndex = index - media.m_TimelineRange.x;
 
+					// if (this->m_Cache->m_Size > 0) this->m_Cache->Remove(1);
+
+					this->m_Cache->Add(&media.m_Images[imageIndex]);
+
 					media.m_Images[imageIndex].Load(this->m_Cache->m_Items[1].m_Ptr, this->m_Profiler);
 
 					break;
@@ -191,7 +199,71 @@ namespace Core
 
 	void Loader::LoadSequenceToCache(const uint32_t startIndex, const uint32_t size) noexcept
 	{
+		uint32_t endIndex = size;
 		
+		if (size == 0)
+		{
+			uint32_t index = startIndex;
+			uint64_t accumulatedByteSize = 0;
+			endIndex = startIndex;
+
+			while (true)
+			{
+				const Image* tmpImage = this->GetImage(index);
+
+				if (tmpImage == nullptr) break;
+
+				accumulatedByteSize += tmpImage->m_Stride;
+
+				if (accumulatedByteSize >= this->m_Cache->m_BytesCapacity) break;
+
+				++endIndex;
+				++index;
+			}
+		}
+
+		for (uint32_t i = startIndex; i < (endIndex - 1); i++)
+		{
+			this->LoadImageToCache(i);
+		}
+	}
+
+	void Loader::BackgroundLoad() noexcept
+	{
+		while(true)
+		{
+			std::unique_lock<std::mutex> lock(this->m_Mutex);
+
+			this->m_CondVar.wait(lock, [this] { return this->m_NeedBgLoad || this->m_StopBgLoad; });
+
+			if (this->m_StopBgLoad) 
+			{
+				this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Stopping background loader");
+				this->m_IsWorking = false;
+				break;
+			}
+			else if (this->m_NeedBgLoad)
+			{
+				this->LoadSequenceToCache(this->m_BgLoadFrameIndex, this->m_BgLoadChunkSize);
+
+				this->m_NeedBgLoad = false;
+			}
+
+			lock.unlock();
+			this->m_CondVar.notify_all();
+		}
+	}
+
+	void Loader::LaunchCacheLoader() noexcept
+	{
+		if (!this->m_IsWorking)
+		{
+			this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Starting background loader");
+
+			this->m_Workers.emplace_back(&Loader::BackgroundLoad, this);
+
+			this->m_IsWorking = true;
+		}
 	}
 
 	void Loader::Release() noexcept

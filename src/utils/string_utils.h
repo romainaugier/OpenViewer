@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include <algorithm>
 #include "decl.h"
 
 #ifdef _MSC_VER
@@ -35,5 +36,22 @@ namespace Utils
         if ((char*)tmp[tmp.size() - 1] == space) tmp.erase(tmp.size() - 1);
 
         return tmp.c_str();
+    }
+
+    OPENVIEWER_FORCEINLINE void Replace(std::string& string, const std::string& substr, const std::string& replace)
+    {
+        // std::replace(string.begin(), string.end(), substr.c_str(), replace.c_str());
+    }
+
+    OPENVIEWER_FORCEINLINE void CleanOSPath(std::string& string)
+    {
+        std::replace(string.begin(), string.end(), '\\', '/');
+    }
+
+    OPENVIEWER_FORCEINLINE std::string CleanOSPath(const std::string& string)
+    {
+        std::string newString = string;
+        CleanOSPath(newString);
+        return newString;
     }
 } // End namespace utils

@@ -2,7 +2,6 @@
 // Copyright (c) 2021 Romain Augier
 // All rights reserved.
 
-
 #pragma once
 
 #include "imgui_impl_glfw.h"
@@ -29,6 +28,7 @@ static void glfw_error_callback(int error, const char* description)
 #include "menubar.h"
 #include "display.h"
 #include "imginfos.h"
+#include "mediaexplorer.h"
 #include "core/loader.h"
 #include "core/parser.h"
 

@@ -34,6 +34,11 @@ namespace Interface
 						this->m_HasOpenedIFD = true;
 					}
 
+					if (ImGui::MenuItem("Media Explorer"))
+					{
+						app.showMediaExplorerWindow = true;
+					}
+
 					ImGui::EndMenu();
 				}
 
@@ -44,24 +49,8 @@ namespace Interface
 						const auto& res = ifd::FileDialog::Instance().GetResults();
 						const std::string fp = res[0].u8string();
 
-						Display* currentActiveDisplay = app.m_Displays[app.m_ActiveDisplayID];
-
-						if(currentActiveDisplay->m_Loader->m_HasBeenInitialized)
-						{
-							currentActiveDisplay->Release();
-							currentActiveDisplay->m_Loader->Release();
-						}
-
 						app.m_Loader->Load(fp);
-						currentActiveDisplay->Initialize(ocio);
-
-						// playbar.m_Range = ImVec2(0.0f, currentActiveDisplay->m_Loader->m_ImageCount + 1.0f);
-						playbar.m_Play = false;
-						playbar.m_Frame = 0;
-
-						change = true;
-						ocio.UpdateProcessor();
-						currentActiveDisplay->Update(ocio, 0);
+						app.m_Loader->LoadImageToCache(playbar.m_Frame);
 					}
 
 					ifd::FileDialog::Instance().Close();
@@ -74,26 +63,8 @@ namespace Interface
 						const auto& res = ifd::FileDialog::Instance().GetResult();
 						const std::string fp = res.u8string();
 
-						Display* currentActiveDisplay = app.m_Displays[app.m_ActiveDisplayID];
-
-						if(currentActiveDisplay->m_Loader->m_HasBeenInitialized)
-						{
-							currentActiveDisplay->Release();
-							currentActiveDisplay->m_Loader->Release();
-						}
-
-						uint64_t cache_size = static_cast<uint64_t>(currentSettings.settings.m_CacheSize);
-
 						app.m_Loader->Load(fp);
-						currentActiveDisplay->Initialize(ocio);
-
-						// playbar.m_Range = ImVec2(0.0f, currentActiveDisplay->m_Loader->m_ImageCount + 1.0f);
-						playbar.m_Play = false;
-						playbar.m_Frame = 0;
-
-						change = true;
-						ocio.UpdateProcessor();
-						currentActiveDisplay->Update(ocio, 0);
+						app.m_Loader->LoadImageToCache(playbar.m_Frame);
 					}
 
 					ifd::FileDialog::Instance().Close();

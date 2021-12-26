@@ -53,7 +53,7 @@ namespace Interface
 				ImGui::SameLine();
 				if (ImGui::SmallButton("Add"))
 				{
-					ifd::FileDialog::Instance().Open("ConfigFileDialog", "Select an OCIO Config", "Ocio file (*.ocio){.oxio},.*");
+					ifd::FileDialog::Instance().Open("ConfigFileDialog", "Select an OCIO Config", "Ocio file (*.ocio){.ocio},.*");
 				}
 			}
 
@@ -100,47 +100,44 @@ namespace Interface
 					ImGui::Checkbox("Use Cache", &settings.m_UseCache);
 					if (ImGui::IsItemEdited())
 					{
+						playbar.Pause();
+						playbar.m_Frame = 0;
+
 						// If we use the cache, and the loader is already initialized, just initialize the cache
 						if (settings.m_UseCache)
 						{
-							for (auto& [id, display] : app.m_Displays)
-							{
-								if (display->m_Loader->m_HasBeenInitialized)
-								{
-									std::this_thread::sleep_for(std::chrono::milliseconds(100));
+							app.m_Loader->m_UseCache = true;
 
-									playbar.m_Play = false;
-									playbar.m_Frame = 0;
-									display->m_Loader->m_UseCache = true;
-									display->m_Loader->m_Cache->Initialize(settings.m_CacheSize, display->m_Logger);
-								}
-								else
-								{
-									display->m_Loader->m_UseCache = true;
-								}
+							if (app.m_Loader->m_Cache->m_HasBeenInitialized)
+							{
+								app.m_Loader->m_Cache->Resize(settings.m_CacheSize);
 							}
+
+							app.m_Loader->LoadSequenceToCache(0);
 						}
 						else
 						{
-							for (auto& [id, display] : app.m_Displays)
+							app.m_Loader->m_UseCache = false;
+							app.m_Loader->m_Cache->Release();
+
+							uint64_t biggestImageSize = 0;
+
+							for (const auto& media : app.m_Loader->m_Medias)
 							{
-								if (display->m_Loader->m_HasBeenInitialized)
+								for (const auto& image : media.m_Images)
 								{
-									display->m_Loader->m_UseCache = false;
-									display->m_Loader->m_Cache->Release();
-								}
-								else
-								{
-									display->m_Loader->m_UseCache = false;
+									biggestImageSize = image.m_Stride > biggestImageSize ? image.m_Stride : biggestImageSize;
 								}
 							}
+
+							app.m_Loader->m_Cache->Initialize(biggestImageSize, app.m_Logger, false);
+
+							app.m_Loader->LoadImageToCache(0);
 						}
 					}
 					
 					if (settings.m_UseCache)
 					{
-						ImGui::Text("Number of displays : %d", app.m_DisplayCount);
-						
 						ImGui::Text("Total Cache Size (MB)");
 						ImGui::SameLine();
 						ImGui::SetNextItemWidth(100.0f);
@@ -174,7 +171,10 @@ namespace Interface
 						ImGui::Text("Cache Usage");
 						ImGui::SameLine();
 						ImGui::SetNextItemWidth(50.0f);
-						ImGui::ProgressBar(0.5f);
+
+						const float cacheUsage = static_cast<float>(app.m_Loader->m_Cache->m_BytesSize) / static_cast<float>(app.m_Loader->m_Cache->m_BytesCapacity) * 100.0f;
+
+						ImGui::ProgressBar(cacheUsage, ImVec2(100.0f, 0.0f));
 					}
 				}
 

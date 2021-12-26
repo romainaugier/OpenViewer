@@ -87,9 +87,12 @@ int application(int argc, char** argv)
 
     // Initialize the different windows
     Interface::Settings_Windows settings;
-    Interface::ImageInfo imageInfosWindow;
+    settings.GetOcioConfig(ocio);
 
-    uint16_t playbarCount = 1;
+    Interface::ImageInfo imageInfosWindow;
+    Interface::MediaExplorer mediaExplorerWindow(&loader);
+
+    uint32_t playbarCount = 1;
 
     // When the app is launched, we have a command line argument specifying to open a directory
     // We initialize a display to load and display its content
@@ -125,13 +128,10 @@ int application(int argc, char** argv)
     }
 
     // initialize windows
-    Interface::ImPlaybar playbar(ImVec2(0.0f, playbarCount));
-
-    settings.GetOcioConfig(ocio);
-    
+    Interface::ImPlaybar playbar(&loader, ImVec2(0.0f, playbarCount));
     Interface::Menubar menubar;
 
-    // initialize memory profiler of main components
+    // Initialize memory profiler of main components
     profiler.MemUsage("Application Memory Usage", ToMB(GetCurrentRss()));
     // profiler.MemUsage("Display Memory Usage", ToMB((sizeof(display) + display.buffer_size) / 8));
     profiler.MemUsage("Ocio Module Memory Usage", ToMB((sizeof(ocio) + ocio.GetSize()) / 8));
@@ -206,6 +206,9 @@ int application(int argc, char** argv)
 
         // menubar
         menubar.Draw(settings, app, playbar, ocio, profiler, change);
+
+        // Media Explorer
+        mediaExplorerWindow.Draw(app.showMediaExplorerWindow);
     
         // playbar 
         playbar.Update();

@@ -15,7 +15,10 @@ namespace Core
         this->m_BytesCapacity = isImgCache ? size * 1000000 : size;
         this->m_Logger = logger;
 
-        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Initializing Image Cache (%.2f MB)", isImgCache ? 
+        const char* minimalCacheMsg = isImgCache ? " minimal " : " ";
+
+        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Initializing%sImage Cache (%.2f MB)", minimalCacheMsg,
+                                                                                            isImgCache ? 
                                                                                             static_cast<float>(size) :
                                                                                             static_cast<float>(size) / 1000000.0f);
 
@@ -26,7 +29,7 @@ namespace Core
     {
         this->m_Mtx.lock();
 
-        const uint64_t imgSize = image->m_Xres * image->m_Yres * image->m_Channels;
+        const uint64_t imgSize = image->m_Xres * image->m_Yres * (image->m_Channels > 4 ? 4 : image->m_Channels);
         const uint64_t imgByteSize = image->m_Stride;
 
         // The image we want to store in cache fits, lets give it a new address
@@ -35,19 +38,19 @@ namespace Core
             // Update cache size
             this->m_BytesSize += imgByteSize;
 
-            const uint64_t cacheOffset = this->m_Size == 0 ? 0 : this->m_BytesSize + imgByteSize;
+            const uint64_t cacheOffset = this->m_Size == 0 ? 0 : this->m_BytesSize;
 
             // Calculate new image address
             void* newImgAddress = static_cast<char*>(this->m_MemoryArena) + cacheOffset;
 
             // Add the image to the current items
-            this->m_Items.emplace(this->m_CurrentIndex, ImageCacheItem(image, newImgAddress, imgSize, imgByteSize));
+            this->m_Items.emplace(this->m_CurrentIndex, ImageCacheItem(image, newImgAddress, imgByteSize, imgSize));
 
             // Set the index on the image (to notify it has been cached, and to be able to retrieve the address with
             // the index only)
             image->m_CacheIndex = this->m_CurrentIndex;
 
-            this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Added image to the Image Cache at index %d (0x%p)", this->m_CurrentIndex, newImgAddress);
+            this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Added image to the Image Cache at index [%d]", this->m_CurrentIndex);
             
             ++this->m_CurrentIndex;
             ++this->m_Size;
@@ -79,7 +82,10 @@ namespace Core
 
                     void* address = tmpImgCacheItem.m_Ptr;
 
-                    this->m_Items[traversingIdx] = ImageCacheItem(image, address, imgSize, imgByteSize);
+                    this->m_Items[traversingIdx] = ImageCacheItem(image, address, imgByteSize, imgSize);
+
+                    // Update cache infos
+                    this->m_BytesSize += imgByteSize;
 
                     // Set the index on the image, to notify it has been loaded into the cache
                     image->m_CacheIndex = traversingIdx;
@@ -131,24 +137,40 @@ namespace Core
 
     void ImageCache::Remove(const uint32_t index) noexcept
     {
-        // TODO
+        this->m_Items[index].m_Image->m_CacheIndex = 0;
+        this->m_BytesSize -= this->m_Items[index].m_Stride;
+
+        --this->m_CurrentIndex;
+        --this->m_Size;
+
+        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Removed image at index [%d]", index);
     }
     
     void ImageCache::Resize(const size_t newSize, const bool sizeInMB) noexcept
     {
-        // Size is given in MB
         const uint64_t newSizeBytes = sizeInMB ? newSize * 1000000 : newSize;
         
-        if(newSizeBytes < this->m_BytesCapacity) return;
+        if(newSizeBytes <= this->m_BytesCapacity) return;
         else
         {
-            OvFree(this->m_MemoryArena);
-
             void* newPtr = OvAlloc(newSizeBytes, 32);
             memmove(newPtr, this->m_MemoryArena, this->m_BytesSize);
+         
+            OvFree(this->m_MemoryArena);
+         
             this->m_MemoryArena = newPtr;
             this->m_BytesCapacity = newSizeBytes;
         }
+
+        for (auto& [index, cacheItem] : this->m_Items)
+        {
+            cacheItem.m_Image->m_CacheIndex = 0;
+        }
+
+        this->m_Items.clear();
+        this->m_Size = 0;
+        this->m_BytesSize = 0;
+        this->m_CurrentIndex = 1;
 
         this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Image Cache resized (%.2f MB)", sizeInMB ? 
                                                                                        static_cast<float>(newSize) :
@@ -162,6 +184,16 @@ namespace Core
             OvFree(this->m_MemoryArena);
             this->m_MemoryArena = nullptr;
         }
+
+        for (auto& [index, cacheItem] : this->m_Items)
+        {
+            cacheItem.m_Image->m_CacheIndex = 0;
+        }
+
+        this->m_Items.clear();
+        this->m_Size = 0;
+        this->m_BytesSize = 0;
+        this->m_CurrentIndex = 1;
 
         this->m_HasBeenInitialized = false;
     }
