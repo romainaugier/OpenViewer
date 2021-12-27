@@ -164,20 +164,20 @@ int application(int argc, char** argv)
     // Main loop
     while (!glfwWindowShouldClose(window))
     {
-        // if (loader.has_finished > 0 ) loader.JoinWorker();
-
         // update memory profiler
-        profiler.MemUsage("Application Memory Usage", ToMB(GetCurrentRss()));
-        // profiler.MemUsage("Display Memory Usage", ToMB((sizeof(display) + display.buffer_size) / 8));
+        profiler.MemUsage("Application Total Memory Usage", ToMB(GetCurrentRss()));
+        profiler.MemUsage("Application Memory Usage", ToMB(GetCurrentRss()) - ToMB(loader.m_Cache->m_BytesSize));
         profiler.MemUsage("Ocio Module Memory Usage", ToMB((sizeof(ocio) + ocio.GetSize()) / 8));
-        // profiler.MemUsage("Loader Memory Usage", ToMB((sizeof(loader) + loader.cached_size) / 8));
+        profiler.MemUsage("Cache Memory Usage", ToMB(loader.m_Cache->m_BytesSize));
+
+        // Update the playbar
+        const auto startPbUpdate = profiler.Start();
+        playbar.Update();
+        const auto endPbUpdate = profiler.End();
+
+        profiler.Time("Playbar Update", startPbUpdate, endPbUpdate);
 
         uint32_t frameIndex = playbar.m_Frame;
-
-        if (playbar.m_Update)
-        {
-            loader.LoadImageToCache(frameIndex);
-        }
 
         glfwPollEvents();
 
@@ -192,14 +192,20 @@ int application(int argc, char** argv)
         // ImPlot::ShowDemoWindow();
 
         // displays
+        const auto startDpUpdate = profiler.Start();
+        
         for(auto[id, display] : app.m_Displays)
         {
             if (change || playbar.m_Update) display->Update(ocio, frameIndex);
             display->Draw(frameIndex);
 
             // One info window per display
-            imageInfosWindow.Draw(*app.m_Loader->GetImage(frameIndex), &app.showImageInfosWindow);
+            imageInfosWindow.Draw(*app.m_Loader->GetImage(frameIndex), app.showImageInfosWindow);
         }
+
+        const auto endDpUpdate = profiler.End();
+
+        profiler.Time("Displays Update", startDpUpdate, endDpUpdate);
 
         // settings windows
         settings.Draw(playbar, &profiler, ocio, app);
@@ -211,16 +217,7 @@ int application(int argc, char** argv)
         mediaExplorerWindow.Draw(app.showMediaExplorerWindow);
     
         // playbar 
-        playbar.Update();
         playbar.Draw();
-
-        // plot
-        if (settings.settings.parade)
-        {
-            auto plot_draw_start = profiler.Start();
-            auto plot_draw_end = profiler.End();
-            profiler.Time("Plot Drawing Time", plot_draw_start, plot_draw_end);
-        }
 
         // Rendering
         ImGui::Render();

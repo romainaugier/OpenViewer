@@ -47,11 +47,13 @@ namespace Core
 
 		Profiler* m_Profiler = nullptr;
 
+		ImVec2 m_Range = ImVec2(0, 0);
+
 		uint32_t m_BgLoadFrameIndex = 0; // Frame from where to start the bg loading
 
 		uint16_t m_MediaCount = 0;
 
-		uint8_t m_BgLoadChunkSize = 8; // Number of images to load in the cache at the same time in the background
+		uint8_t m_BgLoadChunkSize = 4; // Number of images to load in the cache at the same time in the background
 
 		bool m_UseCache = false;
 		bool m_HasBeenInitialized = false;
@@ -84,6 +86,12 @@ namespace Core
 
 		// Launch the worker that loads images to the cache in background
 		void LaunchCacheLoader() noexcept;
+
+		// Stop the worker that loads images to the cache in background
+		void StopCacheLoader() noexcept;
+
+		// Join all the threads launched during cache usage to load images in the background
+		void JoinWorkers() noexcept;
 
 		// Deallocate resources and release the loader
 		void Release() noexcept;

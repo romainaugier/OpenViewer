@@ -12,6 +12,6 @@ namespace Interface
 {
     struct ImageInfo
     {   
-        void Draw(const Core::Image& currentImage, bool* showWindow) const noexcept;
+        void Draw(const Core::Image& currentImage, bool& showWindow) const noexcept;
     };
 }

@@ -60,6 +60,7 @@ namespace Core
 
         // Buffer size, capacity and current index of allocation
         uint32_t m_CurrentIndex = 1; // The index starts at 1, because we store the index in an unsigned 32 bits integer
+        uint32_t m_CurrentTraversingIndex = 0;
         uint32_t m_Size = 0;
         uint32_t m_Capacity = 0;
 

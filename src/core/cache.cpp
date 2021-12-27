@@ -27,7 +27,7 @@ namespace Core
 
     uint32_t ImageCache::Add(Image* image) noexcept
     {
-        this->m_Mtx.lock();
+        std::unique_lock<std::mutex> addLock(this->m_Mtx);
 
         const uint64_t imgSize = image->m_Xres * image->m_Yres * (image->m_Channels > 4 ? 4 : image->m_Channels);
         const uint64_t imgByteSize = image->m_Stride;
@@ -35,10 +35,8 @@ namespace Core
         // The image we want to store in cache fits, lets give it a new address
         if ((this->m_BytesSize + imgByteSize) <= this->m_BytesCapacity)
         {
-            // Update cache size
-            this->m_BytesSize += imgByteSize;
-
-            const uint64_t cacheOffset = this->m_Size == 0 ? 0 : this->m_BytesSize;
+            // The new cache address corresponds to the current byte size
+            const uint64_t cacheOffset = this->m_BytesSize;
 
             // Calculate new image address
             void* newImgAddress = static_cast<char*>(this->m_MemoryArena) + cacheOffset;
@@ -50,12 +48,17 @@ namespace Core
             // the index only)
             image->m_CacheIndex = this->m_CurrentIndex;
 
-            this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Added image to the Image Cache at index [%d]", this->m_CurrentIndex);
+            this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Added image [%s] to the Image Cache at index [%d]", image->m_Path.c_str(), this->m_CurrentIndex);
+
+            // Update cache size
+            this->m_BytesSize += imgByteSize;
+            this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Update cache size : %f MB (Capacity : %f MB)", static_cast<float>(this->m_BytesSize) / 1000000.0f,
+                                                                                                          static_cast<float>(this->m_BytesCapacity) / 1000000.0f);
             
             ++this->m_CurrentIndex;
             ++this->m_Size;
 
-            this->m_Mtx.unlock();
+            addLock.unlock();
 
             return image->m_CacheIndex;
         }
@@ -63,7 +66,8 @@ namespace Core
         // we have enough space to store the image
         else
         {
-            uint32_t traversingIdx = 1;
+            const uint32_t currentIdx = this->m_CurrentTraversingIndex == 0 ? 0 : this->m_CurrentTraversingIndex % this->m_Size;
+            uint32_t traversingIdx = currentIdx + 1;
             uint64_t cleanedByteSize = 0;
             uint32_t cleanIndex = 1;
             void* cleanAddress = nullptr;
@@ -78,7 +82,10 @@ namespace Core
                 {
                     // Notify that this image is not in cache anymore and update the cache infos
                     tmpImgCacheItem.m_Image->m_CacheIndex = 0;
+                    
                     this->m_BytesSize -= tmpImgCacheItem.m_Stride;
+
+                    const std::string removedImagePath = tmpImgCacheItem.m_Image->m_Path;
 
                     void* address = tmpImgCacheItem.m_Ptr;
 
@@ -89,10 +96,11 @@ namespace Core
 
                     // Set the index on the image, to notify it has been loaded into the cache
                     image->m_CacheIndex = traversingIdx;
+                    this->m_CurrentTraversingIndex = traversingIdx;
 
-                    this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Removed image at index [%d] and loaded a new one", traversingIdx);
+                    this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Removed image [%s] at index [%d] and loaded a new one", removedImagePath.c_str(), traversingIdx);
 
-                    this->m_Mtx.unlock();
+                    addLock.unlock();
                     
                     return traversingIdx;
                 }
@@ -109,11 +117,13 @@ namespace Core
                     if(imgByteSize <= cleanedByteSize)
                     {
                         this->m_Items[cleanIndex] = ImageCacheItem(image, cleanAddress, imgSize, imgByteSize);
+
                         image->m_CacheIndex = cleanIndex;   
+                        this->m_CurrentTraversingIndex = cleanIndex;
 
                         this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Loaded image at index [%d]", traversingIdx);
 
-                        this->m_Mtx.unlock();
+                        addLock.unlock();
 
                         return cleanIndex;
                     }
@@ -150,17 +160,10 @@ namespace Core
     {
         const uint64_t newSizeBytes = sizeInMB ? newSize * 1000000 : newSize;
         
-        if(newSizeBytes <= this->m_BytesCapacity) return;
-        else
-        {
-            void* newPtr = OvAlloc(newSizeBytes, 32);
-            memmove(newPtr, this->m_MemoryArena, this->m_BytesSize);
-         
-            OvFree(this->m_MemoryArena);
-         
-            this->m_MemoryArena = newPtr;
-            this->m_BytesCapacity = newSizeBytes;
-        }
+        OvFree(this->m_MemoryArena);
+        
+        this->m_MemoryArena = OvAlloc(newSizeBytes, 32);
+        this->m_BytesCapacity = newSizeBytes;
 
         for (auto& [index, cacheItem] : this->m_Items)
         {
@@ -171,6 +174,7 @@ namespace Core
         this->m_Size = 0;
         this->m_BytesSize = 0;
         this->m_CurrentIndex = 1;
+        this->m_CurrentTraversingIndex = 0;
 
         this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Image Cache resized (%.2f MB)", sizeInMB ? 
                                                                                        static_cast<float>(newSize) :
@@ -194,7 +198,10 @@ namespace Core
         this->m_Size = 0;
         this->m_BytesSize = 0;
         this->m_CurrentIndex = 1;
+        this->m_CurrentTraversingIndex = 0;
 
         this->m_HasBeenInitialized = false;
+
+        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Releasing cache");
     }
 } // end namespace Core

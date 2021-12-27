@@ -171,14 +171,6 @@ namespace Interface
 			const uint16_t currentImageCacheIndex = this->m_Loader->m_UseCache ? currentImage->m_CacheIndex : 1;
 			const void* currentImageCacheAddress = this->m_Loader->m_Cache->m_Items[currentImageCacheIndex].m_Ptr;
 
-			// Error check
-			if (currentImageCacheAddress == nullptr)
-			{
-				StaticDebugConsoleLog("Display Error : Frame Index %d", frameIndex);
-
-				return;
-			}
-
 			// Update the texture
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, this->m_DisplayTexture);
@@ -260,45 +252,33 @@ namespace Interface
 
 		ImGui::Begin(displayName, &p_open, window_flags);
 		{
-			// Get the image to be displayed
-			Core::Image* currentImage = this->m_Loader->GetImage(frameIndex);
+			ImVec2 size = ImVec2(this->m_Width, 
+									this->m_Height);
 
-			if (currentImage != nullptr)
+			static ImVec2 scrolling;
+			static float zoom = 1.0f;
+			const ImVec4 tint(1.0f, 1.0f, 1.0f, 1.0f);
+			const ImVec4 borderColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+			const bool isHovered = ImGui::IsWindowHovered();
+
+			ImGuiIO& io = ImGui::GetIO();
+
+			if (isHovered && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
 			{
-				ImVec2 size = ImVec2(currentImage->m_Xres, 
-									 currentImage->m_Yres);
-
-				static ImVec2 scrolling;
-				static float zoom = 1.0f;
-				const ImVec4 tint(1.0f, 1.0f, 1.0f, 1.0f);
-				const ImVec4 borderColor(0.0f, 0.0f, 0.0f, 1.0f);
-
-				const bool isHovered = ImGui::IsWindowHovered();
-
-				ImGuiIO& io = ImGui::GetIO();
-
-				if (isHovered && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
-				{
-					scrolling.x += io.MouseDelta.x;
-					scrolling.y += io.MouseDelta.y;
-				}
-
-				const float mouseWheel = io.MouseWheel;
-
-				if (isHovered && mouseWheel != 0.0f)
-				{
-					zoom += mouseWheel * 0.1f;
-				}
-
-				ImGui::SetCursorPos((ImGui::GetWindowSize() - size * zoom) * 0.5f + scrolling);
-				ImGui::Image((void*)(intptr_t)this->m_ColorBuffer, size * zoom, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), tint, borderColor);
+				scrolling.x += io.MouseDelta.x;
+				scrolling.y += io.MouseDelta.y;
 			}
-			else
+
+			const float mouseWheel = io.MouseWheel;
+
+			if (isHovered && mouseWheel != 0.0f)
 			{
-				this->m_Logger->Log(LogLevel_Warning, "[DISPLAY] : Internal error, invalid image. Skipping to next frame.");
-
-				return;
+				zoom += mouseWheel * 0.1f;
 			}
+
+			ImGui::SetCursorPos((ImGui::GetWindowSize() - size * zoom) * 0.5f + scrolling);
+			ImGui::Image((void*)(intptr_t)this->m_ColorBuffer, size * zoom, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), tint, borderColor);
 		}
 		ImGui::End();
 	}

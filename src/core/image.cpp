@@ -68,11 +68,11 @@ namespace Core
 		// in case the data window is smaller than the display window
 		// we fill empty pixels everywhere and then read the image pixels
 		// to avoid non initialized values in memory
-		if (data.min.x > display.min.x || data.max.x < display.max.x ||
-			data.min.y > display.min.y || data.max.y < display.min.y)
-		{
-			memset(&buffer[0], static_cast<half>(1.0f), this->m_Xres * this->m_Yres * (this->m_Channels > 4 ? 4 : this->m_Channels));
-		}
+		// if (data.min.x > display.min.x || data.max.x < display.max.x ||
+		// 	data.min.y > display.min.y || data.max.y < display.min.y)
+		// {
+		// 	memset(&buffer[0], static_cast<half>(1.0f), this->m_Xres * this->m_Yres * (this->m_Channels > 4 ? 4 : this->m_Channels));
+		// }
 
 		in.setFrameBuffer((Imf::Rgba*)buffer, 1, dim.x);
 		in.readPixels(data.min.y, data.max.y);

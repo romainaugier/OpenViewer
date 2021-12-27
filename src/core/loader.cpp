@@ -199,13 +199,13 @@ namespace Core
 
 	void Loader::LoadSequenceToCache(const uint32_t startIndex, const uint32_t size) noexcept
 	{
-		uint32_t endIndex = size;
+		uint32_t endIndex = startIndex + size;
 		
 		if (size == 0)
 		{
-			uint32_t index = startIndex;
+			uint32_t index = 0;
 			uint64_t accumulatedByteSize = 0;
-			endIndex = startIndex;
+			endIndex = 0;
 
 			while (true)
 			{
@@ -215,16 +215,20 @@ namespace Core
 
 				accumulatedByteSize += tmpImage->m_Stride;
 
-				if (accumulatedByteSize >= this->m_Cache->m_BytesCapacity) break;
+				if (accumulatedByteSize > this->m_Cache->m_BytesCapacity) break;
 
 				++endIndex;
 				++index;
 			}
+
+			endIndex += startIndex;
 		}
 
-		for (uint32_t i = startIndex; i < (endIndex - 1); i++)
+		for (uint32_t i = startIndex; i < endIndex; i++)
 		{
-			this->LoadImageToCache(i);
+			const uint32_t idx = static_cast<uint32_t>(fmodf(static_cast<float>(i), (this->m_Range.y - 1)));
+
+			this->LoadImageToCache(idx);
 		}
 	}
 
@@ -232,14 +236,15 @@ namespace Core
 	{
 		while(true)
 		{
-			std::unique_lock<std::mutex> lock(this->m_Mutex);
+			std::unique_lock<std::mutex> bgLoaderLock(this->m_Mutex);
 
-			this->m_CondVar.wait(lock, [this] { return this->m_NeedBgLoad || this->m_StopBgLoad; });
+			this->m_CondVar.wait(bgLoaderLock, [this] { return this->m_NeedBgLoad || this->m_StopBgLoad; });
 
 			if (this->m_StopBgLoad) 
 			{
 				this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Stopping background loader");
 				this->m_IsWorking = false;
+				this->m_StopBgLoad = false;
 				break;
 			}
 			else if (this->m_NeedBgLoad)
@@ -249,8 +254,7 @@ namespace Core
 				this->m_NeedBgLoad = false;
 			}
 
-			lock.unlock();
-			this->m_CondVar.notify_all();
+			bgLoaderLock.unlock();
 		}
 	}
 
@@ -266,11 +270,43 @@ namespace Core
 		}
 	}
 
+	void Loader::StopCacheLoader() noexcept
+	{
+		if (this->m_IsWorking)
+		{
+			std::unique_lock<std::mutex> stopLock(this->m_Mutex);
+
+			this->m_StopBgLoad = true;
+
+			stopLock.unlock();
+
+			this->m_CondVar.notify_all();
+		}
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+		this->JoinWorkers();
+	}
+
+	void Loader::JoinWorkers() noexcept
+	{
+		for (auto& worker : this->m_Workers)
+		{
+			if (worker.joinable()) worker.join();
+		}
+	}
+
 	void Loader::Release() noexcept
 	{
 		// Release cache
 		this->m_Cache->Release();
 		delete this->m_Cache;
+
+		// Stop cache loader if active
+		this->StopCacheLoader();
+
+		// Join left workers
+		this->JoinWorkers();
 
 		// Clear the medias
 		for(auto& media : this->m_Medias) 

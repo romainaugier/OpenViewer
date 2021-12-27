@@ -52,7 +52,7 @@ endif()
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	add_compile_definitions(-D_CRT_SECURE_NO_WARNINGS -DOPENEXR_DLL)
-	set(MSVC_COMPILER_FLAGS "/fp:fast /O2 /GA /Gw /GL /arch:AVX2")
+	set(MSVC_COMPILER_FLAGS "/fp:fast /Ox /Os /Oy /GT /GL /Oi /arch:AVX2 /Zi /Gm- /Zc:inline /Qpar")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" "${MSVC_COMPILER_FLAGS}")
 	add_link_options("/LTCG")
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")

@@ -106,6 +106,95 @@ namespace Interface
 
 					ImGui::EndMenu();
 				}
+
+				const ImVec2 leftSpace = ImGui::GetContentRegionAvail();
+
+				ImGui::Dummy(ImVec2(leftSpace.x - 500.0f, leftSpace.y));
+
+				ImGui::Checkbox("Use Cache", &currentSettings.settings.m_UseCache);
+				if (ImGui::IsItemEdited())
+				{
+					playbar.Pause();
+					playbar.m_Frame = 0;
+
+					// If we use the cache, and the loader is already initialized, just initialize the cache
+					if (currentSettings.settings.m_UseCache)
+					{
+						app.m_Loader->m_UseCache = true;
+
+						if (app.m_Loader->m_Cache->m_HasBeenInitialized)
+						{
+							app.m_Loader->m_Cache->Resize(currentSettings.settings.m_CacheSize);
+						}
+
+						// Load the first image
+						app.m_Loader->LoadImageToCache(0);
+
+						// Launch the sequence worker
+						app.m_Loader->m_Workers.emplace_back(&Core::Loader::LoadSequenceToCache, app.m_Loader, 0, 0);
+
+						// Launch the bg loader
+						app.m_Loader->LaunchCacheLoader();
+					}
+					else
+					{
+						app.m_Loader->StopCacheLoader();
+
+						app.m_Loader->m_UseCache = false;
+						app.m_Loader->m_Cache->Release();
+
+						uint64_t biggestImageSize = 0;
+
+						for (const auto& media : app.m_Loader->m_Medias)
+						{
+							for (const auto& image : media.m_Images)
+							{
+								biggestImageSize = image.m_Stride > biggestImageSize ? image.m_Stride : biggestImageSize;
+							}
+						}
+
+						app.m_Loader->m_Cache->Initialize(biggestImageSize, app.m_Logger, false);
+
+						app.m_Loader->LoadImageToCache(0);
+					}
+				}
+
+				if (currentSettings.settings.m_UseCache)
+				{
+					ImGui::Dummy(ImVec2(5.0f, leftSpace.y));
+
+					ImGui::Text("Size (MB) : ");
+
+					ImGui::SetNextItemWidth(50);
+					ImGui::PushID(50);
+					ImGui::InputInt("", &currentSettings.settings.m_CacheSize, 0);
+					if (ImGui::IsItemDeactivatedAfterEdit())
+					{
+						if (currentSettings.settings.m_UseCache)
+						{
+							playbar.Pause();
+							playbar.m_Frame = 0;
+
+							app.m_Loader->StopCacheLoader();
+
+							app.m_Loader->m_Cache->Resize(currentSettings.settings.m_CacheSize);
+
+							// Launch the sequence worker
+							app.m_Loader->m_Workers.emplace_back(&Core::Loader::LoadSequenceToCache, app.m_Loader, 0, 0);
+
+							// Launch the bg loader
+							app.m_Loader->LaunchCacheLoader();
+						}
+					}
+					
+					ImGui::PopID();
+
+					ImGui::Dummy(ImVec2(5.0f, leftSpace.y));
+
+					const float cacheUsage = static_cast<float>(app.m_Loader->m_Cache->m_BytesSize) / static_cast<float>(app.m_Loader->m_Cache->m_BytesCapacity) * 100.0f;
+
+					ImGui::Text("Usage : %.2f%%", cacheUsage);
+				}
 			}
 
 			// OCIO Menu
