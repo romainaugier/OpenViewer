@@ -12,8 +12,8 @@ namespace Interface
 		glGenFramebuffers(1, &this->m_FBO);
 
 		// Generate the color attachement texture
-		glGenTextures(1, &this->m_ColorBuffer);
-		glBindTexture(GL_TEXTURE_2D, this->m_ColorBuffer);
+		glGenTextures(1, &this->m_TransformedTexture);
+		glBindTexture(GL_TEXTURE_2D, this->m_TransformedTexture);
 		glTexImage2D(GL_TEXTURE_2D, 
 					 0, 
 					 image.m_GLInternalFormat,
@@ -34,7 +34,7 @@ namespace Interface
 
 		// Attach the texture and the frame buffer
 		BindFBO();
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, this->m_ColorBuffer, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, this->m_TransformedTexture, 0);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, this->m_RBO);
 
 		// Verify that the framebuffer is complete
@@ -84,9 +84,9 @@ namespace Interface
 		InitializeOpenGL(*initImage);
 
 		// Generate the display texture
-		glGenTextures(1, &this->m_DisplayTexture);
+		glGenTextures(1, &this->m_RawTexture);
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, this->m_DisplayTexture);
+		glBindTexture(GL_TEXTURE_2D, this->m_RawTexture);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -156,6 +156,88 @@ namespace Interface
 		UnbindFBO();
 	}
 
+	void Display::ReInitialize(const Core::Image& image, Core::Ocio& ocio) noexcept
+	{
+		this->m_Logger->Log(LogLevel_Debug, "[DISPLAY] : Image dimensions changed, reinitializing display %d", this->m_DisplayID);
+		
+		this->m_Width = image.m_Xres;
+		this->m_Height = image.m_Yres;
+
+		InitializeOpenGL(image);
+
+		// Generate the display texture
+		glGenTextures(1, &this->m_RawTexture);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, this->m_RawTexture);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+
+		glTexImage2D(GL_TEXTURE_2D, 
+					 0, 
+					 image.m_GLInternalFormat, 
+					 this->m_Width, 
+					 this->m_Height, 
+					 0, 
+					 image.m_GLFormat, 
+					 image.m_GLType, 
+					 this->m_Loader->m_Cache->m_Items[image.m_CacheIndex].m_Ptr); // The first item starts at 1, index 0 is to signal it is not cached
+
+		// OCIO GPU Processing
+		if (ocio.use_gpu > 0)
+		{
+			auto ocio_start = this->m_Profiler->Start();
+
+			// Bind the framebuffer
+			BindFBO();
+			glViewport(0, 0, this->m_Width, this->m_Height);
+			glEnable(GL_DEPTH_TEST);
+
+			// Clear the framebuffer
+			glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			// Update OCIO Processor and process the image
+			ocio.UpdateProcessor();
+			ocio.Process(this->m_Width, this->m_Height);
+
+			// Draw the quad
+			glEnable(GL_TEXTURE_2D);
+
+			glPushMatrix();
+				glBegin(GL_QUADS);
+					glTexCoord2f(1.0f, 1.0f);
+					glVertex2f(1.0f, 1.0f);
+
+					glTexCoord2f(1.0f, 0.0f);
+					glVertex2f(1.0f, -1.0f);
+
+					glTexCoord2f(0.0f, 0.0f);
+					glVertex2f(-1.0f, -1.0f);
+
+					glTexCoord2f(0.0f, 1.0f);
+					glVertex2f(-1.0f, 1.0f);
+				glEnd();
+			glPopMatrix();
+
+			glDisable(GL_TEXTURE_2D);
+
+			// Unbind frame buffer object and clear
+			UnbindFBO();
+			glDisable(GL_DEPTH_TEST);
+
+			auto ocio_end = this->m_Profiler->End();
+			this->m_Profiler->Time("Ocio Transform Time", ocio_start, ocio_end);
+		}
+
+		// Unbind our texture
+		glBindTexture(GL_TEXTURE_2D, 0);
+		
+		UnbindFBO();
+	}
+
 	// Updates the gl texture that displays the images
 	void Display::Update(Core::Ocio& ocio, const uint32_t frameIndex) noexcept
 	{
@@ -164,70 +246,77 @@ namespace Interface
 
 		if (currentImage != nullptr)
 		{
-			// Get the different image infos we need to load it
-			const uint16_t currentImageXRes = currentImage->m_Xres;
-			const uint16_t currentImageYRes = currentImage->m_Yres;
-			const uint64_t currentImageSize = currentImage->m_Size;
-			const uint16_t currentImageCacheIndex = this->m_Loader->m_UseCache ? currentImage->m_CacheIndex : 1;
-			const void* currentImageCacheAddress = this->m_Loader->m_Cache->m_Items[currentImageCacheIndex].m_Ptr;
-
-			// Update the texture
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, this->m_DisplayTexture);
-			glTexSubImage2D(GL_TEXTURE_2D,
-							0, 0, 0,
-							currentImageXRes,
-							currentImageYRes,
-							currentImage->m_GLFormat,
-							currentImage->m_GLType,
-							currentImageCacheAddress);
-
-			// OCIO GPU Processing
-			if (ocio.use_gpu > 0)
+			if (currentImage->m_Xres != this->m_Width || currentImage->m_Yres != this->m_Height)
 			{
-				auto ocio_start = this->m_Profiler->Start();
+				this->ReInitialize(*currentImage, ocio);
+			}
+			else
+			{
+				// Get the different image infos we need to load it
+				const uint16_t currentImageXRes = currentImage->m_Xres;
+				const uint16_t currentImageYRes = currentImage->m_Yres;
+				const uint64_t currentImageSize = currentImage->m_Size;
+				const uint16_t currentImageCacheIndex = this->m_Loader->m_UseCache ? currentImage->m_CacheIndex : 1;
+				const void* currentImageCacheAddress = this->m_Loader->m_Cache->m_Items[currentImageCacheIndex].m_Ptr;
 
-				// Bind the framebuffer
-				BindFBO();
-				glViewport(0, 0, currentImageXRes, currentImageYRes);
-				glEnable(GL_DEPTH_TEST);
+				// Update the texture
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, this->m_RawTexture);
+				glTexSubImage2D(GL_TEXTURE_2D,
+								0, 0, 0,
+								currentImageXRes,
+								currentImageYRes,
+								currentImage->m_GLFormat,
+								currentImage->m_GLType,
+								currentImageCacheAddress);
 
-				// Clear the framebuffer
-				glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				// OCIO GPU Processing
+				if (ocio.use_gpu > 0)
+				{
+					auto ocio_start = this->m_Profiler->Start();
 
-				ocio.Process(currentImageXRes, currentImageYRes);
+					// Bind the framebuffer
+					BindFBO();
+					glViewport(0, 0, currentImageXRes, currentImageYRes);
+					glEnable(GL_DEPTH_TEST);
 
-				// Draw the quad
-				glEnable(GL_TEXTURE_2D);
+					// Clear the framebuffer
+					glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-				glPushMatrix();
-					glBegin(GL_QUADS);
-						glTexCoord2f(1.0f, 1.0f);
-						glVertex2f(1.0f, 1.0f);
+					ocio.Process(currentImageXRes, currentImageYRes);
 
-						glTexCoord2f(1.0f, 0.0f);
-						glVertex2f(1.0f, -1.0f);
+					// Draw the quad
+					glEnable(GL_TEXTURE_2D);
 
-						glTexCoord2f(0.0f, 0.0f);
-						glVertex2f(-1.0f, -1.0f);
+					glPushMatrix();
+						glBegin(GL_QUADS);
+							glTexCoord2f(1.0f, 1.0f);
+							glVertex2f(1.0f, 1.0f);
 
-						glTexCoord2f(0.0f, 1.0f);
-						glVertex2f(-1.0f, 1.0f);
-					glEnd();
-				glPopMatrix();
+							glTexCoord2f(1.0f, 0.0f);
+							glVertex2f(1.0f, -1.0f);
 
-				glDisable(GL_TEXTURE_2D);
+							glTexCoord2f(0.0f, 0.0f);
+							glVertex2f(-1.0f, -1.0f);
 
-				// Unbind frame buffer object and clear
-				UnbindFBO();
-				glDisable(GL_DEPTH_TEST);
+							glTexCoord2f(0.0f, 1.0f);
+							glVertex2f(-1.0f, 1.0f);
+						glEnd();
+					glPopMatrix();
 
-				auto ocio_end = this->m_Profiler->End();
-				this->m_Profiler->Time("Ocio Transform Time", ocio_start, ocio_end);
+					glDisable(GL_TEXTURE_2D);
 
-				// Unbind our texture
-				GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
+					// Unbind frame buffer object and clear
+					UnbindFBO();
+					glDisable(GL_DEPTH_TEST);
+
+					auto ocio_end = this->m_Profiler->End();
+					this->m_Profiler->Time("Ocio Transform Time", ocio_start, ocio_end);
+
+					// Unbind our texture
+					GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
+				}
 			}
 		}
 		else
@@ -239,11 +328,11 @@ namespace Interface
 	}
 
 	// Main function that contains the window drawing 
-	void Display::Draw(uint32_t frameIndex) const noexcept
+	void Display::Draw(uint32_t frameIndex) noexcept
 	{
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar |
-			ImGuiWindowFlags_NoScrollbar |
-			ImGuiWindowFlags_NoCollapse;
+										ImGuiWindowFlags_NoScrollbar |
+										ImGuiWindowFlags_NoCollapse;
 
 		bool p_open = true;
 
@@ -252,8 +341,8 @@ namespace Interface
 
 		ImGui::Begin(displayName, &p_open, window_flags);
 		{
-			ImVec2 size = ImVec2(this->m_Width, 
-									this->m_Height);
+			const ImVec2 size = ImVec2(this->m_Width, 
+								 this->m_Height);
 
 			static ImVec2 scrolling;
 			static float zoom = 1.0f;
@@ -277,10 +366,46 @@ namespace Interface
 				zoom += mouseWheel * 0.1f;
 			}
 
-			ImGui::SetCursorPos((ImGui::GetWindowSize() - size * zoom) * 0.5f + scrolling);
-			ImGui::Image((void*)(intptr_t)this->m_ColorBuffer, size * zoom, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), tint, borderColor);
+			zoom = zoom < 0.1f ? 0.1f : zoom;
+
+			const ImVec2 imagePos = (ImGui::GetWindowSize() - size * zoom) * 0.5f + scrolling;
+
+			ImGui::SetCursorPos(imagePos);
+			const ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
+			ImGui::Image((void*)(intptr_t)this->m_TransformedTexture, size * zoom, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), tint, borderColor);
+
+			if (ImGui::IsItemHovered())
+			{
+				this->m_IsImageHovered = true;
+				this->m_HoverCoordinates = ImClamp(ImGui::Fit(ImGui::GetMousePos() - cursorScreenPos, 
+												              ImVec2(0, 0),
+												              size * zoom,
+												              ImVec2(0, 0),
+												              size), ImVec2(0, 0), size);
+			}                 
+			else
+			{
+				this->m_IsImageHovered = false;
+			}
 		}
 		ImGui::End();
+	}
+
+	ImVec4 Display::GetPixel(const uint16_t x, const uint16_t y) const noexcept
+	{
+		ImVec4 color;
+		
+		this->BindFBO();
+
+		glBindTexture(GL_TEXTURE_2D, this->m_TransformedTexture);
+
+		glReadPixels(x, y, 1, 1, GL_RGBA, GL_FLOAT, static_cast<void*>(&color));
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		this->UnbindFBO();
+
+		return color;
 	}
 
 	void Display::Release() noexcept
@@ -290,8 +415,8 @@ namespace Interface
 		glDeleteRenderbuffers(1, &this->m_RBO);
 
 		// delete the gl textures
-		glDeleteTextures(1, &this->m_DisplayTexture);
-		glDeleteTextures(1, &this->m_ColorBuffer);
+		glDeleteTextures(1, &this->m_RawTexture);
+		glDeleteTextures(1, &this->m_TransformedTexture);
 
 		this->m_Logger->Log(LogLevel_Debug, "[DISPLAY] : Released display %d", this->m_DisplayID);
 	}

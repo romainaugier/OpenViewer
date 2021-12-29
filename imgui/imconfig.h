@@ -112,9 +112,13 @@
 //#define IMGUI_DEBUG_PARANOID
 
 //---- Tip: You can add extra functions within the ImGui:: namespace, here or in your own headers files.
-/*
+
 namespace ImGui
 {
-    void MyFunction(const char* name, const MyMatrix44& v);
+    template<typename T>
+    inline T Fit(T s, T a1, T a2, T b1, T b2) noexcept { return b1 + ((s - a1) * (b2 - b1)) / (a2 - a1); }
+
+    template<typename T>
+    inline T Clamp(T a, T x, T y) noexcept { return a < y ? a < x ? x : a : y; }
 }
-*/
+

@@ -184,12 +184,9 @@ namespace Core
 				if (media.InRange(index))
 				{
 					const uint32_t imageIndex = index - media.m_TimelineRange.x;
+					const uint32_t cachedIndex = this->m_Cache->Add(&media.m_Images[imageIndex]);
 
-					// if (this->m_Cache->m_Size > 0) this->m_Cache->Remove(1);
-
-					this->m_Cache->Add(&media.m_Images[imageIndex]);
-
-					media.m_Images[imageIndex].Load(this->m_Cache->m_Items[1].m_Ptr, this->m_Profiler);
+					media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_Ptr, this->m_Profiler);
 
 					break;
 				}
@@ -218,15 +215,17 @@ namespace Core
 				if (accumulatedByteSize > this->m_Cache->m_BytesCapacity) break;
 
 				++endIndex;
-				++index;
+				index = (index + 1) % static_cast<uint32_t>(this->m_Range.y - 1);
 			}
 
 			endIndex += startIndex;
 		}
 
+		if (startIndex != this->m_Range.x) --endIndex;
+
 		for (uint32_t i = startIndex; i < endIndex; i++)
 		{
-			const uint32_t idx = static_cast<uint32_t>(fmodf(static_cast<float>(i), (this->m_Range.y - 1)));
+			const uint32_t idx = i % static_cast<uint32_t>(this->m_Range.y - 1);
 
 			this->LoadImageToCache(idx);
 		}

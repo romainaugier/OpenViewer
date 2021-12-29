@@ -53,7 +53,7 @@ namespace Interface
 
 		void Play() noexcept;
 		void Pause() noexcept;
-		void Update() noexcept;
+		void Update(Profiler* profiler) noexcept;
 
 		void Draw() noexcept;
 	};

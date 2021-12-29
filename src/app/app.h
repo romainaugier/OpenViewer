@@ -23,6 +23,7 @@ namespace Interface
 
         // Bool to control the state of the different windows
         bool showImageInfosWindow = false;
+        bool showPixelInfosWindow = false;
         bool showMediaInfosWindow = false;
         bool showMediaExplorerWindow = false;
 

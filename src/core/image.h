@@ -11,6 +11,8 @@
 #include "OpenImageIO/imagebuf.h"
 #include "OpenEXR/ImfRgbaFile.h"
 
+#include "imgui.h"
+
 #include "utils/string_utils.h"
 #include "utils/logger.h"
 #include "utils/profiler.h"
@@ -157,7 +159,7 @@ namespace Core
 		void LoadPng(uint8_t* __restrict buffer) const noexcept;
 		void LoadJpg(uint8_t* __restrict buffer) const noexcept;
 		void LoadOther(half* __restrict buffer) const noexcept;
-		void GetTypeSize(uint8_t& img_format_size, uint8_t img_type_size) const noexcept;
+		ImVec4 GetPixel(const uint16_t x, const uint16_t y, void* __restrict buffer) const noexcept;
 	};
 
 } // End namespace Core

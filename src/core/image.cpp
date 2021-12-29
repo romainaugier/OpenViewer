@@ -12,45 +12,34 @@ namespace Core
 		this->m_CacheIndex = 0;
 	}
 
-	// returns the size of the image type (float, uint8...)
-	void Image::GetTypeSize(uint8_t& img_format_size, uint8_t img_type_size) const noexcept
+	ImVec4 Image::GetPixel(const uint16_t x, const uint16_t y, void* __restrict buffer) const noexcept
 	{
-		// default format will be RGBA (4 channels) as half float (16 bits)
-		// as I assume most images will be exr with alpha
-		img_format_size = SIZEOF_HALF_FLOAT * 4;
-		img_type_size = SIZEOF_HALF_FLOAT;
+		ImVec4 color = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
 
-		// other formats will be "detected" here
-		// we make a big branch to avoid having too much branching due to 
-		// the format testing
-		if(!this->m_Format & Format_RGB_HALF)
+		if (x < 0 || x >= this->m_Xres || y < 0 || y >= this->m_Yres) return color;
+
+		if (this->m_Format & Format_RGBA_HALF)
 		{
-			if(this->m_Format & Format_RGB_U8) 
-			{ 
-				img_format_size = 3 * SIZEOF_UINT8;
-				img_type_size = SIZEOF_UINT8;
-			}
-			else if(this->m_Format & Format_RGBA_U8) 
-			{
-				img_format_size = 4 * SIZEOF_UINT8;
-				img_type_size = SIZEOF_UINT8;
-			}
-			else if(this->m_Format & Format_RGB_FLOAT)
-			{
-				img_format_size = 3 * SIZEOF_FLOAT; 
-				img_type_size = SIZEOF_FLOAT;
-			}
-			else if(this->m_Format & Format_RGBA_FLOAT) 
-			{
-				img_format_size = 4 * SIZEOF_FLOAT; 
-				img_type_size = SIZEOF_FLOAT;
-			}
-			else if(this->m_Format & Format_RGB_HALF) 
-			{
-				img_format_size = 3 * SIZEOF_HALF_FLOAT;
-				img_type_size = SIZEOF_HALF_FLOAT;
-			}
+			const half* bufferCasted = (half*)buffer;
+			const uint32_t index = x * 4 + this->m_Xres * 4 * y;
+
+			color.x = static_cast<float>(bufferCasted[index + 0]);
+			color.y = static_cast<float>(bufferCasted[index + 1]);
+			color.z = static_cast<float>(bufferCasted[index + 2]);
+			color.w = static_cast<float>(bufferCasted[index + 3]);
 		}
+		else if (this->m_Format & Format_RGB_U8)
+		{
+			const uint8_t* bufferCasted = (uint8_t*)buffer;
+			const uint32_t index = x * 3 + this->m_Xres * 3 * y;
+
+			color.x = static_cast<float>(bufferCasted[index + 0]) / 255.0f;
+			color.y = static_cast<float>(bufferCasted[index + 1]) / 255.0f;
+			color.z = static_cast<float>(bufferCasted[index + 2]) / 255.0f;
+			color.w = 1.0f;
+		}
+
+		return color;
 	}
 
 	// loads an image
@@ -68,11 +57,11 @@ namespace Core
 		// in case the data window is smaller than the display window
 		// we fill empty pixels everywhere and then read the image pixels
 		// to avoid non initialized values in memory
-		// if (data.min.x > display.min.x || data.max.x < display.max.x ||
-		// 	data.min.y > display.min.y || data.max.y < display.min.y)
-		// {
-		// 	memset(&buffer[0], static_cast<half>(1.0f), this->m_Xres * this->m_Yres * (this->m_Channels > 4 ? 4 : this->m_Channels));
-		// }
+		if (data.min.x > display.min.x || data.max.x < display.max.x ||
+			data.min.y > display.min.y || data.max.y < display.min.y)
+		{
+			memset(&buffer[0], static_cast<half>(1.0f), this->m_Xres * this->m_Yres * (this->m_Channels > 4 ? 4 : this->m_Channels));
+		}
 
 		in.setFrameBuffer((Imf::Rgba*)buffer, 1, dim.x);
 		in.readPixels(data.min.y, data.max.y);

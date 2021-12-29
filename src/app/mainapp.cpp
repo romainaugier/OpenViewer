@@ -90,6 +90,7 @@ int application(int argc, char** argv)
     settings.GetOcioConfig(ocio);
 
     Interface::ImageInfo imageInfosWindow;
+    Interface::PixelInfo pixelInfosWindow;
     Interface::MediaExplorer mediaExplorerWindow(&loader);
 
     uint32_t playbarCount = 1;
@@ -118,6 +119,7 @@ int application(int argc, char** argv)
 
         loader.Load(parser.path);
         loader.m_Medias[0].SetActive();
+        loader.m_Medias[0].m_TimelineRange = ImVec2(0, 1);
         loader.LoadImageToCache(0);
         
         newDisplay->Initialize(ocio);
@@ -137,7 +139,7 @@ int application(int argc, char** argv)
     profiler.MemUsage("Ocio Module Memory Usage", ToMB((sizeof(ocio) + ocio.GetSize()) / 8));
     // profiler.MemUsage("Loader Memory Usage", ToMB((sizeof(loader) + loader.cached_size) / 8));
     
-    bool change = true;
+    bool change = false;
 
     // initialize ImFileDialog
     ifd::FileDialog::Instance().CreateTexture = [](uint8_t* data, int w, int h, char fmt) -> void* {
@@ -171,11 +173,7 @@ int application(int argc, char** argv)
         profiler.MemUsage("Cache Memory Usage", ToMB(loader.m_Cache->m_BytesSize));
 
         // Update the playbar
-        const auto startPbUpdate = profiler.Start();
-        playbar.Update();
-        const auto endPbUpdate = profiler.End();
-
-        profiler.Time("Playbar Update", startPbUpdate, endPbUpdate);
+        playbar.Update(&profiler);
 
         uint32_t frameIndex = playbar.m_Frame;
 
@@ -192,20 +190,31 @@ int application(int argc, char** argv)
         // ImPlot::ShowDemoWindow();
 
         // displays
-        const auto startDpUpdate = profiler.Start();
         
         for(auto[id, display] : app.m_Displays)
         {
-            if (change || playbar.m_Update) display->Update(ocio, frameIndex);
+            if (change || playbar.m_Update) 
+            {
+                const auto startDpUpdate = profiler.Start();
+                
+                display->Update(ocio, frameIndex);
+                change = false;
+                playbar.m_Update = false;
+                
+                const auto endDpUpdate = profiler.End();
+                profiler.Time("Displays Update", startDpUpdate, endDpUpdate);
+            }
+
             display->Draw(frameIndex);
 
             // One info window per display
-            imageInfosWindow.Draw(*app.m_Loader->GetImage(frameIndex), app.showImageInfosWindow);
+            const Core::Image currentImage = *app.m_Loader->GetImage(frameIndex);
+
+            imageInfosWindow.Draw(currentImage, app.showImageInfosWindow);
+            pixelInfosWindow.Draw(&loader, currentImage, display, app.showPixelInfosWindow);
         }
 
-        const auto endDpUpdate = profiler.End();
 
-        profiler.Time("Displays Update", startDpUpdate, endDpUpdate);
 
         // settings windows
         settings.Draw(playbar, &profiler, ocio, app);

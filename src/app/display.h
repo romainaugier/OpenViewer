@@ -33,8 +33,10 @@ namespace Interface
 		
 		Core::Loader* m_Loader;
 
-		GLuint m_DisplayTexture;
-		GLuint m_ColorBuffer;
+		ImVec2 m_HoverCoordinates = ImVec2(0, 0);
+
+		GLuint m_RawTexture;
+		GLuint m_TransformedTexture;
 		GLuint m_FBO, m_RBO;
 		
 		uint16_t m_Width;
@@ -45,6 +47,7 @@ namespace Interface
 
 		bool m_IsOpen = true;
 		bool m_IsActive = false;
+		bool m_IsImageHovered = false;
 
 		Display(Profiler* profiler, Logger* logger, Core::Loader* loader, const uint8_t id)
 		{
@@ -55,13 +58,15 @@ namespace Interface
 		}
 
 		void Initialize(Core::Ocio& ocio) noexcept;
+		void ReInitialize(const Core::Image& image, Core::Ocio& ocio) noexcept;
 		void InitializeOpenGL(const Core::Image& image) noexcept;
 		OPENVIEWER_FORCEINLINE void BindFBO() const noexcept;
 		OPENVIEWER_FORCEINLINE void UnbindFBO() const noexcept;
 		OPENVIEWER_FORCEINLINE void BindRBO() const noexcept;
 		OPENVIEWER_FORCEINLINE void UnbindRBO() const noexcept;
 		void Update(Core::Ocio& ocio, const uint32_t frameIndex) noexcept;
-		void Draw(uint32_t frameIndex) const noexcept;
+		void Draw(uint32_t frameIndex) noexcept;
+		ImVec4 GetPixel(const uint16_t x, const uint16_t y) const noexcept;
 		void Release() noexcept;
 	};
 } // End namespace Interface

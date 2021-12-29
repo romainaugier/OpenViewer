@@ -90,9 +90,9 @@ namespace Interface
 
 				if (ImGui::BeginMenu("Infos"))
 				{
-					if (ImGui::MenuItem("Sequence Infos")) { app.showMediaInfosWindow = true; }
 					if (ImGui::MenuItem("Image Infos")) { app.showImageInfosWindow = true; }
-					
+					if (ImGui::MenuItem("Pixel Infos")) { app.showPixelInfosWindow = true; }
+
 					ImGui::EndMenu();
 				}
 

@@ -67,6 +67,7 @@ namespace Core
         else
         {
             const uint32_t currentIdx = this->m_CurrentTraversingIndex == 0 ? 0 : this->m_CurrentTraversingIndex % this->m_Size;
+            const uint32_t oldSize = this->m_Size;
             uint32_t traversingIdx = currentIdx + 1;
             uint64_t cleanedByteSize = 0;
             uint32_t cleanIndex = 1;
@@ -74,11 +75,13 @@ namespace Core
 
             while (true)
             {
+                traversingIdx = traversingIdx % (oldSize + 1) == 0 ? 1 : traversingIdx;
+                
                 ImageCacheItem tmpImgCacheItem = this->m_Items[traversingIdx];
 
-                // We found an image that was the same size (or larger)
+                // We found an image that was the same size (or larger) or we have enough space in the cache to load the frame at the current index
                 // We remove it from the cache and use its memory to store our new image
-                if(imgByteSize <= tmpImgCacheItem.m_Stride)
+                if(imgByteSize <= tmpImgCacheItem.m_Stride || imgByteSize <= (this->m_BytesCapacity - (this->m_BytesSize - tmpImgCacheItem.m_Stride)))
                 {
                     // Notify that this image is not in cache anymore and update the cache infos
                     tmpImgCacheItem.m_Image->m_CacheIndex = 0;
@@ -97,8 +100,11 @@ namespace Core
                     // Set the index on the image, to notify it has been loaded into the cache
                     image->m_CacheIndex = traversingIdx;
                     this->m_CurrentTraversingIndex = traversingIdx;
+                    this->m_CurrentIndex = traversingIdx + 1;
 
                     this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Removed image [%s] at index [%d] and loaded a new one", removedImagePath.c_str(), traversingIdx);
+                    this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Update cache size : %f MB (Capacity : %f MB)", static_cast<float>(this->m_BytesSize) / 1000000.0f,
+                                                                                                                  static_cast<float>(this->m_BytesCapacity) / 1000000.0f);
 
                     addLock.unlock();
                     
@@ -114,14 +120,17 @@ namespace Core
                         cleanIndex = traversingIdx;
                     }
 
-                    if(imgByteSize <= cleanedByteSize)
+                    if(imgByteSize <= cleanedByteSize || imgByteSize <= this->m_BytesSize)
                     {
                         this->m_Items[cleanIndex] = ImageCacheItem(image, cleanAddress, imgSize, imgByteSize);
 
                         image->m_CacheIndex = cleanIndex;   
                         this->m_CurrentTraversingIndex = cleanIndex;
+                        this->m_CurrentIndex = traversingIdx + 1;
 
-                        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Loaded image at index [%d]", traversingIdx);
+                        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Loaded image [%s] at index [%d]", image->m_Path.c_str(), traversingIdx);
+                        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Update cache size : %f MB (Capacity : %f MB)", static_cast<float>(this->m_BytesSize) / 1000000.0f,
+                                                                                                                      static_cast<float>(this->m_BytesCapacity) / 1000000.0f);
 
                         addLock.unlock();
 
@@ -132,10 +141,15 @@ namespace Core
                         // Notify that we are releasing this image from the cache
                         tmpImgCacheItem.m_Image->m_CacheIndex = 0;
 
+                        this->m_Items.erase(traversingIdx);
+                        this->m_Size -= 1;
+
                         this->m_BytesSize -= tmpImgCacheItem.m_Stride;
                         cleanedByteSize += tmpImgCacheItem.m_Stride;
 
-                        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Removed image at index [%d]", traversingIdx);
+                        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Removed image [%s] at index [%d]", tmpImgCacheItem.m_Image->m_Path.c_str(), traversingIdx);
+                        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Update cache size : %f MB (Capacity : %f MB)", static_cast<float>(this->m_BytesSize) / 1000000.0f,
+                                                                                                                      static_cast<float>(this->m_BytesCapacity) / 1000000.0f);
                     }
                 }
 

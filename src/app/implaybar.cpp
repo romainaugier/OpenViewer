@@ -10,47 +10,14 @@ namespace Interface
 
 	void ImPlaybar::Pause() noexcept { this->m_Play = false; }
 
-	void ImPlaybar::Update() noexcept
+	void ImPlaybar::Update(Profiler* profiler) noexcept
 	{
 		// Update the range of the loader to match the one of the playbar
 		this->m_Loader->m_Range = this->m_Range;
 
-		// Update cache indices
-		for (uint32_t i = this->m_Range.x; i < this->m_Range.y; i++)
-		{
-			const Core::Image* tmpImage = this->m_Loader->GetImage(i);
-
-			this->m_CachedIndices[i] = tmpImage->m_CacheIndex > 0 ? 1 : 0;
-		}
-
 		if (this->m_Play)
 		{
-			// Notify the background cache loader that we need to store some frames in the cache
-			if (this->m_Loader->m_UseCache)
-			{
-				// Urgent load in case of bug
-				// this->m_Loader->LoadImageToCache(this->m_Frame);
-
-				const uint32_t offset = this->m_Loader->m_Cache->m_Size - this->m_Loader->m_BgLoadChunkSize * 2;
-				const uint32_t frameIdx = static_cast<uint32_t>(fmodf((this->m_Frame + offset), (this->m_Range.y - 1)));
-
-				if (!this->m_CachedIndices[frameIdx])
-				{
-					std::unique_lock<std::mutex> playbarLock(this->m_Loader->m_Mutex);
-
-					this->m_Loader->m_NeedBgLoad = true;
-					this->m_Loader->m_BgLoadFrameIndex = frameIdx;
-
-					playbarLock.unlock();
-
-					this->m_Loader->m_CondVar.notify_all();
-				}
-			}
-			else
-			{
-				this->m_Loader->LoadImageToCache(this->m_Frame);
-			}
-
+			// Update frame if we are playing
 			const uint32_t framecount = ImGui::GetFrameCount();
 			const uint32_t fps = ImGui::GetIO().Framerate;
 			const float time = static_cast<float>(fps) / static_cast<float>(this->m_FrameRate);
@@ -64,11 +31,48 @@ namespace Interface
 			{
 				this->m_Update = false;
 			}
+
+			if (this->m_Update)
+			{
+				const auto playbarUpdateStart = profiler->Start();
+				
+				// Notify the background cache loader that we need to store some frames in the cache
+				if (this->m_Loader->m_UseCache)
+				{
+					// Urgent load in case of bug
+					// this->m_Loader->LoadImageToCache(this->m_Frame);
+
+					const uint32_t offset = this->m_Loader->m_Cache->m_Size - this->m_Loader->m_BgLoadChunkSize * 2;
+					const uint32_t frameIdx = static_cast<uint32_t>(fmodf((this->m_Frame + offset), (this->m_Range.y - 1)));
+
+					if (!this->m_CachedIndices[frameIdx])
+					{
+						std::unique_lock<std::mutex> playbarLock(this->m_Loader->m_Mutex);
+
+						this->m_Loader->m_NeedBgLoad = true;
+						this->m_Loader->m_BgLoadFrameIndex = frameIdx;
+
+						playbarLock.unlock();
+
+						this->m_Loader->m_CondVar.notify_all();
+					}
+				}
+				else
+				{
+					this->m_Loader->LoadImageToCache(this->m_Frame);
+				}
+				
+				const auto playbarUpdateEnd = profiler->End();
+				
+				profiler->Time("Playbar Update Time", playbarUpdateStart, playbarUpdateEnd);
+			}
 		}
 		else
 		{
 			if (this->m_Update)
 			{
+				const auto playbarUpdateStart = profiler->Start();
+				
 				this->m_Loader->LoadImageToCache(this->m_Frame);
 
 				// Load all the frames from the frame we clicked on
@@ -77,9 +81,27 @@ namespace Interface
 					this->m_Loader->m_Workers.emplace_back(&Core::Loader::LoadSequenceToCache, this->m_Loader, this->m_Frame, 0);
 				}
 
-				this->m_Update = false;
+				// this->m_Update = false;
+				
+				const auto playbarUpdateEnd = profiler->End();
+				
+				profiler->Time("Playbar Update Time", playbarUpdateStart, playbarUpdateEnd);
 			}
 		}
+		
+		const auto cacheUpdateStart = profiler->Start();
+
+		// Update cache indices
+		for (uint32_t i = this->m_Range.x; i < this->m_Range.y; i++)
+		{
+			const Core::Image* tmpImage = this->m_Loader->GetImage(i);
+
+			this->m_CachedIndices[i] = tmpImage->m_CacheIndex > 0 ? 1 : 0;
+		}
+
+		const auto cacheUpdateEnd = profiler->End();
+
+		profiler->Time("Playbar Cache Indices Update Time", cacheUpdateStart, cacheUpdateEnd);
 	}
  
 	void ImPlaybar::Draw() noexcept
