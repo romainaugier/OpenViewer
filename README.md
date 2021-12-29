@@ -8,7 +8,7 @@ The wiki (under development) is [here](https://github.com/romainaugier/OpenViewe
 
 ## Dependencies
 
-OpenViewer uses [OpenImageIO](https://github.com/OpenImageIO/oiio), [OpenEXR](https://github.com/AcademySoftwareFoundation/openexr) and [Wuffs](https://github.com/google/wuffs) for image reading, [OpenColorIO](https://github.com/AcademySoftwareFoundation/OpenColorIO) to manage colorspaces, [TBB](https://github.com/oneapi-src/oneTBB), [ISPC](https://github.com/ispc/ispc) and [Dear ImGui](https://github.com/ocornut/imgui) for the interface.
+OpenViewer uses [OpenImageIO](https://github.com/OpenImageIO/oiio), [OpenEXR](https://github.com/AcademySoftwareFoundation/openexr) and [Wuffs](https://github.com/google/wuffs) for image reading, [OpenColorIO](https://github.com/AcademySoftwareFoundation/OpenColorIO) to manage colorspaces and [Dear ImGui](https://github.com/ocornut/imgui) for the interface.
 
 ## Installation
 
@@ -25,7 +25,6 @@ cd vcpkg
 ./vcpkg-bootstrap.sh
 ./vcpkg install OpenImageIO:x64-linux
 ./vcpkg install OpenColorIO:x64-linux
-./vcpkg install tbb:x64-linux
 ```
 
 ### Windows
@@ -37,7 +36,6 @@ cd vcpkg
 vcpkg-bootstrap.bat
 vcpkg install OpenImageIO:x64-windows
 vcpkg install OpenColorIO:x64-windows
-vcpkg install tbb:x64-windows
 ```
 
 
