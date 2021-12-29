@@ -28,7 +28,7 @@ namespace Core
     struct ImageCacheItem
     {
         Image* m_Image;
-        void* m_Ptr;
+        void* m_DataPtr;
         
         uint64_t m_Stride;
         uint64_t m_Size; 
@@ -37,7 +37,7 @@ namespace Core
 
         ImageCacheItem(Image* image, void* ptr, const uint64_t stride, const uint64_t size) : 
             m_Image(image),
-            m_Ptr(ptr),
+            m_DataPtr(ptr),
             m_Stride(stride),
             m_Size(size) {}
     };
@@ -59,7 +59,7 @@ namespace Core
         uint64_t m_BytesSize = 0;
 
         // Buffer size, capacity and current index of allocation
-        uint32_t m_CurrentIndex = 1; // The index starts at 1, because we store the index in an unsigned 32 bits integer
+        uint32_t m_CurrentIndex = 1; // The index starts at 1, because we store the index in an unsigned 32 bits integer (and not cached is indicated by an index of 0)
         uint32_t m_CurrentTraversingIndex = 0;
         uint32_t m_Size = 0;
         uint32_t m_Capacity = 0;
@@ -74,6 +74,9 @@ namespace Core
 
         // Remove an image from the cache
         void Remove(const uint32_t index) noexcept;
+
+        // Clear all the items, but keeps the allocated memory available
+        void Flush() noexcept;
 
         // Resizes the cache
         void Resize(const size_t newSize, const bool sizeInMB = true) noexcept;

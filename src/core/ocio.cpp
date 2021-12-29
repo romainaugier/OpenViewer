@@ -26,6 +26,8 @@ namespace Core
 
     void Ocio::Initialize()
     {
+        this->logger->Log(LogLevel_Diagnostic, "[OCIO] : Initializing OCIO");
+
         config_path = std::getenv("OCIO");
 
         std::string current_path = std::filesystem::current_path().string();
@@ -39,7 +41,7 @@ namespace Core
             {
                 config = OCIO::Config::CreateFromEnv();
 
-                logger->Log(LogLevel_Debug, "[OCIO] : Configuration loaded from file %s", config_path);
+                logger->Log(LogLevel_Message, "[OCIO] : Configuration loaded from file %s", config_path);
             }
             catch(const std::exception& e)
             {
@@ -245,7 +247,7 @@ namespace Core
             config = OCIO::Config::CreateFromFile(config_path);
             config_path = config_path;
 
-            logger->Log(LogLevel_Debug, "[OCIO] : Configuration switched to %s", config_path);
+            logger->Log(LogLevel_Message, "[OCIO] : Configuration switched to %s", config_path);
 
             GetOcioActiveDisplays();
             current_display = displays[0];
@@ -468,6 +470,6 @@ namespace Core
             }
         }
 
-        logger->Log(LogLevel_Debug, "[OCIO] : Released OCIO");
+        logger->Log(LogLevel_Diagnostic, "[OCIO] : Released OCIO");
     }
 } // End namespace Core

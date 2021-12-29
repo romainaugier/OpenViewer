@@ -48,10 +48,10 @@ enum LogColor_
     LogColor_Magenta = 0x20
 };
 
-#ifdef IMGUI_CONSOLE
-struct ImGui_Console
+#ifdef LOGGER_IMGUI_CONSOLE
+struct LoggerConsole
 {
-
+    
 };
 #endif
 
@@ -161,7 +161,6 @@ public:
     
     }
 };
-
 
 inline static void Assert(int expression) noexcept
 {

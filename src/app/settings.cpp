@@ -87,11 +87,11 @@ namespace Interface
 			ImGui::End();
 		}
 
-		if (p_open_performance_window)
+		if (p_open_debug_window)
 		{
 			ImGui::SetNextWindowBgAlpha(settings.interface_windows_bg_alpha);
 		
-			ImGui::Begin("Performance Settings", &p_open_performance_window);
+			ImGui::Begin("Performance Settings", &p_open_debug_window);
 			{
 				ImGuiIO& io = ImGui::GetIO();
 

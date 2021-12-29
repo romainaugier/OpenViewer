@@ -14,7 +14,13 @@ namespace Interface
     {
         Core::Loader* m_Loader = nullptr;
 
-        MediaExplorer(Core::Loader* loader);
+        Logger* m_Logger = nullptr;
+
+        ImVec2 m_CurrentMediaRange = ImVec2(0, 0);
+
+        bool m_CurrentMediaChanged = false;
+
+        MediaExplorer(Core::Loader* loader, Logger* logger);
 
         void Draw(bool& showWindow) noexcept;
     };

@@ -54,6 +54,7 @@ namespace Interface
 		void Play() noexcept;
 		void Pause() noexcept;
 		void Update(Profiler* profiler) noexcept;
+		void SetRange(const ImVec2& newRange) noexcept;
 
 		void Draw() noexcept;
 	};

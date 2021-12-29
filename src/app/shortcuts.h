@@ -6,6 +6,8 @@
 
 #include <unordered_map>
 
+#include "GLFW/glfw3.h"
+
 namespace Interface
 {
     using ShortcutCallback = void(*)(void*);
@@ -14,6 +16,8 @@ namespace Interface
     struct Shortcuts
     {
         Map m_ShortcutMap;
+
+        void Register() noexcept;
 
         void Handle() noexcept;
     };

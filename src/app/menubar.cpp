@@ -72,21 +72,20 @@ namespace Interface
 
 				this->m_HasOpenedIFD = false;
 				
+				// if (ImGui::BeginMenu("Plot"))
+				// {
+				// 	if (ImGui::MenuItem("Histogram")) {}
+				// 	if (ImGui::MenuItem("Waveform")) {}
+				// 	if (ImGui::MenuItem("Parade"))
+				// 	{
+				// 		if (currentSettings.settings.parade) currentSettings.settings.parade = false;
+				// 		else currentSettings.settings.parade = true;
+				// 	}
+				// 	if (ImGui::MenuItem("Vector Scope")) {}
+				// 	if (ImGui::MenuItem("Custom")) {}
 
-				if (ImGui::BeginMenu("Plot"))
-				{
-					if (ImGui::MenuItem("Histogram")) {}
-					if (ImGui::MenuItem("Waveform")) {}
-					if (ImGui::MenuItem("Parade"))
-					{
-						if (currentSettings.settings.parade) currentSettings.settings.parade = false;
-						else currentSettings.settings.parade = true;
-					}
-					if (ImGui::MenuItem("Vector Scope")) {}
-					if (ImGui::MenuItem("Custom")) {}
-
-					ImGui::EndMenu();
-				}
+				// 	ImGui::EndMenu();
+				// }
 
 				if (ImGui::BeginMenu("Infos"))
 				{
@@ -101,17 +100,20 @@ namespace Interface
 					if (ImGui::MenuItem("Playback")) { currentSettings.p_open_playback_window = true; }
 					if (ImGui::MenuItem("OCIO")) { currentSettings.p_open_ocio_window = true; }
 					if (ImGui::MenuItem("Interface")) { currentSettings.p_open_interface_window = true; }
-					if (ImGui::MenuItem("Performance")) { currentSettings.p_open_performance_window = true; }
+					if (ImGui::MenuItem("Debug")) { currentSettings.p_open_debug_window = true; }
 
 
 					ImGui::EndMenu();
 				}
+			}
 
-				const ImVec2 leftSpace = ImGui::GetContentRegionAvail();
-
-				ImGui::Dummy(ImVec2(leftSpace.x - 500.0f, leftSpace.y));
-
-				ImGui::Checkbox("Use Cache", &currentSettings.settings.m_UseCache);
+			// Cache Menu
+			else if (this->m_BarMode == 1)
+			{
+				ImGui::Text("Use Cache : ");
+				
+				ImGui::Checkbox("###", &currentSettings.settings.m_UseCache);
+				
 				if (ImGui::IsItemEdited())
 				{
 					playbar.Pause();
@@ -159,14 +161,24 @@ namespace Interface
 					}
 				}
 
-				if (currentSettings.settings.m_UseCache)
-				{
-					ImGui::Dummy(ImVec2(5.0f, leftSpace.y));
+				ImGui::Dummy(ImVec2(10.0f, 10.0f));
+				
+				ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+				
+				ImGui::Dummy(ImVec2(10.0f, 10.0f));
 
-					ImGui::Text("Size (MB) : ");
+				if (currentSettings.settings.m_UseCache) 
+				{
+					ImGui::Text("Mode : Full");
+
+					ImGui::Dummy(ImVec2(10.0f, 10.0f));
+					ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+					ImGui::Dummy(ImVec2(10.0f, 10.0f));
+					
+					ImGui::Text("Capacity (MB) : ");
 
 					ImGui::SetNextItemWidth(50);
-					ImGui::PushID(50);
+					ImGui::PushID(1);
 					ImGui::InputInt("", &currentSettings.settings.m_CacheSize, 0);
 					if (ImGui::IsItemDeactivatedAfterEdit())
 					{
@@ -189,16 +201,54 @@ namespace Interface
 					
 					ImGui::PopID();
 
-					ImGui::Dummy(ImVec2(5.0f, leftSpace.y));
+					ImGui::Dummy(ImVec2(10.0f, 10.0f));
+					ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+					ImGui::Dummy(ImVec2(10.0f, 10.0f));
+
+					const float cacheSize = static_cast<float>(app.m_Loader->m_Cache->m_BytesSize) / 1000000.0f;
+					ImGui::Text("Size : %.2f MB", cacheSize);
+
+					ImGui::Dummy(ImVec2(10.0f, 10.0f));
+					ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+					ImGui::Dummy(ImVec2(10.0f, 10.0f));
 
 					const float cacheUsage = static_cast<float>(app.m_Loader->m_Cache->m_BytesSize) / static_cast<float>(app.m_Loader->m_Cache->m_BytesCapacity) * 100.0f;
-
 					ImGui::Text("Usage : %.2f%%", cacheUsage);
+
+					ImGui::Dummy(ImVec2(10.0f, 10.0f));
+					ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+					ImGui::Dummy(ImVec2(10.0f, 10.0f));
+
+					ImGui::Text("Item Count : %d", app.m_Loader->m_Cache->m_Size);
+				}
+				else
+				{
+					ImGui::Text("Mode : Minimal");
+					
+					ImGui::Dummy(ImVec2(10.0f, 10.0f));
+					ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+					ImGui::Dummy(ImVec2(10.0f, 10.0f));
+
+					const float cacheSize = static_cast<float>(app.m_Loader->m_Cache->m_BytesSize) / 1000000.0f;
+					ImGui::Text("Size : %.2f MB", cacheSize);
+
+					ImGui::Dummy(ImVec2(10.0f, 10.0f));
+					ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+					ImGui::Dummy(ImVec2(10.0f, 10.0f));
+
+					const float cacheUsage = static_cast<float>(app.m_Loader->m_Cache->m_BytesSize) / static_cast<float>(app.m_Loader->m_Cache->m_BytesCapacity) * 100.0f;
+					ImGui::Text("Usage : %.2f%%", cacheUsage);
+
+					ImGui::Dummy(ImVec2(10.0f, 10.0f));
+					ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+					ImGui::Dummy(ImVec2(10.0f, 10.0f));
+
+					ImGui::Text("Images In Cache : %d", app.m_Loader->m_Cache->m_Size);
 				}
 			}
 
 			// OCIO Menu
-			else if (this->m_BarMode == 1)
+			else if (this->m_BarMode == 2)
 			{
 				// Here we have the OCIO menus to select the role, display and view
 				// Each time we choose something, the item is updated, the ocio
@@ -213,7 +263,8 @@ namespace Interface
 
 				ImGui::Text("Channels");
 				ImGui::PushID(0);
-				ImGui::SetNextItemWidth(100.0f);
+				const float channelsWidth = ImGui::CalcTextSize(channels[ocio.current_channel_idx]).x + 30.0f;
+				ImGui::SetNextItemWidth(channelsWidth);
 				ImGui::Combo("", &ocio.current_channel_idx, &channels[0], IM_ARRAYSIZE(channels));
 				ImGui::PopID();
 
@@ -269,13 +320,13 @@ namespace Interface
 					change = true;
 				}
 
-				ImGui::Dummy(ImVec2(50.0f, avail_width.y));
+				ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
 
 				// Role
 				ImGui::Text("Role");
 				ImGui::PushID(1);
-				static const float width = ImGui::CalcTextSize(ocio.current_role).x;
-				ImGui::SetNextItemWidth(width);
+				const float roleWidth = ImGui::CalcTextSize(ocio.current_role).x + 30.0f;
+				ImGui::SetNextItemWidth(roleWidth);
 				ImGui::Combo("", &ocio.current_role_idx, &ocio.roles[0], ocio.roles.size());
 				ImGui::PopID();
 
@@ -290,10 +341,13 @@ namespace Interface
 					change = true;
 				}
 
+				ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+
 				// Display
 				ImGui::Text("Display");
 				ImGui::PushID(2);
-				ImGui::SetNextItemWidth(100.0f);
+				const float displayWidth = ImGui::CalcTextSize(ocio.current_display).x + 30.0f;
+				ImGui::SetNextItemWidth(displayWidth);
 				ImGui::Combo("", &ocio.current_display_idx, &ocio.displays[0], ocio.displays.size());
 				ImGui::PopID();
 
@@ -309,10 +363,13 @@ namespace Interface
 					change = true;
 				}
 
+				ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+
 				// View
 				ImGui::Text("View");
 				ImGui::PushID(3);
-				ImGui::SetNextItemWidth(100.0f);
+				const float viewWidth = ImGui::CalcTextSize(ocio.current_view).x + 30.0f;
+				ImGui::SetNextItemWidth(viewWidth);
 				ImGui::Combo("", &ocio.current_view_idx, &ocio.views[0], ocio.views.size());
 				ImGui::PopID();
 
@@ -326,10 +383,13 @@ namespace Interface
 					change = true;
 				}
 
+				ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+
 				// Look
 				ImGui::Text("Look");
 				ImGui::PushID(4);
-				ImGui::SetNextItemWidth(100.0f);
+				const float lookWidth = ImGui::CalcTextSize(ocio.current_look).x + 30.0f;
+				ImGui::SetNextItemWidth(lookWidth);
 				ImGui::Combo("", &ocio.current_look_idx, &ocio.looks[0], ocio.looks.size());
 				ImGui::PopID();
 
@@ -343,7 +403,7 @@ namespace Interface
 					change = true;
 				}
 
-				ImGui::Dummy(ImVec2(50.0f, avail_width.y));
+				ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
 
 				// Exponent
 				ImGui::Text("Exp");
@@ -361,7 +421,7 @@ namespace Interface
 					change = true;
 				}
 
-				ImGui::Dummy(ImVec2(20.0f, avail_width.y));
+				ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
 
 				// Gamma
 				ImGui::Text("Gamma");
@@ -379,7 +439,7 @@ namespace Interface
 					change = true;
 				}
 
-				ImGui::Dummy(ImVec2(20.0f, avail_width.y));
+				ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
 
 				// Reset button for Exponent/Gamma
 				if (ImGui::Button("Reset"))
@@ -401,7 +461,7 @@ namespace Interface
 
 			ImGui::Dummy(ImVec2(avail_width.x - 100.0f, avail_width.y));
 
-			static const char* modes[] = {"Menu", "Ocio"};
+			static const char* modes[] = {"Menu", "Cache", "Ocio"};
 
 			ImGui::PushID(99);
 			ImGui::SetNextItemWidth(100.0f);

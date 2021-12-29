@@ -11,7 +11,7 @@ int application(int argc, char** argv)
     // Logger
     Logger logger;
     logger.SetLevel(LogLevel_Debug);
-    logger.Log(LogLevel_Debug, "[MAIN] : Initializing OpenViewer");
+    logger.Log(LogLevel_Diagnostic, "[MAIN] : Initializing OpenViewer");
     
     // Profiler
     Profiler profiler;
@@ -91,7 +91,7 @@ int application(int argc, char** argv)
 
     Interface::ImageInfo imageInfosWindow;
     Interface::PixelInfo pixelInfosWindow;
-    Interface::MediaExplorer mediaExplorerWindow(&loader);
+    Interface::MediaExplorer mediaExplorerWindow(&loader, &logger);
 
     uint32_t playbarCount = 1;
 
@@ -119,7 +119,6 @@ int application(int argc, char** argv)
 
         loader.Load(parser.path);
         loader.m_Medias[0].SetActive();
-        loader.m_Medias[0].m_TimelineRange = ImVec2(0, 1);
         loader.LoadImageToCache(0);
         
         newDisplay->Initialize(ocio);
@@ -171,6 +170,14 @@ int application(int argc, char** argv)
         profiler.MemUsage("Application Memory Usage", ToMB(GetCurrentRss()) - ToMB(loader.m_Cache->m_BytesSize));
         profiler.MemUsage("Ocio Module Memory Usage", ToMB((sizeof(ocio) + ocio.GetSize()) / 8));
         profiler.MemUsage("Cache Memory Usage", ToMB(loader.m_Cache->m_BytesSize));
+
+        // The current media changed, reset the playbar and flush the cache
+        if (mediaExplorerWindow.m_CurrentMediaChanged)
+        {
+            loader.m_Cache->Flush();
+            playbar.SetRange(mediaExplorerWindow.m_CurrentMediaRange);
+            mediaExplorerWindow.m_CurrentMediaChanged = false;
+        }
 
         // Update the playbar
         playbar.Update(&profiler);

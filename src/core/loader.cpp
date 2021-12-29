@@ -16,7 +16,7 @@ namespace Core
 
 	void Loader::Initialize(const bool useCache, const size_t cacheSize) noexcept
 	{
-		this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Initializing loader");
+		this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : Initializing loader");
 
 		this->m_HasBeenInitialized = true;
 
@@ -32,11 +32,11 @@ namespace Core
 	{
 		const std::string cleanMediaPath = Utils::CleanOSPath(mediaPath);
 
-		this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loading media %s", cleanMediaPath.c_str());
+		this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : Loading media %s", cleanMediaPath.c_str());
 
 		if (std::filesystem::is_directory(cleanMediaPath))
 		{
-			this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Directory detected, loading image sequence");
+			this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : Directory detected, loading image sequence");
 
 			Media newTmpMedia;
 
@@ -68,7 +68,7 @@ namespace Core
 				}
 				else
 				{
-					this->m_Logger->Log(LogLevel_Debug, "[LOADER] : File : %s is invalid, discarded", item.path().c_str());
+					this->m_Logger->Log(LogLevel_Warning, "[LOADER] : File : %s is invalid, discarded", item.path().c_str());
 				}
 			}
 
@@ -79,8 +79,7 @@ namespace Core
 			{
 				if (this->m_Cache->m_HasBeenInitialized)
 				{
-					// Cache will detect automatically if it needs to be resized
-					this->m_Cache->Resize(biggestImageByteSize, false);
+					if (biggestImageByteSize > this->m_Cache->m_BytesCapacity) this->m_Cache->Resize(biggestImageByteSize, false);
 				}
 				else
 				{
@@ -89,6 +88,7 @@ namespace Core
 			}
 
 			newTmpMedia.m_Images.shrink_to_fit();
+			newTmpMedia.m_ID = this->m_MediaCount;
 
 			// Move the newly created media into the media vector of the loader
 			this->m_Medias.push_back(std::move(newTmpMedia));
@@ -96,7 +96,7 @@ namespace Core
 		}
 		else if (std::filesystem::is_regular_file(cleanMediaPath))
 		{
-			this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Single image detected, loading single image");
+			this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : Single image detected, loading single image");
 
 			Media newTmpMedia;
 
@@ -111,14 +111,16 @@ namespace Core
 
 				if (this->m_Cache->m_HasBeenInitialized)
 				{
-					// Cache will detect automatically if it needs to be resized
-					this->m_Cache->Resize(loadedImgByteSize, false);
+					if (loadedImgByteSize > this->m_Cache->m_BytesCapacity) this->m_Cache->Resize(loadedImgByteSize, false);
 				}
 				else
 				{
 					this->m_Cache->Initialize(loadedImgByteSize, this->m_Logger, false);
 				}
 			}
+
+        	newTmpMedia.m_Range = ImVec2(0, 1);
+			newTmpMedia.m_ID = this->m_MediaCount;
 
 			// Move the media into the media vector of the loader
 			this->m_Medias.push_back(std::move(newTmpMedia));
@@ -167,7 +169,7 @@ namespace Core
 					const uint32_t imageIndex = index - media.m_TimelineRange.x;
 					const uint32_t cachedIndex = this->m_Cache->Add(&media.m_Images[imageIndex]);
 
-					media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_Ptr, this->m_Profiler);
+					media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_DataPtr, this->m_Profiler);
 
 					break;
 				}
@@ -186,7 +188,7 @@ namespace Core
 					const uint32_t imageIndex = index - media.m_TimelineRange.x;
 					const uint32_t cachedIndex = this->m_Cache->Add(&media.m_Images[imageIndex]);
 
-					media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_Ptr, this->m_Profiler);
+					media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_DataPtr, this->m_Profiler);
 
 					break;
 				}
@@ -320,6 +322,6 @@ namespace Core
 		this->m_Workers.clear();
 		this->m_Workers.resize(0);
 
-		this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Released loader");
+		this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : Released loader");
 	}
 }

@@ -15,12 +15,12 @@ namespace Core
         this->m_BytesCapacity = isImgCache ? size * 1000000 : size;
         this->m_Logger = logger;
 
-        const char* minimalCacheMsg = isImgCache ? " minimal " : " ";
+        const char* minimalCacheMsg = isImgCache ? " " : " minimal ";
 
-        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Initializing%sImage Cache (%.2f MB)", minimalCacheMsg,
-                                                                                            isImgCache ? 
-                                                                                            static_cast<float>(size) :
-                                                                                            static_cast<float>(size) / 1000000.0f);
+        this->m_Logger->Log(LogLevel_Diagnostic, "[CACHE] : Initializing%sImage Cache (%.2f MB)", minimalCacheMsg,
+                                                                                                  isImgCache ? 
+                                                                                                  static_cast<float>(size) :
+                                                                                                  static_cast<float>(size) / 1000000.0f);
 
         this->m_MemoryArena = OvAlloc(this->m_BytesCapacity, 32);
     }
@@ -76,7 +76,9 @@ namespace Core
             while (true)
             {
                 traversingIdx = traversingIdx % (oldSize + 1) == 0 ? 1 : traversingIdx;
-                
+
+                // bool foundImageCacheItem = this->m_Items.find(traversingIdx) != this->m_Items.end();
+         
                 ImageCacheItem tmpImgCacheItem = this->m_Items[traversingIdx];
 
                 // We found an image that was the same size (or larger) or we have enough space in the cache to load the frame at the current index
@@ -90,7 +92,7 @@ namespace Core
 
                     const std::string removedImagePath = tmpImgCacheItem.m_Image->m_Path;
 
-                    void* address = tmpImgCacheItem.m_Ptr;
+                    void* address = tmpImgCacheItem.m_DataPtr;
 
                     this->m_Items[traversingIdx] = ImageCacheItem(image, address, imgByteSize, imgSize);
 
@@ -102,7 +104,9 @@ namespace Core
                     this->m_CurrentTraversingIndex = traversingIdx;
                     this->m_CurrentIndex = traversingIdx + 1;
 
-                    this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Removed image [%s] at index [%d] and loaded a new one", removedImagePath.c_str(), traversingIdx);
+                    this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Removed image [%s] at index [%d] and loaded a new one [%s]", removedImagePath.c_str(), 
+                                                                                                                                traversingIdx,
+                                                                                                                                image->m_Path.c_str());
                     this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Update cache size : %f MB (Capacity : %f MB)", static_cast<float>(this->m_BytesSize) / 1000000.0f,
                                                                                                                   static_cast<float>(this->m_BytesCapacity) / 1000000.0f);
 
@@ -116,7 +120,7 @@ namespace Core
                     // and idem for the index
                     if (cleanedByteSize == 0) 
                     {
-                        cleanAddress = tmpImgCacheItem.m_Ptr;
+                        cleanAddress = tmpImgCacheItem.m_DataPtr;
                         cleanIndex = traversingIdx;
                     }
 
@@ -168,6 +172,22 @@ namespace Core
 
         this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Removed image at index [%d]", index);
     }
+
+    void ImageCache::Flush() noexcept
+    {
+        for (auto& [index, cacheItem] : this->m_Items)
+        {
+            cacheItem.m_Image->m_CacheIndex = 0;
+        }
+
+        this->m_Items.clear();
+        this->m_Size = 0;
+        this->m_BytesSize = 0;
+        this->m_CurrentIndex = 1;
+        this->m_CurrentTraversingIndex = 0;
+
+        this->m_Logger->Log(LogLevel_Diagnostic, "[CACHE] : Image Cache flushed");
+    }
     
     void ImageCache::Resize(const size_t newSize, const bool sizeInMB) noexcept
     {
@@ -189,7 +209,7 @@ namespace Core
         this->m_CurrentIndex = 1;
         this->m_CurrentTraversingIndex = 0;
 
-        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Image Cache resized (%.2f MB)", sizeInMB ? 
+        this->m_Logger->Log(LogLevel_Diagnostic, "[CACHE] : Image Cache resized (%.2f MB)", sizeInMB ? 
                                                                                        static_cast<float>(newSize) :
                                                                                        static_cast<float>(newSize) / 1000000.0f);
     }
@@ -215,6 +235,6 @@ namespace Core
 
         this->m_HasBeenInitialized = false;
 
-        this->m_Logger->Log(LogLevel_Debug, "[CACHE] : Releasing cache");
+        this->m_Logger->Log(LogLevel_Diagnostic, "[CACHE] : Releasing cache");
     }
 } // end namespace Core

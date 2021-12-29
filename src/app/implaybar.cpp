@@ -103,6 +103,20 @@ namespace Interface
 
 		profiler->Time("Playbar Cache Indices Update Time", cacheUpdateStart, cacheUpdateEnd);
 	}
+
+	void ImPlaybar::SetRange(const ImVec2& newRange) noexcept
+	{
+		this->Pause();
+
+		this->m_Frame = 0;
+
+		this->m_Range = newRange;
+
+		this->m_Update = true;
+
+		this->m_CachedIndices.resize(newRange.y);
+		for (uint32_t i = 0; i < newRange.y; i++) this->m_CachedIndices[i] = false;
+	}
  
 	void ImPlaybar::Draw() noexcept
 	{
@@ -135,7 +149,7 @@ namespace Interface
 
 			drawList->PushClipRect(timelineP0, timelineP1, true);
 
-			const float step = timelineSize.x / (this->m_Range.y - 1.0f);
+			const float step = timelineSize.x / (this->m_Range.y);
 
 			// Separating lines and frame number indicators
 			for (float x = this->m_Range.x; x < (this->m_Range.y); x++)

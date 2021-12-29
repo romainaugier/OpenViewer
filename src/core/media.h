@@ -22,6 +22,8 @@ namespace Core
         ImVec2 m_Range = ImVec2(0, 0); // "Raw" range of the sequence
         ImVec2 m_TimelineRange = ImVec2(0, 0); // Range in the timeline
 
+        uint32_t m_ID;
+
         bool m_IsActive = false; // The media is in the timeline, and so is/will be displayed
 
         uint32_t Size() const noexcept;

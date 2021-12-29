@@ -74,7 +74,7 @@ namespace Interface
 	// Initializes the gl texture that will display the images
 	void Display::Initialize(Core::Ocio& ocio) noexcept
 	{
-		this->m_Logger->Log(LogLevel_Debug, "[DISPLAY] : Initializing display %d", this->m_DisplayID);
+		this->m_Logger->Log(LogLevel_Diagnostic, "[DISPLAY] : Initializing display %d", this->m_DisplayID);
 		
 		// When we initialize a display, we have at least one media and one image loader
 		const Core::Image* initImage = &this->m_Loader->m_Medias[0].m_Images[0];
@@ -101,7 +101,7 @@ namespace Interface
 					 0, 
 					 initImage->m_GLFormat, 
 					 initImage->m_GLType, 
-					 this->m_Loader->m_Cache->m_Items[1].m_Ptr); // The first item starts at 1, index 0 is to signal it is not cached
+					 this->m_Loader->m_Cache->m_Items[1].m_DataPtr); // The first item starts at 1, index 0 is to signal it is not cached
 
 		// OCIO GPU Processing
 		if (ocio.use_gpu > 0)
@@ -158,7 +158,7 @@ namespace Interface
 
 	void Display::ReInitialize(const Core::Image& image, Core::Ocio& ocio) noexcept
 	{
-		this->m_Logger->Log(LogLevel_Debug, "[DISPLAY] : Image dimensions changed, reinitializing display %d", this->m_DisplayID);
+		this->m_Logger->Log(LogLevel_Diagnostic, "[DISPLAY] : Image dimensions changed, reinitializing display %d", this->m_DisplayID);
 		
 		this->m_Width = image.m_Xres;
 		this->m_Height = image.m_Yres;
@@ -183,7 +183,7 @@ namespace Interface
 					 0, 
 					 image.m_GLFormat, 
 					 image.m_GLType, 
-					 this->m_Loader->m_Cache->m_Items[image.m_CacheIndex].m_Ptr); // The first item starts at 1, index 0 is to signal it is not cached
+					 this->m_Loader->m_Cache->m_Items[image.m_CacheIndex].m_DataPtr); // The first item starts at 1, index 0 is to signal it is not cached
 
 		// OCIO GPU Processing
 		if (ocio.use_gpu > 0)
@@ -256,8 +256,7 @@ namespace Interface
 				const uint16_t currentImageXRes = currentImage->m_Xres;
 				const uint16_t currentImageYRes = currentImage->m_Yres;
 				const uint64_t currentImageSize = currentImage->m_Size;
-				const uint16_t currentImageCacheIndex = this->m_Loader->m_UseCache ? currentImage->m_CacheIndex : 1;
-				const void* currentImageCacheAddress = this->m_Loader->m_Cache->m_Items[currentImageCacheIndex].m_Ptr;
+				const void* currentImageCacheAddress = this->m_Loader->m_Cache->m_Items[currentImage->m_CacheIndex].m_DataPtr;
 
 				// Update the texture
 				glActiveTexture(GL_TEXTURE0);
@@ -342,7 +341,7 @@ namespace Interface
 		ImGui::Begin(displayName, &p_open, window_flags);
 		{
 			const ImVec2 size = ImVec2(this->m_Width, 
-								 this->m_Height);
+								       this->m_Height);
 
 			static ImVec2 scrolling;
 			static float zoom = 1.0f;
@@ -418,6 +417,6 @@ namespace Interface
 		glDeleteTextures(1, &this->m_RawTexture);
 		glDeleteTextures(1, &this->m_TransformedTexture);
 
-		this->m_Logger->Log(LogLevel_Debug, "[DISPLAY] : Released display %d", this->m_DisplayID);
+		this->m_Logger->Log(LogLevel_Diagnostic, "[DISPLAY] : Released display %d", this->m_DisplayID);
 	}
 } // End namespace Interface

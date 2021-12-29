@@ -45,7 +45,7 @@ namespace Interface
 		bool p_open_interface_window = false;
 		bool p_open_ocio_window = false;
 		bool p_open_playback_window = false;
-		bool p_open_performance_window = false;
+		bool p_open_debug_window = false;
 
 		void Draw(ImPlaybar& playbar, Profiler* prof, Core::Ocio& ocio, Application& app) noexcept;
 		void GetOcioConfig(Core::Ocio& ocio) noexcept;

@@ -19,6 +19,6 @@ namespace Interface
             display->Release();
         }
 
-        this->m_Logger->Log(LogLevel_Debug, "[MAIN] : Released OpenViewer");
+        this->m_Logger->Log(LogLevel_Diagnostic, "[MAIN] : Released OpenViewer");
     }
 }

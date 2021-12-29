@@ -8,7 +8,7 @@ namespace Core
 {
     uint32_t Media::Size() const noexcept
     {
-        return this->m_Range.y + 1; // The range starts at 0
+        return this->m_Range.y;
     }
 
     bool Media::InRange(const uint32_t index) const noexcept
@@ -19,10 +19,12 @@ namespace Core
     void Media::SetActive() noexcept
     {
         this->m_IsActive = true;
+        this->m_TimelineRange = this->m_Range;
     }
     
     void Media::SetInactive() noexcept
     {
         this->m_IsActive = false;
+        this->m_TimelineRange = ImVec2(0, 0);
     }
 }

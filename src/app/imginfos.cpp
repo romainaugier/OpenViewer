@@ -52,7 +52,7 @@ namespace Interface
                 
                 ImGui::Text("Raw Color");
 
-                void* currentImageBuffer = loader->m_Cache->m_Items[currentImage.m_CacheIndex].m_Ptr;
+                void* currentImageBuffer = loader->m_Cache->m_Items[currentImage.m_CacheIndex].m_DataPtr;
                 const ImVec4 currentColorRaw = ImClamp(currentImage.GetPixel(X, Y, currentImageBuffer), 
                                                        ImVec4(0.0f, 0.0f, 0.0f, 0.0f), 
                                                        ImVec4(100.0f, 100.0f, 100.0f, 100.0f));
