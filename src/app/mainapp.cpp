@@ -10,7 +10,7 @@ int application(int argc, char** argv)
     
     // Logger
     Logger logger;
-    logger.SetLevel(LogLevel_Debug);
+    logger.SetLevel(LogLevel_Diagnostic);
     logger.Log(LogLevel_Diagnostic, "[MAIN] : Initializing OpenViewer");
     
     // Profiler

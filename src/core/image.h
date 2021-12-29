@@ -74,7 +74,7 @@ namespace Core
 			{
 				this->m_Type = FileType_Exr;
 				this->m_Format = Format_RGBA_HALF;
-				this->m_GLInternalFormat = GL_RGBA32F;
+				this->m_GLInternalFormat = GL_RGBA16F;
 				this->m_GLFormat = GL_RGBA;
 				this->m_GLType = GL_HALF_FLOAT;
 				this->m_Xres = spec.full_width;
@@ -88,7 +88,7 @@ namespace Core
 				const bool hasAlpha = spec.alpha_channel >= 0;
 				this->m_Type = FileType_Png;
 				this->m_Format = hasAlpha ? Format_RGBA_U8 : Format_RGB_U8;
-				this->m_GLInternalFormat = hasAlpha ? GL_RGBA32F : GL_RGB32F;
+				this->m_GLInternalFormat = hasAlpha ? GL_RGBA8 : GL_RGB8;
 				this->m_GLFormat = hasAlpha ? GL_RGBA : GL_RGB;
 				this->m_GLType = GL_UNSIGNED_BYTE;
 				this->m_Xres = spec.width;
@@ -101,7 +101,7 @@ namespace Core
 			{
 				this->m_Type = FileType_Jpg;
 				this->m_Format = Format_RGB_U8;
-				this->m_GLInternalFormat = GL_RGB32F;
+				this->m_GLInternalFormat = GL_RGB8;
 				this->m_GLFormat = GL_RGB;
 				this->m_GLType = GL_UNSIGNED_BYTE;
 				this->m_Xres = spec.width;
@@ -127,7 +127,7 @@ namespace Core
 			{
 				this->m_Type = FileType_Tiff;
 				this->m_Format = Format_RGB_HALF;
-				this->m_GLInternalFormat = GL_RGBA32F;
+				this->m_GLInternalFormat = GL_RGBA16F;
 				this->m_GLFormat = GL_RGBA;
 				this->m_GLType = GL_HALF_FLOAT;
 				this->m_Xres = spec.width;
@@ -140,7 +140,7 @@ namespace Core
 			{
 				this->m_Type = FileType_Other;
 				this->m_Format = Format_RGB_HALF;
-				this->m_GLInternalFormat = GL_RGB32F;
+				this->m_GLInternalFormat = GL_RGB16F;
 				this->m_GLFormat = GL_RGB;
 				this->m_GLType = GL_HALF_FLOAT;
 				this->m_Xres = spec.width;

@@ -242,7 +242,10 @@ namespace Interface
 	void Display::Update(Core::Ocio& ocio, const uint32_t frameIndex) noexcept
 	{
 		// Get the image to be displayed
+		auto getStart = this->m_Profiler->Start();
 		Core::Image* currentImage = this->m_Loader->GetImage(frameIndex);
+		auto getEnd = this->m_Profiler->End();
+		this->m_Profiler->Time("Display Image Get Time", getStart, getEnd);
 
 		if (currentImage != nullptr)
 		{
@@ -253,13 +256,17 @@ namespace Interface
 			else
 			{
 				// Get the different image infos we need to load it
+				const auto getImgInfoStart = this->m_Profiler->Start();
 				const uint16_t currentImageXRes = currentImage->m_Xres;
 				const uint16_t currentImageYRes = currentImage->m_Yres;
 				const uint64_t currentImageSize = currentImage->m_Size;
 				const void* currentImageCacheAddress = this->m_Loader->m_Cache->m_Items[currentImage->m_CacheIndex].m_DataPtr;
+				const auto getImgInfoEnd = this->m_Profiler->End();
+				this->m_Profiler->Time("Display Image Infos Time", getImgInfoStart, getImgInfoEnd);
 
 				// Update the texture
-				glActiveTexture(GL_TEXTURE0);
+				const auto texUpdateStart = this->m_Profiler->Start();
+				// glActiveTexture(GL_TEXTURE0);
 				glBindTexture(GL_TEXTURE_2D, this->m_RawTexture);
 				glTexSubImage2D(GL_TEXTURE_2D,
 								0, 0, 0,
@@ -268,11 +275,13 @@ namespace Interface
 								currentImage->m_GLFormat,
 								currentImage->m_GLType,
 								currentImageCacheAddress);
+				const auto texUpdateEnd = this->m_Profiler->End();
+				this->m_Profiler->Time("Display Texture Update Time", texUpdateStart, texUpdateEnd);
 
 				// OCIO GPU Processing
 				if (ocio.use_gpu > 0)
 				{
-					auto ocio_start = this->m_Profiler->Start();
+					const auto ocio_start = this->m_Profiler->Start();
 
 					// Bind the framebuffer
 					BindFBO();
@@ -310,11 +319,11 @@ namespace Interface
 					UnbindFBO();
 					glDisable(GL_DEPTH_TEST);
 
-					auto ocio_end = this->m_Profiler->End();
+					const auto ocio_end = this->m_Profiler->End();
 					this->m_Profiler->Time("Ocio Transform Time", ocio_start, ocio_end);
 
 					// Unbind our texture
-					GL_CHECK(glBindTexture(GL_TEXTURE_2D, 0));
+					glBindTexture(GL_TEXTURE_2D, 0);
 				}
 			}
 		}

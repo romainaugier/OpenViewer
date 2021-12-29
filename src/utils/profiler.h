@@ -40,7 +40,7 @@ struct Profiler
 									 const std::chrono::time_point<std::chrono::system_clock>& start, 
 			  						 const std::chrono::time_point<std::chrono::system_clock>& end) noexcept
 	{
-		const float time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+		const float time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 		
 		if(times.find(name) != times.end()) times[name] = time;
 		else times.emplace(name, time);

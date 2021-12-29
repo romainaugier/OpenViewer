@@ -425,18 +425,19 @@ namespace Core
 
     void Ocio::Process(const uint16_t width, const uint16_t height)
     {
-        try
-        {
-            // apply the ocio view transform
+        ogl_builder->useAllUniforms();
+        // try
+        // {
+        //     // apply the ocio view transform
 
-            // GPU
-            if (use_gpu > 0) ogl_builder->useAllUniforms();
-            else logger->Log(LogLevel_Error, "[OCIO] : CPU Processor has not been implemented yet");
-        }
-        catch (OCIO::Exception& exception)
-        {
-            logger->Log(LogLevel_Error, "[OCIO] : %s", exception.what());
-        }
+        //     // GPU
+        //     if (use_gpu > 0) ogl_builder->useAllUniforms();
+        //     else logger->Log(LogLevel_Error, "[OCIO] : CPU Processor has not been implemented yet");
+        // }
+        // catch (OCIO::Exception& exception)
+        // {
+        //     logger->Log(LogLevel_Error, "[OCIO] : %s", exception.what());
+        // }
     }
 
     // cleanup the vectors containing views, displays, roles and looks
