@@ -91,17 +91,44 @@ namespace Interface
 		{
 			ImGui::SetNextWindowBgAlpha(settings.interface_windows_bg_alpha);
 		
-			ImGui::Begin("Performance Settings", &p_open_debug_window);
+			ImGui::Begin("Debug", &p_open_debug_window);
 			{
+				// Log Level
+				const char* logLevels[6] = { "Error", "Warning", "Message", "Diagnostic", "Verbose", "Debug" };
+				static int logLevelIndex = 3;
+
+				ImGui::Text("Log Level");
+
+				ImGui::SameLine();
+
+				const ImVec2 leftSpace = ImGui::GetContentRegionAvail();
+
+				ImGui::Dummy(ImVec2(leftSpace.x - 100.0f, 1.0f));
+				ImGui::SameLine();
+
+				ImGui::SetNextItemWidth(100.0f);
+				ImGui::Combo("###", &logLevelIndex, logLevels, 6);
+
+				if (ImGui::IsItemEdited())
+				{
+					if (logLevelIndex == 0) app.m_Logger->SetLevel(LogLevel_Error);
+					if (logLevelIndex == 1) app.m_Logger->SetLevel(LogLevel_Warning);
+					if (logLevelIndex == 2) app.m_Logger->SetLevel(LogLevel_Message);
+					if (logLevelIndex == 3) app.m_Logger->SetLevel(LogLevel_Diagnostic);
+					if (logLevelIndex == 4) app.m_Logger->SetLevel(LogLevel_Verbose);
+					if (logLevelIndex == 5) app.m_Logger->SetLevel(LogLevel_Debug);
+				}
+
 				ImGuiIO& io = ImGui::GetIO();
 
-				if (ImGui::CollapsingHeader("Profiling"))
+				if (ImGui::CollapsingHeader("Event Profiling"))
 				{
-					ImGui::Text("Time");
 					ImGui::Text("Frame Average Time : %0.3f ms/frame (%0.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-					for(const auto& [key, value] : prof->times)	ImGui::Text("%s : %0.3f ms", key.c_str(), value);
 					ImGui::Separator();
-					ImGui::Text("Memory");
+					for(const auto& [key, value] : prof->times)	ImGui::Text("%s : %0.3f ms", key.c_str(), value / 1000.0f);
+				}
+				if (ImGui::CollapsingHeader("Memory Profiling"))
+				{
 					for(const auto& [key, value] : prof->mem_usage) ImGui::Text("%s : %0.3f MB", key.c_str(), value);
 				}
 			}

@@ -42,7 +42,6 @@ struct Profiler
 	{
 		const float time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 		
-		if(times.find(name) != times.end()) times[name] = time;
-		else times.emplace(name, time);
+		times[name] = time;
 	}
 };

@@ -76,14 +76,14 @@ namespace Core
             while (true)
             {
                 traversingIdx = traversingIdx % (oldSize + 1) == 0 ? 1 : traversingIdx;
+                ImageCacheItem tmpImgCacheItem = this->m_Items[traversingIdx];
 
                 // bool foundImageCacheItem = this->m_Items.find(traversingIdx) != this->m_Items.end();
-         
-                ImageCacheItem tmpImgCacheItem = this->m_Items[traversingIdx];
+                const bool imageFitsInCache = imgByteSize <= (this->m_BytesCapacity - (this->m_BytesSize - tmpImgCacheItem.m_Stride));
 
                 // We found an image that was the same size (or larger) or we have enough space in the cache to load the frame at the current index
                 // We remove it from the cache and use its memory to store our new image
-                if(imgByteSize <= tmpImgCacheItem.m_Stride || imgByteSize <= (this->m_BytesCapacity - (this->m_BytesSize - tmpImgCacheItem.m_Stride)))
+                if(imgByteSize <= tmpImgCacheItem.m_Stride || imageFitsInCache)
                 {
                     // Notify that this image is not in cache anymore and update the cache infos
                     tmpImgCacheItem.m_Image->m_CacheIndex = 0;
@@ -93,6 +93,18 @@ namespace Core
                     const std::string removedImagePath = tmpImgCacheItem.m_Image->m_Path;
 
                     void* address = tmpImgCacheItem.m_DataPtr;
+
+                    if (imageFitsInCache)
+                    {
+                        // Special case where we emptied all the cache but we are not at index 1, so we kind of flush the cache
+                        // and add a new item at the index 1
+                        if (this->m_Items.find(1) == this->m_Items.end())
+                        {
+                            this->m_Items.erase(traversingIdx);
+                            address = this->m_MemoryArena;
+                            traversingIdx = 1;
+                        }
+                    }
 
                     this->m_Items[traversingIdx] = ImageCacheItem(image, address, imgByteSize, imgSize);
 

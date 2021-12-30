@@ -266,15 +266,19 @@ namespace Interface
 
 				// Update the texture
 				const auto texUpdateStart = this->m_Profiler->Start();
-				// glActiveTexture(GL_TEXTURE0);
+
+				glActiveTexture(GL_TEXTURE0);
 				glBindTexture(GL_TEXTURE_2D, this->m_RawTexture);
-				glTexSubImage2D(GL_TEXTURE_2D,
-								0, 0, 0,
-								currentImageXRes,
-								currentImageYRes,
-								currentImage->m_GLFormat,
-								currentImage->m_GLType,
-								currentImageCacheAddress);
+				glTexImage2D(GL_TEXTURE_2D, 
+							 0, 
+							 currentImage->m_GLInternalFormat, 
+							 currentImageXRes, 
+							 currentImageYRes, 
+							 GL_CLAMP, 
+							 currentImage->m_GLFormat, 
+							 currentImage->m_GLType, 
+							 currentImageCacheAddress);
+							 
 				const auto texUpdateEnd = this->m_Profiler->End();
 				this->m_Profiler->Time("Display Texture Update Time", texUpdateStart, texUpdateEnd);
 
