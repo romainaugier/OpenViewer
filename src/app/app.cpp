@@ -6,10 +6,11 @@
 
 namespace Interface
 {
-    Application::Application(Logger* logger, Core::Loader* loader)
+    Application::Application(Logger* logger, Core::Loader* loader, Core::Ocio* ocio)
     {
         this->m_Logger = logger;
         this->m_Loader = loader;
+        this->m_OcioModule = ocio;
     }
 
     void Application::Release() noexcept

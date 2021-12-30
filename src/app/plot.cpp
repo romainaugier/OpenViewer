@@ -27,52 +27,52 @@ void Plot::Initialize(uint64_t size, uint16_t width, uint16_t height) noexcept
 
 void Plot::Update(float* image) noexcept
 {
-	uint64_t idx = 0;
+	// uint64_t idx = 0;
 
-	const __m256 luma_coeff_r = _mm256_set1_ps(0.2126f);
-	const __m256 luma_coeff_g = _mm256_set1_ps(0.7152f);
-	const __m256 luma_coeff_b = _mm256_set1_ps(0.0722f);
-	const __m256 max = _mm256_set1_ps(1.0f);
-	const __m256 min = _mm256_setzero_ps();
+	// const __m256 luma_coeff_r = _mm256_set1_ps(0.2126f);
+	// const __m256 luma_coeff_g = _mm256_set1_ps(0.7152f);
+	// const __m256 luma_coeff_b = _mm256_set1_ps(0.0722f);
+	// const __m256 max = _mm256_set1_ps(1.0f);
+	// const __m256 min = _mm256_setzero_ps();
 
-	for (uint64_t i = 0; i < image_size; i += 32)
-	{
-		__m256 r = _mm256_set_ps(image[i + 0], image[i + 4], image[i + 8], image[i + 12],
-			image[i + 16], image[i + 20], image[i + 24], image[i + 28]);
+	// for (uint64_t i = 0; i < image_size; i += 32)
+	// {
+	// 	__m256 r = _mm256_set_ps(image[i + 0], image[i + 4], image[i + 8], image[i + 12],
+	// 		image[i + 16], image[i + 20], image[i + 24], image[i + 28]);
 
-		__m256 g = _mm256_set_ps(image[i + 1], image[i + 5], image[i + 9], image[i + 13],
-			image[i + 17], image[i + 21], image[i + 25], image[i + 29]);
+	// 	__m256 g = _mm256_set_ps(image[i + 1], image[i + 5], image[i + 9], image[i + 13],
+	// 		image[i + 17], image[i + 21], image[i + 25], image[i + 29]);
 
-		__m256 b = _mm256_set_ps(image[i + 2], image[i + 6], image[i + 10], image[i + 14],
-			image[i + 18], image[i + 22], image[i + 26], image[i + 30]);
+	// 	__m256 b = _mm256_set_ps(image[i + 2], image[i + 6], image[i + 10], image[i + 14],
+	// 		image[i + 18], image[i + 22], image[i + 26], image[i + 30]);
 
-		__m256 mask = _mm256_cmp_ps(r, max, 14);
-		r = _mm256_blendv_ps(r, max, mask);
+	// 	__m256 mask = _mm256_cmp_ps(r, max, 14);
+	// 	r = _mm256_blendv_ps(r, max, mask);
 
-		mask = _mm256_cmp_ps(g, max, 14);
-		g = _mm256_blendv_ps(g, max, mask);
+	// 	mask = _mm256_cmp_ps(g, max, 14);
+	// 	g = _mm256_blendv_ps(g, max, mask);
 
-		mask = _mm256_cmp_ps(b, max, 14);
-		b = _mm256_blendv_ps(b, max, mask);
+	// 	mask = _mm256_cmp_ps(b, max, 14);
+	// 	b = _mm256_blendv_ps(b, max, mask);
 		
-		__m256i indices = _mm256_set_epi32(i + 0, i + 4, i + 8, i + 12, i + 16, i + 20, i + 24, i + 28);
-		//__m256i multiplier = _mm256_set1_epi32(2);
-		__m256i divisors = _mm256_set1_epi32(mipmap_idx);
-		__m256i positions_int;
-		//indices = _mm256_mul_epi32(indices, multiplier);
-		//indices = _mm256_div_epi32(indices, divisors);
-		divisors = _mm256_set1_epi32(image_width);
-		indices = _mm256_divrem_epi32(&positions_int, indices, divisors);
-		__m256 positions = _mm256_cvtepi32_ps(positions_int);
+	// 	__m256i indices = _mm256_set_epi32(i + 0, i + 4, i + 8, i + 12, i + 16, i + 20, i + 24, i + 28);
+	// 	//__m256i multiplier = _mm256_set1_epi32(2);
+	// 	__m256i divisors = _mm256_set1_epi32(mipmap_idx);
+	// 	__m256i positions_int;
+	// 	//indices = _mm256_mul_epi32(indices, multiplier);
+	// 	//indices = _mm256_div_epi32(indices, divisors);
+	// 	divisors = _mm256_set1_epi32(image_width);
+	// 	indices = _mm256_divrem_epi32(&positions_int, indices, divisors);
+	// 	__m256 positions = _mm256_cvtepi32_ps(positions_int);
 
 
-		_mm256_store_ps(&r_array[idx], r);
-		_mm256_store_ps(&g_array[idx], g);
-		_mm256_store_ps(&b_array[idx], b);
-		_mm256_store_ps(&pos_array[idx], positions);
+	// 	_mm256_store_ps(&r_array[idx], r);
+	// 	_mm256_store_ps(&g_array[idx], g);
+	// 	_mm256_store_ps(&b_array[idx], b);
+	// 	_mm256_store_ps(&pos_array[idx], positions);
 
-		idx += 8;
-	}
+	// 	idx += 8;
+	// }
 	
 }
 

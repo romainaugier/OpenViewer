@@ -154,6 +154,8 @@ namespace Core
 	{
 		const Image* tmpImg = this->GetImage(index);
 
+		if (tmpImg == nullptr) return;
+
 		if (tmpImg->m_CacheIndex > 0) return;
 
 		if (this->m_UseCache)

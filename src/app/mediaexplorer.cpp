@@ -12,7 +12,7 @@ namespace Interface
         this->m_Logger = logger;
     }
 
-    void MediaExplorer::Draw(bool& showWindow) noexcept
+    void MediaExplorer::Draw(Application* app, bool& showWindow) noexcept
     {
         if (showWindow)
         {
@@ -55,6 +55,21 @@ namespace Interface
 
                                 this->m_CurrentMediaChanged = true;
                             }
+
+                            // If no display is active, create one
+                            if (app->m_DisplayCount == 0)
+                            {
+                                this->m_Loader->LoadImageToCache(0);
+                                
+                                Interface::Display* newDisplay = new Interface::Display(app->m_Loader->m_Profiler, app->m_Logger, app->m_Loader, 1);
+
+                                newDisplay->Initialize(*app->m_OcioModule);
+                                
+
+                                app->m_Displays[++app->m_DisplayCount] = newDisplay;
+                                app->m_ActiveDisplayID = 1;
+                            }
+                            
                         }
                     }
                 }

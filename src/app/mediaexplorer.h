@@ -7,6 +7,7 @@
 #include "imgui.h"
 
 #include "core/loader.h"
+#include "app.h"
 
 namespace Interface
 {
@@ -22,6 +23,6 @@ namespace Interface
 
         MediaExplorer(Core::Loader* loader, Logger* logger);
 
-        void Draw(bool& showWindow) noexcept;
+        void Draw(Application* app, bool& showWindow) noexcept;
     };
 }

@@ -15,11 +15,15 @@ int application(int argc, char** argv)
     
     // Profiler
     Profiler profiler;
+    
+    // Ocio 
+    Core::Ocio ocio(&logger);
+    ocio.Initialize();
 
     // Loader/Cache
     Core::Loader loader(&logger, &profiler);
 
-    Interface::Application app(&logger, &loader);
+    Interface::Application app(&logger, &loader, &ocio);
 
     // Setup GLFW
     glfwSetErrorCallback(glfw_error_callback);
@@ -80,10 +84,6 @@ int application(int argc, char** argv)
 
     // Initialize parser to get command line arguments, if any
     Parser parser(argc, argv);
-
-    // Initialize OCIO 
-    Core::Ocio ocio(&logger);
-    ocio.Initialize();
 
     // Initialize the different windows
     Interface::Settings_Windows settings;
@@ -180,8 +180,11 @@ int application(int argc, char** argv)
         }
 
         // Update the playbar
-        playbar.Update(&profiler);
-
+        if (app.m_DisplayCount > 0)
+        {
+            playbar.Update(&profiler);
+        }
+        
         uint32_t frameIndex = playbar.m_Frame;
 
         glfwPollEvents();
@@ -221,8 +224,6 @@ int application(int argc, char** argv)
             pixelInfosWindow.Draw(&loader, currentImage, display, app.showPixelInfosWindow);
         }
 
-
-
         // settings windows
         settings.Draw(playbar, &profiler, ocio, app);
 
@@ -230,7 +231,7 @@ int application(int argc, char** argv)
         menubar.Draw(settings, app, playbar, ocio, profiler, change);
 
         // Media Explorer
-        mediaExplorerWindow.Draw(app.showMediaExplorerWindow);
+        mediaExplorerWindow.Draw(&app, app.showMediaExplorerWindow);
     
         // playbar 
         playbar.Draw();

@@ -26,7 +26,6 @@ static void glfw_error_callback(int error, const char* description)
 #include <thread>
 
 #include "menubar.h"
-#include "display.h"
 #include "imginfos.h"
 #include "mediaexplorer.h"
 #include "core/loader.h"

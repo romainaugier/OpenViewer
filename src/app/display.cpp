@@ -278,7 +278,7 @@ namespace Interface
 							 currentImage->m_GLFormat, 
 							 currentImage->m_GLType, 
 							 currentImageCacheAddress);
-							 
+
 				const auto texUpdateEnd = this->m_Profiler->End();
 				this->m_Profiler->Time("Display Texture Update Time", texUpdateStart, texUpdateEnd);
 
@@ -378,7 +378,7 @@ namespace Interface
 				zoom += mouseWheel * 0.1f;
 			}
 
-			zoom = zoom < 0.1f ? 0.1f : zoom;
+			zoom = zoom < 0.01f ? 0.01f : zoom;
 
 			const ImVec2 imagePos = (ImGui::GetWindowSize() - size * zoom) * 0.5f + scrolling;
 

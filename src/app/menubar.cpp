@@ -49,6 +49,12 @@ namespace Interface
 						const auto& res = ifd::FileDialog::Instance().GetResults();
 						const std::string fp = res[0].u8string();
 
+						if (!app.m_Loader->m_HasBeenInitialized)
+						{
+							app.m_Loader->Initialize(currentSettings.settings.m_UseCache,
+													 currentSettings.settings.m_CacheSize);
+						}
+
 						app.m_Loader->Load(fp);
 						app.m_Loader->LoadImageToCache(playbar.m_Frame);
 					}
@@ -62,6 +68,12 @@ namespace Interface
 					{
 						const auto& res = ifd::FileDialog::Instance().GetResult();
 						const std::string fp = res.u8string();
+
+						if (!app.m_Loader->m_HasBeenInitialized)
+						{
+							app.m_Loader->Initialize(currentSettings.settings.m_UseCache,
+													 currentSettings.settings.m_CacheSize);
+						}
 
 						app.m_Loader->Load(fp);
 						app.m_Loader->LoadImageToCache(playbar.m_Frame);
@@ -118,11 +130,35 @@ namespace Interface
 				{
 					playbar.Pause();
 					playbar.m_Frame = 0;
+					
+					// Find the biggest image we have in cache to make sure enough space will be allocated in the cache 
+					// Especially when size is set manually
+					uint64_t biggestImageSize = 0;
+
+					for (const auto& media : app.m_Loader->m_Medias)
+					{
+						for (const auto& image : media.m_Images)
+						{
+							biggestImageSize = image.m_Stride > biggestImageSize ? image.m_Stride : biggestImageSize;
+						}
+					}
 
 					// If we use the cache, and the loader is already initialized, just initialize the cache
 					if (currentSettings.settings.m_UseCache)
 					{
 						app.m_Loader->m_UseCache = true;
+
+						const uint64_t newCacheSize = static_cast<uint64_t>(currentSettings.settings.m_CacheSize) * 1000000;
+
+						if (newCacheSize < biggestImageSize)
+						{
+							app.m_Logger->Log(LogLevel_Warning, 
+											  "[CACHE] : New size (%d MB) is not enough, setting size to %f MB",
+											  currentSettings.settings.m_CacheSize,
+											  static_cast<float>(biggestImageSize) / 1000000.0f);
+
+							currentSettings.settings.m_CacheSize = static_cast<int>(biggestImageSize / 1000000);
+						}
 
 						if (app.m_Loader->m_Cache->m_HasBeenInitialized)
 						{
@@ -144,16 +180,6 @@ namespace Interface
 
 						app.m_Loader->m_UseCache = false;
 						app.m_Loader->m_Cache->Release();
-
-						uint64_t biggestImageSize = 0;
-
-						for (const auto& media : app.m_Loader->m_Medias)
-						{
-							for (const auto& image : media.m_Images)
-							{
-								biggestImageSize = image.m_Stride > biggestImageSize ? image.m_Stride : biggestImageSize;
-							}
-						}
 
 						app.m_Loader->m_Cache->Initialize(biggestImageSize, app.m_Logger, false);
 
@@ -188,6 +214,30 @@ namespace Interface
 							playbar.m_Frame = 0;
 
 							app.m_Loader->StopCacheLoader();
+
+							// Find the biggest image we have in cache to make sure enough space will be allocated in the cache 
+							// Especially when size is set manually
+							uint64_t biggestImageSize = 0;
+
+							for (const auto& media : app.m_Loader->m_Medias)
+							{
+								for (const auto& image : media.m_Images)
+								{
+									biggestImageSize = image.m_Stride > biggestImageSize ? image.m_Stride : biggestImageSize;
+								}
+							}
+
+							const uint64_t newCacheSize = static_cast<uint64_t>(currentSettings.settings.m_CacheSize) * 1000000;
+
+							if (newCacheSize < biggestImageSize)
+							{
+								app.m_Logger->Log(LogLevel_Warning, 
+												"[CACHE] : New size (%d MB) is not enough, setting size to %f MB",
+												currentSettings.settings.m_CacheSize,
+												static_cast<float>(biggestImageSize) / 1000000.0f);
+
+								currentSettings.settings.m_CacheSize = static_cast<int>(biggestImageSize / 1000000);
+							}
 
 							app.m_Loader->m_Cache->Resize(currentSettings.settings.m_CacheSize);
 
@@ -225,6 +275,13 @@ namespace Interface
 				{
 					ImGui::Text("Mode : Minimal");
 					
+					ImGui::Dummy(ImVec2(10.0f, 10.0f));
+					ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+					ImGui::Dummy(ImVec2(10.0f, 10.0f));
+
+					const float cacheCapacity = static_cast<float>(app.m_Loader->m_Cache->m_BytesCapacity) / 1000000.0f;
+					ImGui::Text("Capacity : %.2f MB", cacheCapacity);
+
 					ImGui::Dummy(ImVec2(10.0f, 10.0f));
 					ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
 					ImGui::Dummy(ImVec2(10.0f, 10.0f));
