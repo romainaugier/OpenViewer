@@ -30,6 +30,8 @@ jobs:
 
     - run: sudo apt-get install libxmu-dev libxi-dev libgl-dev
 
+    - run: sudo apt-get install libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev
+
     - run: $VCPKG_ROOT/vcpkg install glew:x64-linux
 
     - name: Configure CMake
