@@ -274,7 +274,7 @@ namespace Interface
 							 currentImage->m_GLInternalFormat, 
 							 currentImageXRes, 
 							 currentImageYRes, 
-							 GL_CLAMP, 
+							 0, 
 							 currentImage->m_GLFormat, 
 							 currentImage->m_GLType, 
 							 currentImageCacheAddress);

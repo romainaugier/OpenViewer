@@ -8,36 +8,46 @@
 #include <string>
 #include <filesystem>
 #include <cstring>
+#include <unordered_map>
 
-struct Parser
+#include "utils/string_utils.h"
+#include "utils/logger.h"
+
+/*
+CLI Flags
+
+-p  : path to either a directory containing a sequence of files,
+	  or an image file
+-py : path to a python to script to execute at startup
+-h  : display the help message with usage
+
+*/
+
+namespace Core
 {
-	std::string path;
-	std::string py_script_path = "";
-	unsigned int is_directory : 1;
-	unsigned int is_file : 1;
-	unsigned int has_py_script : 1;
-	
-	Parser(int argc, char** argv)
-	{
-		is_directory = 0;
-		is_file = 0;
-		has_py_script = 0;
+	using Flags = std::unordered_map<std::string, bool>;
 
-		for (uint8_t i = 1; i < argc; i++)
-		{
-			if (strcmp(argv[i], "-d") == 0)
-			{
-				is_directory = 1;
-				path = argv[i + 1];
-				break;
-			}
-			
-			else if (strcmp(argv[i], "-i") == 0)
-			{
-				is_file = 1;
-				path = argv[i + 1];
-				break;
-			}
-		}
-	}
-};
+	struct CliParser
+	{
+		Flags m_Flags;
+
+		std::vector<std::string> m_Paths;
+		
+		Logger* m_Logger = nullptr;
+
+		CliParser(Logger* logger);
+
+		void ParseArgs(int argc, char** argv) noexcept;
+
+		void ProcessArgs() noexcept;
+
+		bool HasArgs() noexcept;
+		bool HasPaths() noexcept;
+		bool HasPythonScript() noexcept;
+		bool HasToDisplayHelp() noexcept;
+
+		void GetPaths(std::vector<std::string>& paths) noexcept;
+
+		void DisplayHelp() const noexcept;
+	};
+} // End namespace Core

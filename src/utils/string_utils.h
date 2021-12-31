@@ -6,6 +6,8 @@
 
 #include <string>
 #include <algorithm>
+#include <vector>
+#include <sstream>
 #include "decl.h"
 
 #ifdef _MSC_VER
@@ -53,5 +55,17 @@ namespace Utils
         std::string newString = string;
         CleanOSPath(newString);
         return newString;
+    }
+
+    OPENVIEWER_FORCEINLINE void Split(std::vector<std::string>& outputStrings, const std::string& inputString, char delimiter)
+    {
+        std::string tmpString;
+
+        std::istringstream stream(inputString);
+
+        while (std::getline(stream, tmpString, delimiter))
+        {
+            outputStrings.push_back(tmpString);
+        }
     }
 } // End namespace utils

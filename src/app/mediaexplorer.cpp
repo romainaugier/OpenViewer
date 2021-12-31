@@ -65,7 +65,6 @@ namespace Interface
 
                                 newDisplay->Initialize(*app->m_OcioModule);
                                 
-
                                 app->m_Displays[++app->m_DisplayCount] = newDisplay;
                                 app->m_ActiveDisplayID = 1;
                             }

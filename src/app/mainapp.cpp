@@ -11,7 +11,7 @@ int application(int argc, char** argv)
     // Logger
     Logger logger;
     logger.SetLevel(LogLevel_Diagnostic);
-    logger.Log(LogLevel_Diagnostic, "[MAIN] : Initializing OpenViewer");
+    logger.Log(LogLevel_Diagnostic, "[MAIN] : Initializing OpenViewer %s %s", OPENVIEWER_VERSION_STR, OPENVIEWER_PLATFORM_STR);
     
     // Profiler
     Profiler profiler;
@@ -44,10 +44,13 @@ int application(int argc, char** argv)
         return 1;
 
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1); // Enable vsync
+    // Enable vsync
+    glfwSwapInterval(1);
+    // Maximizes the window to the screen size
+    glfwMaximizeWindow(window);
 
     // Initialize OpenGL loader
-    bool err = glewInit() != 0;
+    const bool err = glewInit() != 0;
 
     if (err)
     {
@@ -80,65 +83,47 @@ int application(int argc, char** argv)
     // Our state
     bool show_demo_window = true;
     bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(0.06f, 0.05f, 0.07f, 1.00f);
+    const ImVec4 clearColor = ImVec4(0.06f, 0.05f, 0.07f, 1.00f);
+    
+    // Command line
+    Core::CliParser parser(&logger);
+    parser.ParseArgs(argc, argv);
+    parser.ProcessArgs();
 
-    // Initialize parser to get command line arguments, if any
-    Parser parser(argc, argv);
+    if (parser.HasPaths())
+    {
+        std::vector<std::string> parsedPaths;
+        parser.GetPaths(parsedPaths);
 
-    // Initialize the different windows
+        for (const auto& path : parsedPaths)
+        {
+            loader.Load(path);
+        }
+
+        // If there is only one path in the cli, initialize a display to play it
+        if (parsedPaths.size() == 1)
+        {
+            loader.Initialize(false, 0);
+            loader.LoadImageToCache(0);
+                                
+            Interface::Display* newDisplay = new Interface::Display(app.m_Loader->m_Profiler, app.m_Logger, app.m_Loader, 1);
+
+            newDisplay->Initialize(*app.m_OcioModule);
+            
+            app.m_Displays[++app.m_DisplayCount] = newDisplay;
+            app.m_ActiveDisplayID = 1;
+        }
+    }
+
+    // Initialize the ui elements
     Interface::Settings_Windows settings;
     settings.GetOcioConfig(ocio);
 
     Interface::ImageInfo imageInfosWindow;
     Interface::PixelInfo pixelInfosWindow;
     Interface::MediaExplorer mediaExplorerWindow(&loader, &logger);
-
-    uint32_t playbarCount = 1;
-
-    // When the app is launched, we have a command line argument specifying to open a directory
-    // We initialize a display to load and display its content
-    if (parser.is_directory > 0)
-    {
-        Interface::Display* newDisplay = new Interface::Display(&profiler, &logger, &loader, 1);
-
-        loader.Load(parser.path);
-        loader.m_Medias[0].SetActive();
-        loader.m_Medias[0].m_TimelineRange = loader.m_Medias[0].m_Range;
-        loader.LoadImageToCache(0);
-        
-        playbarCount = loader.m_Medias[0].m_Range.y;
-
-        newDisplay->Initialize(ocio);
-
-        app.m_Displays[++app.m_DisplayCount] = newDisplay;
-        app.m_ActiveDisplayID = 1;
-    }
-    else if (parser.is_file > 0)
-    {
-        Interface::Display* newDisplay = new Interface::Display(&profiler, &logger, &loader, 1);
-
-        loader.Load(parser.path);
-        loader.m_Medias[0].SetActive();
-        loader.LoadImageToCache(0);
-        
-        newDisplay->Initialize(ocio);
-        playbarCount = 0;
-
-        app.m_Displays[++app.m_DisplayCount] = newDisplay;
-        app.m_ActiveDisplayID = 1;
-    }
-
-    // initialize windows
-    Interface::ImPlaybar playbar(&loader, ImVec2(0.0f, playbarCount));
+    Interface::ImPlaybar playbar(&loader, ImVec2(0.0f, 1.0f));
     Interface::Menubar menubar;
-
-    // Initialize memory profiler of main components
-    profiler.MemUsage("Application Memory Usage", ToMB(GetCurrentRss()));
-    // profiler.MemUsage("Display Memory Usage", ToMB((sizeof(display) + display.buffer_size) / 8));
-    profiler.MemUsage("Ocio Module Memory Usage", ToMB((sizeof(ocio) + ocio.GetSize()) / 8));
-    // profiler.MemUsage("Loader Memory Usage", ToMB((sizeof(loader) + loader.cached_size) / 8));
-    
-    bool change = false;
 
     // initialize ImFileDialog
     ifd::FileDialog::Instance().CreateTexture = [](uint8_t* data, int w, int h, char fmt) -> void* {
@@ -161,8 +146,10 @@ int application(int argc, char** argv)
         GLuint texID = (GLuint)tex;
         GL_CHECK(glDeleteTextures(1, &texID));
     };
+    
+    bool changeHappened = false;
 
-    // Main loop
+    // Main window loop
     while (!glfwWindowShouldClose(window))
     {
         // update memory profiler
@@ -184,7 +171,7 @@ int application(int argc, char** argv)
         {
             playbar.Update(&profiler);
         }
-        
+
         uint32_t frameIndex = playbar.m_Frame;
 
         glfwPollEvents();
@@ -203,12 +190,12 @@ int application(int argc, char** argv)
         
         for(auto[id, display] : app.m_Displays)
         {
-            if (change || playbar.m_Update) 
+            if (changeHappened || playbar.m_Update) 
             {
                 const auto startDpUpdate = profiler.Start();
                 
                 display->Update(ocio, frameIndex);
-                change = false;
+                changeHappened = false;
                 playbar.m_Update = false;
                 
                 const auto endDpUpdate = profiler.End();
@@ -228,7 +215,7 @@ int application(int argc, char** argv)
         settings.Draw(playbar, &profiler, ocio, app);
 
         // menubar
-        menubar.Draw(settings, app, playbar, ocio, profiler, change);
+        menubar.Draw(settings, app, playbar, ocio, profiler, changeHappened);
 
         // Media Explorer
         mediaExplorerWindow.Draw(&app, app.showMediaExplorerWindow);
@@ -243,7 +230,7 @@ int application(int argc, char** argv)
 
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+        glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
