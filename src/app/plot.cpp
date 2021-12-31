@@ -9,20 +9,20 @@
 
 void Plot::Initialize(uint64_t size, uint16_t width, uint16_t height) noexcept
 {
-	has_been_initialized = 1;
+	// has_been_initialized = 1;
 
-	mipmap_idx = floor(height / 1000);
+	// mipmap_idx = floor(height / 1000);
 
-	if(mipmap_idx == 0) image_size = size;
-	else image_size = size / (mipmap_idx * 4);
+	// if(mipmap_idx == 0) image_size = size;
+	// else image_size = size / (mipmap_idx * 4);
 	
-	image_width = width;
-	image_height = height;
+	// image_width = width;
+	// image_height = height;
 
-	r_array = static_cast<float*>(OvAlloc((image_size / 4) * sizeof(float), 32));
-	g_array = static_cast<float*>(OvAlloc((image_size / 4) * sizeof(float), 32));
-	b_array = static_cast<float*>(OvAlloc((image_size / 4) * sizeof(float), 32));
-	pos_array = static_cast<float*>(OvAlloc((image_size / 4) * sizeof(float), 32));
+	// r_array = static_cast<float*>(OvAlloc((image_size / 4) * sizeof(float), 32));
+	// g_array = static_cast<float*>(OvAlloc((image_size / 4) * sizeof(float), 32));
+	// b_array = static_cast<float*>(OvAlloc((image_size / 4) * sizeof(float), 32));
+	// pos_array = static_cast<float*>(OvAlloc((image_size / 4) * sizeof(float), 32));
 }
 
 void Plot::Update(float* image) noexcept
@@ -78,64 +78,64 @@ void Plot::Update(float* image) noexcept
 
 void Plot::Release() noexcept
 {
-	OvFree(static_cast<void*>(r_array));
-	OvFree(static_cast<void*>(g_array));
-	OvFree(static_cast<void*>(b_array));
-	OvFree(static_cast<void*>(pos_array));
+	// OvFree(static_cast<void*>(r_array));
+	// OvFree(static_cast<void*>(g_array));
+	// OvFree(static_cast<void*>(b_array));
+	// OvFree(static_cast<void*>(pos_array));
 
-	for (int b = 0; b < (bin_x * bin_y); b += 4)
-	{
-		const __m256d tmp = _mm256_set1_pd(0.0);
-		_mm256_storeu_pd(&bin_counts[b], tmp);
-	}
+	// for (int b = 0; b < (bin_x * bin_y); b += 4)
+	// {
+	// 	const __m256d tmp = _mm256_set1_pd(0.0);
+	// 	_mm256_storeu_pd(&bin_counts[b], tmp);
+	// }
 
-	r_array = nullptr;
-	g_array = nullptr;
-	b_array = nullptr;
-	pos_array = nullptr;
+	// r_array = nullptr;
+	// g_array = nullptr;
+	// b_array = nullptr;
+	// pos_array = nullptr;
 
-	has_been_initialized = 0;
+	// has_been_initialized = 0;
 }
 
 void Plot::Parade() const noexcept
 {
-	if (has_been_initialized > 0)
-	{
-		ImGui::Begin("Parade");
-		{
-			ImGui::SmallButton("R");
-			ImGui::SameLine();
-			ImGui::SmallButton("G");
-			ImGui::SameLine();
-			ImGui::SmallButton("B");
+	// if (has_been_initialized > 0)
+	// {
+	// 	ImGui::Begin("Parade");
+	// 	{
+	// 		ImGui::SmallButton("R");
+	// 		ImGui::SameLine();
+	// 		ImGui::SmallButton("G");
+	// 		ImGui::SameLine();
+	// 		ImGui::SmallButton("B");
 
 			
 
-			if (ImPlot::BeginPlot("R", nullptr, nullptr, ImVec2(-1, 0), ImPlotFlags_CanvasOnly, ImPlotAxisFlags_AutoFit))
-			{
-				ImPlot::PushColormap("RedWF");
-				ImPlot::PlotHistogram2D("", pos_array, r_array, (image_size / 4), bin_counts, bin_x, bin_y, false, ImPlotLimits(0, image_width, 0, 1.05), false);
-				ImPlot::PopColormap();
-				ImPlot::EndPlot();
-			}
-			if (ImPlot::BeginPlot("G", nullptr, nullptr, ImVec2(-1, 0), ImPlotFlags_CanvasOnly, ImPlotAxisFlags_AutoFit))
-			{
-				ImPlot::PushColormap("GreenWF");
-				ImPlot::PlotHistogram2D("", pos_array, g_array, (image_size / 4), bin_counts, bin_x, bin_y, false, ImPlotLimits(0, image_width, 0, 1.05), false);
-				ImPlot::PopColormap();
-				ImPlot::EndPlot();
-			}
-			if (ImPlot::BeginPlot("B", nullptr, nullptr, ImVec2(-1, 0), ImPlotFlags_CanvasOnly, ImPlotAxisFlags_AutoFit))
-			{																	  
-				ImPlot::PushColormap("BlueWF");									  
-				ImPlot::PlotHistogram2D("", pos_array, b_array, (image_size / 4), bin_counts, bin_x, bin_y, false, ImPlotLimits(0, image_width, 0, 1.05), false);
-				ImPlot::PopColormap();
-				ImPlot::EndPlot();
-			}
+	// 		if (ImPlot::BeginPlot("R", nullptr, nullptr, ImVec2(-1, 0), ImPlotFlags_CanvasOnly, ImPlotAxisFlags_AutoFit))
+	// 		{
+	// 			ImPlot::PushColormap("RedWF");
+	// 			ImPlot::PlotHistogram2D("", pos_array, r_array, (image_size / 4), bin_counts, bin_x, bin_y, false, ImPlotLimits(0, image_width, 0, 1.05), false);
+	// 			ImPlot::PopColormap();
+	// 			ImPlot::EndPlot();
+	// 		}
+	// 		if (ImPlot::BeginPlot("G", nullptr, nullptr, ImVec2(-1, 0), ImPlotFlags_CanvasOnly, ImPlotAxisFlags_AutoFit))
+	// 		{
+	// 			ImPlot::PushColormap("GreenWF");
+	// 			ImPlot::PlotHistogram2D("", pos_array, g_array, (image_size / 4), bin_counts, bin_x, bin_y, false, ImPlotLimits(0, image_width, 0, 1.05), false);
+	// 			ImPlot::PopColormap();
+	// 			ImPlot::EndPlot();
+	// 		}
+	// 		if (ImPlot::BeginPlot("B", nullptr, nullptr, ImVec2(-1, 0), ImPlotFlags_CanvasOnly, ImPlotAxisFlags_AutoFit))
+	// 		{																	  
+	// 			ImPlot::PushColormap("BlueWF");									  
+	// 			ImPlot::PlotHistogram2D("", pos_array, b_array, (image_size / 4), bin_counts, bin_x, bin_y, false, ImPlotLimits(0, image_width, 0, 1.05), false);
+	// 			ImPlot::PopColormap();
+	// 			ImPlot::EndPlot();
+	// 		}
 			
-		}
-		ImGui::End();
-	}
+	// 	}
+	// 	ImGui::End();
+	// }
 }
 
 void Plot::Vectorscope() const noexcept
