@@ -6,13 +6,13 @@ cmake_minimum_required(VERSION 3.15)
 # Vcpkg
 if(DEFINED CMAKE_TOOLCHAIN_FILE)
 	if(EXISTS "${CMAKE_TOOLCHAIN_FILE}")
-		message("-- Vcpkg has been found")
+		message(STATUS "Vcpkg has been found")
 	else()
 		message(FATAL_ERROR "Vcpkg can't be found, CMake will exit")
 	endif()
 else()
 	if(EXISTS "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake")
-		message("-- Vcpkg has been found")	
+		message(STATUS "Vcpkg has been found")	
 		set(CMAKE_TOOLCHAIN_FILE "${CMAKE_SOURCE_DIR}/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE FILEPATH "CMAKE Toolchain" FORCE)
 	else()
 		message(FATAL_ERROR "Vcpkg can't be found, CMake will exit")
@@ -77,19 +77,15 @@ include_directories(dependencies/ociov2/include)
 # OpenImageIO
 find_package(OpenImageIO REQUIRED)
 
-# As openimageio include variable works on window and not on linux, we need to use a hack to find
-# the vcpkg include directory
-if(WIN32)
-	include_directories(${OPENIMAGEIO_INCLUDES})
-elseif(UNIX)
-	# Vcpkg include dir
-	find_path(VCPKG_INCLUDE_DIR zlib.h)
-	include_directories(${VCPKG_INCLUDE_DIR})
-endif()
+# Hack to get the vcpkg include directory working
+find_path(VCPKG_INCLUDE_DIR zlib.h)
+include_directories(${VCPKG_INCLUDE_DIR})
+
+message(STATUS "Vcpkg include directory : ${VCPKG_INCLUDE_DIR}")
 
 # OpenEXR
-find_package(IlmBase CONFIG REQUIRED)
-find_package(OpenEXR CONFIG REQUIRED)
+find_package(IlmBase REQUIRED)
+find_package(OpenEXR REQUIRED)
 
 # imf headers have some <> include that requires this OpenEXR include to be found
 if(WIN32)

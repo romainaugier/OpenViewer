@@ -16,7 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     
-    - name: get-cmake
+    - name: Get CMake
       uses: lukka/get-cmake@latest
 
     - name: Run Vcpkg
@@ -27,6 +27,8 @@ jobs:
     - run: $VCPKG_ROOT/vcpkg install openimageio:x64-linux
 
     - run: $VCPKG_ROOT/vcpkg install opencolorio:x64-linux
+
+    - run: sudo apt-get install libxmu-dev libxi-dev libgl-dev
 
     - run: $VCPKG_ROOT/vcpkg install glew:x64-linux
 
