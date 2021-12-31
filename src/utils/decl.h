@@ -20,23 +20,27 @@
 #define OPENVIEWER_VERSION_STR "Debug"
 #endif
 
+#include <cstdint>
+
+#if INTPTR_MAX == INT64_MAX
+#define OPENVIEWER_X64 1
+#elif INTPTR_MAX == INT32_MAX
+#define OPENVIEWER_X86 1
+#endif
+
 #ifndef OPENVIEWER_PLATFORM_STR
 #ifdef _WIN32 || _WIN64
-#ifdef _WIN64
+#ifdef OPENVIEWER_X64
 #define OPENVIEWER_PLATFORM_STR "WIN64"
-#define OPENVIEWER_X64 1
 #else
 #define OPENVIEWER_VERSION_STR "WIN32"
-#define OPENVIEWER_x86 1
 #endif
 #endif
 #elif __GNUC__
-#ifdef __x86_64__ || __ppc64__
+#ifdef OPENVIEWER_X64
 #define OPENVIEWER_PLATFORM_STR "LINUX64"
-#define OPENVIEWER_X64 1
 #else
 #define OPENVIEWER_PLATFORM_STR "LINUX32"
-#define OPENVIEWER_x86 1
 #endif
 #endif
 
