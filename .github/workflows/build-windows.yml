@@ -22,11 +22,9 @@ jobs:
     - name: Run Vcpkg
       uses: lukka/run-vcpkg@v10
       with:
+        vcpkgDirectory: '${{runner.workspace}}/b/vcpkg'
         vcpkgGitCommitId: 025e564979cc01d0fbc5c920aa8a36635efb01bb
         runVcpkgInstall: true
-
-    - name: Install TBB
-      run: ${{env.VCPKG_ROOT}}/vcpkg.exe install tbb:x64-windows
 
     - name: Install OpenImageIO
       run: ${{env.VCPKG_ROOT}}/vcpkg.exe install openimageio:x64-windows
