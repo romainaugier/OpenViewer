@@ -21,6 +21,8 @@ jobs:
     
     - name: Run Vcpkg
       uses: lukka/run-vcpkg@v10
+      with:
+        vcpkgGitCommitId: 025e564979cc01d0fbc5c920aa8a36635efb01bb
 
     - name: Install OpenImageIO
       run: ${{env.VCPKG_ROOT}}/vcpkg.exe install openimageio:x64-windows
