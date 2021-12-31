@@ -5,6 +5,7 @@
 #pragma once
 
 #include <filesystem>
+#include <regex>
 
 #include "decl.h" 
 
@@ -14,4 +15,6 @@ namespace Utils
     {
         return static_cast<size_t>(std::distance(std::filesystem::directory_iterator(directoryPath), std::filesystem::directory_iterator{}));
     }
+
+    
 } // End namespace Utils

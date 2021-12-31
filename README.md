@@ -2,17 +2,23 @@
 ![build windows](https://github.com/romainaugier/OpenViewer/actions/workflows/build-windows.yml/badge.svg)
 ![build linux](https://github.com/romainaugier/OpenViewer/actions/workflows/build-linux.yml/badge.svg)
 
-OpenViewer is an open source, tiny and powerful image viewer made for professionals and enthusiasts of the animation and vfx industry. As I am currently in the last year of my studies, I don't have a lot of time to work on the project, but I'll do my best to advance it from time to time.
+OpenViewer is an open source, tiny and powerful image viewer made for professionals and enthusiasts of the animation and vfx industry.
+
+As I am currently in the last year of my studies, I don't have a lot of time to work on the project, but I'll do my best to advance it from time to time.
+
+I am a CG student in a 3D animation school in France
 
 The wiki (under development) is [here](https://github.com/romainaugier/OpenViewer/wiki), and the roadmap of the project is [here](https://github.com/romainaugier/OpenViewer/wiki/Roadmap).
 
 ## Dependencies
 
-OpenViewer uses [OpenImageIO](https://github.com/OpenImageIO/oiio), [OpenEXR](https://github.com/AcademySoftwareFoundation/openexr) and [Wuffs](https://github.com/google/wuffs) for image reading, [OpenColorIO](https://github.com/AcademySoftwareFoundation/OpenColorIO) to manage colorspaces and [Dear ImGui](https://github.com/ocornut/imgui) for the interface.
+OpenViewer uses [OpenImageIO](https://github.com/OpenImageIO/oiio), [OpenEXR](https://github.com/AcademySoftwareFoundation/openexr) and [Wuffs](https://github.com/google/wuffs) for image reading, [OpenColorIO](https://github.com/AcademySoftwareFoundation/OpenColorIO) to manage colorspaces, [Dear ImGui](https://github.com/ocornut/imgui) for the interface and [Glew](https://github.com/nigels-com/glew) to load OpenGL functions.
 
 ## Installation
 
 OpenViewer uses [Vcpkg](https://github.com/microsoft/vcpkg) to manage dependencies and [CMake](https://cmake.org/) to build across platforms. Make sure ispc, git and cmake are installed on your machine before building OpenViewer.
+
+Vcpkg commit ID used to built the dependencies : 1085a57da0725c19e19586025438e8c16f34c890. If you want to build the project and match the dependencies versions I use to develop OpenViewer and used in Github Actions, rebase vcpkg to this commit.
 
 You first need to install vcpkg and OpenViewer's dependencies. Depending on your machine capabilities, it can take a non negligeable amount of time to build (up to 1 hour on the small pc I use to develop on linux).
 
@@ -25,6 +31,7 @@ cd vcpkg
 ./vcpkg-bootstrap.sh
 ./vcpkg install OpenImageIO:x64-linux
 ./vcpkg install OpenColorIO:x64-linux
+./vcpkg install Glew:x64-linux
 ```
 
 ### Windows
@@ -36,6 +43,7 @@ cd vcpkg
 vcpkg-bootstrap.bat
 vcpkg install OpenImageIO:x64-windows
 vcpkg install OpenColorIO:x64-windows
+vcpkg install Glew:x64-windows
 ```
 
 
@@ -85,3 +93,9 @@ This software is based in part on the works of :
 - [OpenImageIO](https://github.com/OpenImageIO/oiio), Copyright © 2008-2021 by Contributors to the OpenImageIO project. All Rights Reserved.
 - [Wuffs](https://github.com/google/wuffs), Copyright © 2021 Andrew Dassonville, Chris Palmer, Jimmy Casey, Leo Neat, Mike Kaufman, Muhammad Aldo Firmansyah, Nigel Tao
 - [Vcpkg](https://github.com/microsoft/vcpkg), Copyright © Microsoft Corporation
+
+## Special thanks
+
+Thanks to Paul-Emile Buteau for the help and the code reviews.
+
+Thanks to Legend for his 20k jpg renders that helps testing the application.

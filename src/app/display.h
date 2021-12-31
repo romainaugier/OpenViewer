@@ -14,7 +14,7 @@
 #include "GLFW/glfw3.h"
 #include "utils/gl_utils.h"
 
-#include "half.h"
+#include "OpenEXR/half.h"
 #include <immintrin.h>
 
 #include "plot.h"

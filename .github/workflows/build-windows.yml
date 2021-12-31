@@ -22,13 +22,16 @@ jobs:
     - name: Run Vcpkg
       uses: lukka/run-vcpkg@v10
       with:
-        vcpkgGitCommitId: 025e564979cc01d0fbc5c920aa8a36635efb01bb
+        vcpkgGitCommitId: 1085a57da0725c19e19586025438e8c16f34c890
 
     - name: Install OpenImageIO
       run: ${{env.VCPKG_ROOT}}/vcpkg.exe install openimageio:x64-windows
     
     - name: Install OpenColorIO
       run: ${{env.VCPKG_ROOT}}/vcpkg.exe install opencolorio:x64-windows
+
+    - name: Install Glew
+      run: ${{env.VCPKG_ROOT}}/vcpkg.exe install glew:x64-windows
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_TOOLCHAIN_FILE=${{env.VCPKG_ROOT}}/scripts/buildsystems/vcpkg.cmake
