@@ -184,3 +184,26 @@ inline static void StaticDebugConsoleLog(const char* fmt, ...) noexcept
     printf("[NDEBUG] %s : %s\n", cur_time, buffer);
 #endif
 }
+
+inline static void StaticErrorConsoleLog(const char* fmt, ...) noexcept
+{
+#ifdef _WIN32
+    HANDLE winConsole;
+    SetConsoleTextAttribute(winConsole, FOREGROUND_RED);
+#endif
+    char currentTimeBuffer[1024];
+    time_t currentTime;
+    time(&currentTime);
+    tm* localTime = localtime(&currentTime);
+    sprintf(currentTimeBuffer, "%02d:%02d:%02d", localTime->tm_hour, localTime->tm_min, localTime->tm_sec);
+
+    char logBuffer[2048];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(logBuffer, 2048, fmt, args);
+    va_end(args);
+    printf("[ERROR] %s : %s", currentTimeBuffer, logBuffer);
+#ifdef _WIN32
+    SetConsoleTextAttribute(winConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
+#endif
+;}

@@ -95,7 +95,8 @@ namespace Interface
 			{
 				// Log Level
 				const char* logLevels[6] = { "Error", "Warning", "Message", "Diagnostic", "Verbose", "Debug" };
-				static int logLevelIndex = 3;
+				
+				static int logLevelIndex = 1;
 
 				ImGui::Text("Log Level");
 
@@ -114,8 +115,8 @@ namespace Interface
 					if (logLevelIndex == 0) app.m_Logger->SetLevel(LogLevel_Error);
 					if (logLevelIndex == 1) app.m_Logger->SetLevel(LogLevel_Warning);
 					if (logLevelIndex == 2) app.m_Logger->SetLevel(LogLevel_Message);
-					if (logLevelIndex == 3) app.m_Logger->SetLevel(LogLevel_Diagnostic);
-					if (logLevelIndex == 4) app.m_Logger->SetLevel(LogLevel_Verbose);
+					if (logLevelIndex == 3) app.m_Logger->SetLevel(LogLevel_Verbose);
+					if (logLevelIndex == 4) app.m_Logger->SetLevel(LogLevel_Diagnostic);
 					if (logLevelIndex == 5) app.m_Logger->SetLevel(LogLevel_Debug);
 				}
 

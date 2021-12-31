@@ -28,9 +28,9 @@ namespace Interface
 
                     char selectableLabel[8192];
                     
-                    if (isSequence) sprintf_s(selectableLabel, "%s (sequence [%d images])", mediaPath.c_str(), 
+                    if (isSequence) Utils::Format(selectableLabel, "%s (sequence [%d images])", mediaPath.c_str(), 
                                                                                             static_cast<uint32_t>(this->m_Loader->m_Medias[i].Size()));
-                    else sprintf_s(selectableLabel, "%s (single image)", mediaPath.c_str());
+                    else Utils::Format(selectableLabel, "%s (single image)", mediaPath.c_str());
 
                     ImGui::Selectable(selectableLabel, selected);
 

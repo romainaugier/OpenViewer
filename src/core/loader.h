@@ -51,6 +51,8 @@ namespace Core
 
 		uint32_t m_BgLoadFrameIndex = 0; // Frame from where to start the bg loading
 
+		uint32_t m_CacheSizeMB = 0;
+
 		uint16_t m_MediaCount = 0;
 
 		uint8_t m_BgLoadChunkSize = 4; // Number of images to load in the cache at the same time in the background
@@ -65,7 +67,15 @@ namespace Core
 		Loader(Logger* logger, Profiler* profiler);
 
 		// Initializes the loader
-		void Initialize(const bool useCache, const size_t cacheSize) noexcept;
+		void Initialize(const bool useCache, const size_t cacheSize = 0) noexcept;
+
+		// A few inline methods to get/set states on different attributes/objects of the loader
+		// Sets a media active
+		OPENVIEWER_FORCEINLINE void SetMediaActive(const uint32_t mediaId) noexcept { this->m_Medias[mediaId].SetActive(); }
+
+		OPENVIEWER_FORCEINLINE void SetRange(const ImVec2& range) noexcept { this->m_Range = range; }
+
+		OPENVIEWER_FORCEINLINE uint16_t GetMediaCount() const noexcept { return this->m_MediaCount; }
 
 		// Loads a media into the loader
 		void Load(const std::string& mediaPath) noexcept;

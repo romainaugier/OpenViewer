@@ -15,9 +15,9 @@
 OPENVIEWER_FORCEINLINE void* OvAlloc(size_t size, size_t alignement)
 {
     StaticDebugConsoleLog("[MEM_DEBUG] : Allocated %lld bytes.", size);
-#ifdef __GNUC__
+#ifdef OPENVIEWER_GCC
     void* tmp = aligned_alloc(alignement, size);
-#else _MSC_VER
+#else OPENVIEWER_MSVC
     void* tmp = _aligned_malloc(size, alignement);
 #endif
     if (tmp != nullptr)
@@ -27,17 +27,17 @@ OPENVIEWER_FORCEINLINE void* OvAlloc(size_t size, size_t alignement)
     }
     else
     {
-        StaticDebugConsoleLog("[MEMORY ERROR] : Allocation failed, OpenViewer will exit");
-        exit(1);
+        StaticErrorConsoleLog("[MEMORY ERROR] : Allocation failed. Exiting application");
+        std::exit(EXIT_FAILURE);
     }
 }
 
 OPENVIEWER_FORCEINLINE void OvFree(void* ptr)
 {
     StaticDebugConsoleLog("[MEM_DEBUG] : Freed 0x%p ptr.", ptr);
-#ifdef __GNUC__
+#ifdef OPENVIEWER_GCC
     free(ptr);
-#else _MSC_VER
+#else OPENVIEWER_MSVC
     _aligned_free(ptr);
 #endif
 }

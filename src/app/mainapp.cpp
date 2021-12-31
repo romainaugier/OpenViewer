@@ -7,11 +7,12 @@
 int application(int argc, char** argv)
 {
     // Initialize the application
-    
+    printf("OpenViewer %s %s\n", OPENVIEWER_VERSION_STR, OPENVIEWER_PLATFORM_STR);
+
     // Logger
     Logger logger;
     logger.SetLevel(LogLevel_Diagnostic);
-    logger.Log(LogLevel_Diagnostic, "[MAIN] : Initializing OpenViewer %s %s", OPENVIEWER_VERSION_STR, OPENVIEWER_PLATFORM_STR);
+    logger.Log(LogLevel_Diagnostic, "[MAIN] : Initializing Logger");
     
     // Profiler
     Profiler profiler;
@@ -22,6 +23,7 @@ int application(int argc, char** argv)
 
     // Loader/Cache
     Core::Loader loader(&logger, &profiler);
+    loader.Initialize(false);
 
     Interface::Application app(&logger, &loader, &ocio);
 
@@ -31,7 +33,7 @@ int application(int argc, char** argv)
     if (!glfwInit())
     {
         logger.Log(LogLevel_Error, "[GLFW] : Failed to initialize GLFW. Exiting application");
-        return 1;
+        std::exit(EXIT_FAILURE);
     }
 
     const char* glsl_version = "#version 130";
@@ -41,7 +43,10 @@ int application(int argc, char** argv)
     // Create window with graphics context
     GLFWwindow* window = glfwCreateWindow(1920, 1080, "OpenViewer", NULL, NULL);
     if (window == NULL)
-        return 1;
+    {
+        logger.Log(LogLevel_Error, "[GLFW] : Failed to create window. Exiting application");
+        std::exit(EXIT_FAILURE);
+    }
 
     glfwMakeContextCurrent(window);
     // Enable vsync
@@ -55,7 +60,7 @@ int application(int argc, char** argv)
     if (err)
     {
         logger.Log(LogLevel_Error, "[OPENGL] : Failed to initialize loader. Exiting application");
-        return 1;
+        std::exit(EXIT_FAILURE);
     }
 
     // Setup Dear ImGui context
@@ -103,7 +108,7 @@ int application(int argc, char** argv)
         // If there is only one path in the cli, initialize a display to play it
         if (parsedPaths.size() == 1)
         {
-            loader.Initialize(false, 0);
+            loader.SetMediaActive(0);
             loader.LoadImageToCache(0);
                                 
             Interface::Display* newDisplay = new Interface::Display(app.m_Loader->m_Profiler, app.m_Logger, app.m_Loader, 1);

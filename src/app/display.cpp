@@ -349,7 +349,7 @@ namespace Interface
 		bool p_open = true;
 
 		char displayName[64];
-		sprintf_s(displayName, "Display %d", this->m_DisplayID);
+		Utils::Format(displayName, "Display %d", this->m_DisplayID);
 
 		ImGui::Begin(displayName, &p_open, window_flags);
 		{

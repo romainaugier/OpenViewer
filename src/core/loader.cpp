@@ -20,11 +20,10 @@ namespace Core
 
 		this->m_HasBeenInitialized = true;
 
-		// Allocate the cache (if used)
 		if (useCache)
 		{
 			this->m_UseCache = true;
-			this->m_Cache->Initialize(cacheSize, this->m_Logger);
+			this->m_CacheSizeMB = cacheSize;
 		}
 	}
 
@@ -83,7 +82,14 @@ namespace Core
 				}
 				else
 				{
-					this->m_Cache->Initialize(biggestImageByteSize, this->m_Logger, false);
+					this->m_Cache->Initialize(biggestImageByteSize, this->m_Logger);
+				}
+			}
+			else
+			{
+				if (!this->m_Cache->m_HasBeenInitialized)
+				{
+					this->m_Cache->Initialize(this->m_CacheSizeMB, this->m_Logger, true);
 				}
 			}
 

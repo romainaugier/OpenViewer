@@ -4,8 +4,6 @@
 
 #include "parser.h"
 
-#include "OpenImageIO/argparse.h"
-
 namespace Core
 {
     CliParser::CliParser(Logger* logger) 
@@ -26,12 +24,12 @@ namespace Core
 
         for (uint8_t i = 0; i < argc; i++)
         {
-            if (strcmp(argv[i], "-h"))
+            if (strcmp(argv[i], "-h") == 0)
             {
                 this->m_Flags["Show Help"] = true;
                 return;
             }
-            else if (strcmp(argv[i], "-p"))
+            else if (strcmp(argv[i], "-p") == 0)
             {
                 if (!(argc > i))
                 {
@@ -88,31 +86,21 @@ namespace Core
         }
     }
 
-    OPENVIEWER_FORCEINLINE bool CliParser::HasArgs() noexcept { return this->m_Flags["Has Args"]; }
-
-    OPENVIEWER_FORCEINLINE bool CliParser::HasPaths() noexcept { return this->m_Flags["Has Paths"]; }
-    
-    OPENVIEWER_FORCEINLINE bool CliParser::HasPythonScript() noexcept { return this->m_Flags["Has Python Script"]; }
-
-    OPENVIEWER_FORCEINLINE bool CliParser::HasToDisplayHelp() noexcept { return this->m_Flags["Show Help"]; }
-
-    OPENVIEWER_FORCEINLINE void CliParser::GetPaths(std::vector<std::string>& paths) noexcept { if (this->m_Flags["Has Paths"]) paths = std::move(this->m_Paths); }
-
     void CliParser::DisplayHelp() const noexcept
     {
         static const char helpMessage[] = "OpenViewer Command Line Interface\n"
                                          "\n"
                                          "Available arguments :\n"
-                                         "  -p : Path to a directory containing a file sequence or to an image file"
+                                         "  -p : Path to a directory containing a file sequence or to an image file\n"
                                          "       (or multiple ones separated by a ';')\n"
-                                         "       If only one path is passed to the cli interface, OpenViewer will initialize"
-                                         "       the player with this file(s). Otherwise, it will load every files and they"
-                                         "       will be available in the media explorer."
+                                         "       If only one path is passed to the cli interface, OpenViewer will initialize\n"
+                                         "       the player with this file(s). Otherwise, it will load every files and they\n"
+                                         "       will be available in the media explorer.\n"
                                          "  -h : Displays this help message.\n"
                                          "\n"
                                          "Example : ./OpenViewer -p \"/path/to/one/file.jpg;/path/to/another/file.exr;/path/to/a/directory\"\n"
                                          "\n"
-                                         "Don't forget to put the paths into double quotes \"\" like in the example !"
+                                         "Don't forget to put the paths into double quotes \"\" like in the example !\n"
                                          "\n";
 
         printf(helpMessage);

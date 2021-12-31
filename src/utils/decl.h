@@ -17,25 +17,25 @@
 #endif
 
 #ifndef OPENVIEWER_VERSION_STR
-#define OPENVIEWER_VERSION_STR "Non-Official Version"
+#define OPENVIEWER_VERSION_STR "Debug"
 #endif
 
 #ifndef OPENVIEWER_PLATFORM_STR
 #ifdef _WIN32 || _WIN64
 #ifdef _WIN64
-#define OPENVIEWER_PLATFORM_STR "Windows x64"
+#define OPENVIEWER_PLATFORM_STR "WIN64"
 #define OPENVIEWER_X64 1
 #else
-#define OPENVIEWER_VERSION_STR "Windows x86"
+#define OPENVIEWER_VERSION_STR "WIN32"
 #define OPENVIEWER_x86 1
 #endif
 #endif
 #elif __GNUC__
 #ifdef __x86_64__ || __ppc64__
-#define OPENVIEWER_PLATFORM_STR "Linux x64"
+#define OPENVIEWER_PLATFORM_STR "LINUX64"
 #define OPENVIEWER_X64 1
 #else
-#define OPENVIEWER_PLATFORM_STR "Linux x86"
+#define OPENVIEWER_PLATFORM_STR "LINUX32"
 #define OPENVIEWER_x86 1
 #endif
 #endif

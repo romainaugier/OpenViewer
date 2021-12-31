@@ -41,12 +41,15 @@ namespace Core
 
 		void ProcessArgs() noexcept;
 
-		bool HasArgs() noexcept;
-		bool HasPaths() noexcept;
-		bool HasPythonScript() noexcept;
-		bool HasToDisplayHelp() noexcept;
+		OPENVIEWER_FORCEINLINE bool HasArgs() noexcept { return this->m_Flags["Has Args"]; }
 
-		void GetPaths(std::vector<std::string>& paths) noexcept;
+    	OPENVIEWER_FORCEINLINE bool HasPaths() noexcept { return this->m_Flags["Has Paths"]; }
+    
+    	OPENVIEWER_FORCEINLINE bool HasPythonScript() noexcept { return this->m_Flags["Has Python Script"]; }
+
+    	OPENVIEWER_FORCEINLINE bool HasToDisplayHelp() noexcept { return this->m_Flags["Show Help"]; }
+
+    	OPENVIEWER_FORCEINLINE void GetPaths(std::vector<std::string>& paths) noexcept { if (this->m_Flags["Has Paths"]) paths = std::move(this->m_Paths); }
 
 		void DisplayHelp() const noexcept;
 	};
