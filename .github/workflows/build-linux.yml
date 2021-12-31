@@ -16,13 +16,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     
-    - name: Run Vcpkg
-      uses: lukka/run-vcpkg@v7
-      with:
-        vcpkgGitCommitId: 025e564979cc01d0fbc5c920aa8a36635efb01bb
-        setupOnly: true
+    - name: get-cmake
+      uses: lukka/get-cmake@v3.21.1
 
-    - run: $VCPKG_ROOT/vcpkg install tbb:x64-linux
+    - name: Run Vcpkg
+      uses: lukka/run-vcpkg@v10
+      with:
+        setupOnly: true
 
     - run: $VCPKG_ROOT/vcpkg install openimageio:x64-linux
 
