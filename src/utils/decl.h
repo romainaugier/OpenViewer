@@ -35,12 +35,12 @@
 #else
 #define OPENVIEWER_PLATFORM_STR "WIN32"
 #endif
-#endif
 #elif __linux__
 #ifdef OPENVIEWER_X64
 #define OPENVIEWER_PLATFORM_STR "LINUX64"
 #else
 #define OPENVIEWER_PLATFORM_STR "LINUX32"
+#endif
 #endif
 #endif
 
