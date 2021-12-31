@@ -71,7 +71,7 @@ namespace Utils
         }
     }
 
-    inline void Format(char* buffer, const char* fmt, ...) noexcept
+    OPENVIEWER_STATIC_FUNC void Format(char* buffer, const char* fmt, ...) noexcept
     {
         va_list args;
         va_start(args, fmt);

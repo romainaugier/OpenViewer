@@ -33,16 +33,18 @@
 #ifdef OPENVIEWER_X64
 #define OPENVIEWER_PLATFORM_STR "WIN64"
 #else
-#define OPENVIEWER_VERSION_STR "WIN32"
+#define OPENVIEWER_PLATFORM_STR "WIN32"
 #endif
 #endif
-#elif __GNUC__
+#elif __linux__
 #ifdef OPENVIEWER_X64
 #define OPENVIEWER_PLATFORM_STR "LINUX64"
 #else
 #define OPENVIEWER_PLATFORM_STR "LINUX32"
 #endif
 #endif
+
+#define OPENVIEWER_STATIC_FUNC static
 
 // utility constants
 constexpr int SIZEOF_FLOAT = sizeof(float);
