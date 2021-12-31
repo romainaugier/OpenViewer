@@ -15,12 +15,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+
+    - name: get-cmake
+      uses: lukka/get-cmake@v3.21.1
     
     - name: Run Vcpkg
-      uses: lukka/run-vcpkg@v7
+      uses: lukka/run-vcpkg@v10
       with:
         vcpkgGitCommitId: 025e564979cc01d0fbc5c920aa8a36635efb01bb
-        setupOnly: true
+        runVcpkgInstall: true
 
     - name: Install TBB
       run: ${{env.VCPKG_ROOT}}/vcpkg.exe install tbb:x64-windows
