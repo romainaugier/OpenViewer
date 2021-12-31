@@ -28,7 +28,11 @@ If you want to build the project and match the dependencies versions I use to de
 You first need to install vcpkg and OpenViewer's dependencies. Depending on your machine capabilities, it can take a non negligeable amount of time to build (up to 1 hour on the small pc I use to develop on linux).
 
 ### Linux
-```bash
+```shell
+# Needed to build glew and link glu with the app
+sudo apt-get install libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev
+sudo apt-get install libxmu-dev libxi-dev libgl-dev
+
 git clone https://github.com/romainaugier/OpenViewer.git
 cd OpenViewer
 git clone https://github.com/microsoft/vcpkg.git

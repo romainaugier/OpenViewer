@@ -71,7 +71,7 @@ namespace Utils
         }
     }
 
-    OPENVIEWER_FORCEINLINE void Format(char* buffer, const char* fmt, ...) noexcept
+    void Format(char* buffer, const char* fmt, ...) noexcept
     {
         va_list args;
         va_start(args, fmt);
