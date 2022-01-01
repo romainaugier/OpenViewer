@@ -32,6 +32,9 @@ You first need to install vcpkg and OpenViewer's dependencies. Depending on your
 sudo apt-get install libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev
 sudo apt-get install libxmu-dev libxi-dev libgl-dev
 
+# Required to build ffmpeg with vcpkg
+sudo apt-get install nasm
+
 git clone https://github.com/romainaugier/OpenViewer.git
 cd OpenViewer
 git clone https://github.com/microsoft/vcpkg.git
