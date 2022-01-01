@@ -37,7 +37,7 @@ cd OpenViewer
 git clone https://github.com/microsoft/vcpkg.git
 cd vcpkg
 ./vcpkg-bootstrap.sh
-./vcpkg install openimageio[ffmpeg,libraw]:x64-linux
+./vcpkg install openimageio[ffmpeg,libraw]:x64-linux --recurse
 ./vcpkg install opencolorio:x64-linux
 ./vcpkg install glew:x64-linux
 ```
@@ -49,7 +49,7 @@ cd OpenViewer
 git clone https://github.com/microsoft/vcpkg.git
 cd vcpkg
 vcpkg-bootstrap.bat
-vcpkg install openimageio[ffmpeg,libraw]:x64-windows
+vcpkg install openimageio[ffmpeg,libraw]:x64-windows --recurse
 vcpkg install opencolorio:x64-windows
 vcpkg install glew:x64-windows
 ```

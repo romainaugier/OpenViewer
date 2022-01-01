@@ -11,7 +11,7 @@
 
 namespace Utils
 {
-    OPENVIEWER_FORCEINLINE size_t FileCountInDirectory(const std::string& directoryPath)
+    OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE size_t FileCountInDirectory(const std::string& directoryPath)
     {
         return static_cast<size_t>(std::distance(std::filesystem::directory_iterator(directoryPath), std::filesystem::directory_iterator{}));
     }

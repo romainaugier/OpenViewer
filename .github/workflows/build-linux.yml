@@ -24,7 +24,7 @@ jobs:
       with:
         vcpkgGitCommitId: 1085a57da0725c19e19586025438e8c16f34c890
 
-    - run: $VCPKG_ROOT/vcpkg install openimageio[ffmpeg,libraw]:x64-linux
+    - run: $VCPKG_ROOT/vcpkg install openimageio[ffmpeg,libraw]:x64-linux --recurse
 
     - run: $VCPKG_ROOT/vcpkg install opencolorio:x64-linux
 
