@@ -54,6 +54,7 @@ namespace Core
 		uint32_t m_Yres = 0;
 		uint32_t m_Channels = 0;
 		uint32_t m_CacheIndex = 0; // zero means it is not cached
+		uint32_t m_Frame = 0; // used for reading video
 		
 		FileType_ m_Type;
 		Format_ m_Format;
@@ -68,6 +69,7 @@ namespace Core
 			this->m_Path = fp;
 			
 			auto in = OIIO::ImageInput::open(fp);
+			std::cout << OIIO::geterror() << "\n";
 			const OIIO::ImageSpec& spec = in->spec();
 
 			if(Utils::EndsWith(fp, ".exr"))
@@ -109,6 +111,24 @@ namespace Core
 				this->m_Channels = spec.nchannels;
 				this->m_Size = m_Xres * m_Yres * m_Channels;
 				this->m_Stride = m_Size * Size::Size8;
+			}
+			else if(Utils::EndsWith(fp, ".mp4"))
+			{
+				this->m_Type = FileType_Mp4;
+				int subImages;
+				if (spec.getattribute("oiio::subimages", OIIO::TypeDesc::INT, &subImages))
+				{
+					printf("Mp4 subimages : %d\n", subImages);
+				}
+			}
+			else if(Utils::EndsWith(fp, ".mov"))
+			{
+				this->m_Type = FileType_Mov;
+				int subImages;
+				if (spec.getattribute("oiio::subimages", OIIO::TypeDesc::INT, &subImages))
+				{
+					printf("Mov subimages : %d\n", subImages);
+				}
 			}
 			else if(Utils::EndsWith(fp, ".hdr"))
 			{

@@ -25,8 +25,7 @@ OpenViewer uses [Vcpkg](https://github.com/microsoft/vcpkg) to manage dependenci
 Vcpkg commit ID used to built the dependencies : 1085a57da0725c19e19586025438e8c16f34c890. 
 If you want to build the project and match the dependencies versions I use to develop OpenViewer and used in Github Actions, rebase vcpkg to this commit.
 
-You first need to install vcpkg and OpenViewer's dependencies. Depending on your machine capabilities, it can take a non negligeable amount of time to build (up to 1 hour on the small pc I use to develop on linux).
-
+You first need to install vcpkg and OpenViewer's dependencies. Depending on your machine capabilities, it can take a non negligeable amount of time to build, so take a coffee and relax until everything is built.
 ### Linux
 ```shell
 # Needed to build glew and link glu with the app
@@ -38,7 +37,7 @@ cd OpenViewer
 git clone https://github.com/microsoft/vcpkg.git
 cd vcpkg
 ./vcpkg-bootstrap.sh
-./vcpkg install openimageio:x64-linux
+./vcpkg install openimageio[ffmpeg,libraw]:x64-linux
 ./vcpkg install opencolorio:x64-linux
 ./vcpkg install glew:x64-linux
 ```
@@ -50,7 +49,7 @@ cd OpenViewer
 git clone https://github.com/microsoft/vcpkg.git
 cd vcpkg
 vcpkg-bootstrap.bat
-vcpkg install openimageio:x64-windows
+vcpkg install openimageio[ffmpeg,libraw]:x64-windows
 vcpkg install opencolorio:x64-windows
 vcpkg install glew:x64-windows
 ```
