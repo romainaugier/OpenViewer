@@ -20,17 +20,17 @@
 
 namespace Utils
 {
-    OPENVIEWER_FORCEINLINE bool EndsWith(const std::string_view& str, const std::string_view& suffix) noexcept
+    OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE bool EndsWith(const std::string_view& str, const std::string_view& suffix) noexcept
     {
         return str.size() >= suffix.size() && 0 == str.compare(str.size()-suffix.size(), suffix.size(), suffix);
     }
 
-    OPENVIEWER_FORCEINLINE bool StartsWith(const std::string_view& str, const std::string_view& prefix) noexcept
+    OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE bool StartsWith(const std::string_view& str, const std::string_view& prefix) noexcept
     {
         return str.size() >= prefix.size() && 0 == str.compare(0, prefix.size(), prefix);
     }
 
-    OPENVIEWER_FORCEINLINE const char* RemoveSpaces(char* s) noexcept
+    OPENVIEWER_STATIC_FUNC const char* RemoveSpaces(char* s) noexcept
     {
         std::string tmp = s;
 
@@ -42,24 +42,24 @@ namespace Utils
         return tmp.c_str();
     }
 
-    OPENVIEWER_FORCEINLINE void Replace(std::string& string, const std::string& substr, const std::string& replace) noexcept
+    OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE void Replace(std::string& string, const std::string& substr, const std::string& replace) noexcept
     {
         // std::replace(string.begin(), string.end(), substr.c_str(), replace.c_str());
     }
 
-    OPENVIEWER_FORCEINLINE void CleanOSPath(std::string& string) noexcept
+    OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE void CleanOSPath(std::string& string) noexcept
     {
         std::replace(string.begin(), string.end(), '\\', '/');
     }
 
-    OPENVIEWER_FORCEINLINE std::string CleanOSPath(const std::string& string) noexcept
+    OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE std::string CleanOSPath(const std::string& string) noexcept
     {
         std::string newString = string;
         CleanOSPath(newString);
         return newString;
     }
 
-    OPENVIEWER_FORCEINLINE void Split(std::vector<std::string>& outputStrings, const std::string& inputString, char delimiter) noexcept
+    OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE void Split(std::vector<std::string>& outputStrings, const std::string& inputString, char delimiter) noexcept
     {
         std::string tmpString;
 

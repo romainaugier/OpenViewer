@@ -188,7 +188,7 @@ inline static void StaticDebugConsoleLog(const char* fmt, ...) noexcept
 inline static void StaticErrorConsoleLog(const char* fmt, ...) noexcept
 {
 #ifdef _WIN32
-    HANDLE winConsole;
+    HANDLE winConsole = GetStdHandle(STD_OUTPUT_HANDLE);;
     SetConsoleTextAttribute(winConsole, FOREGROUND_RED);
 #endif
     char currentTimeBuffer[1024];
