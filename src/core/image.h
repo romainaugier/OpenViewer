@@ -68,9 +68,12 @@ namespace Core
 		{
 			this->m_Path = fp;
 			
-			auto in = OIIO::ImageInput::open(fp);
+			// auto in = OIIO::ImageInput::open(fp);
+			auto buf = OIIO::ImageBuf(fp);
+			const OIIO::ImageSpec& spec = buf.spec();
+			
 			std::cout << OIIO::geterror() << "\n";
-			const OIIO::ImageSpec& spec = in->spec();
+			// const OIIO::ImageSpec& spec = in->spec();
 
 			if(Utils::EndsWith(fp, ".exr"))
 			{
@@ -115,19 +118,22 @@ namespace Core
 			else if(Utils::EndsWith(fp, ".mp4"))
 			{
 				this->m_Type = FileType_Mp4;
-				int subImages;
+				this->m_Xres = spec.width;
+				this->m_Yres = spec.height;
+				this->m_Channels = spec.nchannels;
+				int subImages = buf.nsubimages();
+				printf("Mp4 subimages : %d\n", subImages);
 				if (spec.getattribute("oiio::subimages", OIIO::TypeDesc::INT, &subImages))
 				{
-					printf("Mp4 subimages : %d\n", subImages);
 				}
 			}
 			else if(Utils::EndsWith(fp, ".mov"))
 			{
 				this->m_Type = FileType_Mov;
-				int subImages;
+				int subImages = buf.nsubimages();
+				printf("Mov subimages : %d\n", subImages);
 				if (spec.getattribute("oiio::subimages", OIIO::TypeDesc::INT, &subImages))
 				{
-					printf("Mov subimages : %d\n", subImages);
 				}
 			}
 			else if(Utils::EndsWith(fp, ".hdr"))
@@ -170,7 +176,7 @@ namespace Core
 				this->m_Stride = this->m_Size * Size::Size16;
 			}
 
-			in->close();
+			// in->close();
 		}
 
 		void Release() noexcept;

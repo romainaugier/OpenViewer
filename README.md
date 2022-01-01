@@ -29,8 +29,7 @@ You first need to install vcpkg and OpenViewer's dependencies. Depending on your
 ### Linux
 ```shell
 # Needed to build glew and link glu with the app
-sudo apt-get install libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev
-sudo apt-get install libxmu-dev libxi-dev libgl-dev
+sudo apt-get install libxmu-dev libxi-dev libgl-dev libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev libxrandr-dev libxxf86vm-dev
 
 # Required to build ffmpeg with vcpkg
 sudo apt-get install nasm
