@@ -26,13 +26,11 @@ jobs:
 
     - run: sudo apt-get install nasm
 
+    - run: sudo apt-get install libxmu-dev libxi-dev libgl-dev libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev libxrandr-dev libxxf86vm-dev
+    
     - run: $VCPKG_ROOT/vcpkg install openimageio[ffmpeg,libraw]:x64-linux --recurse
 
     - run: $VCPKG_ROOT/vcpkg install opencolorio:x64-linux
-
-    - run: sudo apt-get install libxmu-dev libxi-dev libgl-dev
-
-    - run: sudo apt-get install libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev
 
     - run: $VCPKG_ROOT/vcpkg install glew:x64-linux
 
