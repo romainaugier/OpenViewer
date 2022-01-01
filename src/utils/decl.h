@@ -12,7 +12,7 @@
 #define OPENVIEWER_VECTORCALL __vectorcall
 #elif __GNUC__
 #define OPENVIEWER_GCC 1
-#define OPENVIEWER_FORCEINLINE __attribute__((always_inline))
+#define OPENVIEWER_FORCEINLINE __attribute__((always_inline)) inline
 #define OPENVIEWER_VECTORCALL
 #endif
 
