@@ -59,7 +59,7 @@ elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 	set(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE} -O3")
 	add_compile_options(-fopenmp -mavx2 -mveclibabi=svml -mf16c -fpermissive -Wall)
-	add_link_options(-lstdc++fs -fopenmp -llcms2)
+	add_link_options(-lstdc++fs -fopenmp)
 else()
 	message(FATAL_ERROR "Your compiler is not supported yet, CMake will exit.")
 endif()
@@ -67,22 +67,19 @@ endif()
 # OpenGL
 include_directories(dependencies/glfw/include)
 
-find_package(GLEW REQUIRED)
+# Glew
+find_package(GLEW CONFIG REQUIRED)
+
+# GLFW
+find_package(glfw3 CONFIG REQUIRED)
 
 # OpenColorIO
 # There is an issue with OCIO V2 and vcpkg, so we will keep on using the shipped library instead
-# find_package(OpenColorIO REQUIRED)
+#find_package(OpenColorIO REQUIRED)
 include_directories(dependencies/ociov2/include)
 
 # OpenImageIO
-find_package(OpenImageIO REQUIRED)
-
-# Correct a bug with libraw when linking with gcc
-if(UNIX)
-	find_package(lcms2 REQUIRED)
-	target_link_libraries(${LibRaw_r_LIBRARIES} lcms2::lcms2)   
-	target_link_libraries(${LibRaw_LIBRARIES} lcms2::lcms2)   
-endif()
+find_package(OpenImageIO CONFIG REQUIRED)
 
 # Hack to get the vcpkg include directory working
 find_path(VCPKG_INCLUDE_DIR zlib.h)
@@ -91,15 +88,11 @@ include_directories(${VCPKG_INCLUDE_DIR})
 message(STATUS "Vcpkg include directory : ${VCPKG_INCLUDE_DIR}")
 
 # OpenEXR
-find_package(IlmBase REQUIRED)
-find_package(OpenEXR REQUIRED)
+find_package(IlmBase CONFIG REQUIRED)
+find_package(OpenEXR CONFIG REQUIRED)
 
 # imf headers have some <> include that requires this OpenEXR include to be found
-if(WIN32)
-	include_directories(${OPENIMAGEIO_INCLUDES}/OpenEXR)
-elseif(UNIX)
-	include_directories(${VCPKG_INCLUDE_DIR}/OpenEXR)
-endif()
+include_directories(${VCPKG_INCLUDE_DIR}/OpenEXR)
 
 include_directories(src)
 include_directories(imgui)

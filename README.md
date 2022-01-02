@@ -16,7 +16,7 @@ If you or your studio are interested in implementing special features/need help 
 
 ## Dependencies
 
-OpenViewer uses [OpenImageIO](https://github.com/OpenImageIO/oiio), [OpenEXR](https://github.com/AcademySoftwareFoundation/openexr) and [Wuffs](https://github.com/google/wuffs) for image reading, [OpenColorIO](https://github.com/AcademySoftwareFoundation/OpenColorIO) to manage colorspaces, [Dear ImGui](https://github.com/ocornut/imgui) for the interface and [Glew](https://github.com/nigels-com/glew) to load OpenGL functions.
+OpenViewer uses [OpenImageIO](https://github.com/OpenImageIO/oiio), [OpenEXR](https://github.com/AcademySoftwareFoundation/openexr) and [Wuffs](https://github.com/google/wuffs) for image reading, [OpenColorIO](https://github.com/AcademySoftwareFoundation/OpenColorIO) to manage colorspaces, [Dear ImGui](https://github.com/ocornut/imgui) for the interface, [Glew](https://github.com/nigels-com/glew) to load OpenGL functions and [GLFW](https://www.glfw.org/) to create the window.
 
 ## Installation
 
@@ -42,6 +42,7 @@ cd vcpkg
 ./vcpkg install openimageio[ffmpeg,libraw]:x64-linux --recurse
 ./vcpkg install opencolorio:x64-linux
 ./vcpkg install glew:x64-linux
+./vcpkg install glfw3:x64-linux
 ```
 
 ### Windows
@@ -54,6 +55,7 @@ vcpkg-bootstrap.bat
 vcpkg install openimageio[ffmpeg,libraw]:x64-windows --recurse
 vcpkg install opencolorio:x64-windows
 vcpkg install glew:x64-windows
+vcpkg install glfw3:x64-windows
 ```
 
 

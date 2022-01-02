@@ -24,15 +24,23 @@ jobs:
       with:
         vcpkgGitCommitId: 1085a57da0725c19e19586025438e8c16f34c890
 
-    - run: sudo apt-get install nasm
+    - name: Install Nasm
+      run: sudo apt-get install nasm
 
-    - run: sudo apt-get install libxmu-dev libxi-dev libgl-dev libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev libxrandr-dev libxxf86vm-dev
+    - name: Install GL dependencies
+      run: sudo apt-get install libxmu-dev libxi-dev libgl-dev libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev libxrandr-dev libxxf86vm-dev
     
-    - run: $VCPKG_ROOT/vcpkg install openimageio[ffmpeg,libraw]:x64-linux --recurse
+    - name: Install OpenImageIO
+      run: $VCPKG_ROOT/vcpkg install openimageio[ffmpeg,libraw]:x64-linux --recurse
 
-    - run: $VCPKG_ROOT/vcpkg install opencolorio:x64-linux
+    - name: Install OpenColorIO
+      run: $VCPKG_ROOT/vcpkg install opencolorio:x64-linux
 
-    - run: $VCPKG_ROOT/vcpkg install glew:x64-linux
+    - name: Install Glew
+      run: $VCPKG_ROOT/vcpkg install glew:x64-linux
+
+    - name: Install GLFW
+      run: ${{env.VCPKG_ROOT}}/vcpkg.exe install glfw3:x64-linux
 
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
