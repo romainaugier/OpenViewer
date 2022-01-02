@@ -355,15 +355,18 @@ namespace Interface
 								       this->m_Height);
 
 			static ImVec2 scrolling;
+			static ImVec2 zoomedPos;
 			static float zoom = 1.0f;
 			const ImVec4 tint(1.0f, 1.0f, 1.0f, 1.0f);
 			const ImVec4 borderColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 			const bool isHovered = ImGui::IsWindowHovered();
+			const bool isFocused = ImGui::IsWindowFocused();
+			const bool isActive = isHovered && isFocused;
 
 			ImGuiIO& io = ImGui::GetIO();
 
-			if (isHovered && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+			if (isActive && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
 			{
 				scrolling.x += io.MouseDelta.x;
 				scrolling.y += io.MouseDelta.y;
@@ -371,18 +374,24 @@ namespace Interface
 
 			const float mouseWheel = io.MouseWheel;
 
-			if (isHovered && mouseWheel != 0.0f)
+			if (isActive && mouseWheel != 0.0f)
 			{
 				zoom += mouseWheel * 0.1f;
+				zoomedPos = io.MousePos;
 			}
 
 			zoom = zoom < 0.01f ? 0.01f : zoom;
 
-			const ImVec2 imagePos = (ImGui::GetWindowSize() - size * zoom) * 0.5f + scrolling;
+			const ImVec2 zoomedSize = size * zoom;
+			const ImVec2 imagePos = (ImGui::GetWindowSize() - zoomedSize) * 0.5f + scrolling;
+			const ImVec2 dImagePos = (zoomedPos - imagePos) * (zoom - 1.0f); 
 
-			ImGui::SetCursorPos(imagePos);
+			this->m_Logger->Log(LogLevel_Debug, "[DISPLAY] : Image Pos X = %f, Y = %f", imagePos.x, imagePos.y);
+			this->m_Logger->Log(LogLevel_Debug, "[DISPLAY] : Zoomed Pos X = %f, Y = %f", zoomedPos.x, zoomedPos.y);
+
+			ImGui::SetCursorPos(imagePos - dImagePos);
 			const ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
-			ImGui::Image((void*)(intptr_t)this->m_TransformedTexture, size * zoom, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), tint, borderColor);
+			ImGui::Image((void*)(intptr_t)this->m_TransformedTexture, zoomedSize, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), tint, borderColor);
 
 			if (ImGui::IsItemHovered())
 			{
