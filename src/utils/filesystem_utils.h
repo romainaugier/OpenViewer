@@ -56,7 +56,7 @@ namespace Utils
             {
                 const std::smatch itMatch = *it;
                 const std::string itMatchStr = itMatch.str();
-                std::regex itMatchPatternRegex(itMatchStr);
+                const std::regex itMatchPatternRegex(itMatchStr);
 
                 std::string itMatchSub = itFileStem;
                 itMatchSub = std::regex_replace(itMatchSub, itMatchPatternRegex, "#");
@@ -65,7 +65,7 @@ namespace Utils
                 {
                     const std::smatch baseMatch = *base;
                     const std::string baseMatchStr = baseMatch.str();
-                    std::regex baseMatchPatternRegex(baseMatchStr);
+                    const std::regex baseMatchPatternRegex(baseMatchStr);
 
                     std::string baseMatchSub = baseFileStem;
                     baseMatchSub = std::regex_replace(baseMatchSub, baseMatchPatternRegex, "#");
