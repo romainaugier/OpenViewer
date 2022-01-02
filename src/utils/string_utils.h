@@ -12,6 +12,8 @@
 #include <stdarg.h>
 #include "decl.h"
 
+#include "OpenImageIO/imageio.h"
+
 #ifdef OPENVIEWER_MSVC
 #include <string_view>
 #elif OPENVIEWER_GCC
@@ -42,9 +44,14 @@ namespace Utils
         return tmp.c_str();
     }
 
+    OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE void Replace(std::string& string, char substr, char replace) noexcept
+    {
+        std::replace(string.begin(), string.end(), substr, replace);
+    }
+    
     OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE void Replace(std::string& string, const std::string& substr, const std::string& replace) noexcept
     {
-        // std::replace(string.begin(), string.end(), substr.c_str(), replace.c_str());
+        // std::replace(string.begin(), string.end(), substr, replace);
     }
 
     OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE void CleanOSPath(std::string& string) noexcept
@@ -59,6 +66,23 @@ namespace Utils
         return newString;
     }
 
+    OPENVIEWER_STATIC_FUNC void Format(char* buffer, const char* fmt, ...) noexcept
+    {
+        va_list args;
+        va_start(args, fmt);
+        vsnprintf(buffer, 8192, fmt, args);
+        va_end(args);
+    }
+
+    OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE std::string GetOIIOVersionStr() noexcept
+    {
+        char versionBuffer[32];
+        Format(versionBuffer, "%d", OIIO::openimageio_version());
+        std::string versionAsStr(versionBuffer);
+        Replace(versionAsStr, '0', '.');
+        return versionAsStr;
+    }
+
     OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE void Split(std::vector<std::string>& outputStrings, const std::string& inputString, char delimiter) noexcept
     {
         std::string tmpString;
@@ -69,13 +93,5 @@ namespace Utils
         {
             outputStrings.push_back(tmpString);
         }
-    }
-
-    OPENVIEWER_STATIC_FUNC void Format(char* buffer, const char* fmt, ...) noexcept
-    {
-        va_list args;
-        va_start(args, fmt);
-        vsnprintf(buffer, 8192, fmt, args);
-        va_end(args);
     }
 } // End namespace utils

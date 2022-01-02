@@ -17,6 +17,7 @@ namespace Core
 	void Loader::Initialize(const bool useCache, const size_t cacheSize) noexcept
 	{
 		this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : Initializing loader");
+		this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loader OIIO version : %s", Utils::GetOIIOVersionStr().c_str());
 
 		this->m_HasBeenInitialized = true;
 

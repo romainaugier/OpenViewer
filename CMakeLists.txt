@@ -77,8 +77,12 @@ include_directories(dependencies/ociov2/include)
 # OpenImageIO
 find_package(OpenImageIO REQUIRED)
 
-# FFMPEG
-find_package(FFMPEG REQUIRED)
+# Correct a bug with libraw when linking with gcc
+if(UNIX)
+	find_package(lcms2 REQUIRED)
+	target_link_libraries(${LibRaw_r_LIBRARIES} lcms2::lcms2)   
+	target_link_libraries(${LibRaw_LIBRARIES} lcms2::lcms2)   
+endif()
 
 # Hack to get the vcpkg include directory working
 find_path(VCPKG_INCLUDE_DIR zlib.h)

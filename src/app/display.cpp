@@ -342,9 +342,7 @@ namespace Interface
 	// Main function that contains the window drawing 
 	void Display::Draw(uint32_t frameIndex) noexcept
 	{
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar |
-										ImGuiWindowFlags_NoScrollbar |
-										ImGuiWindowFlags_NoCollapse;
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar;
 
 		bool p_open = true;
 

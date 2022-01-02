@@ -202,7 +202,7 @@ inline static void StaticErrorConsoleLog(const char* fmt, ...) noexcept
     va_start(args, fmt);
     vsnprintf(logBuffer, 2048, fmt, args);
     va_end(args);
-    printf("[ERROR] %s : %s", currentTimeBuffer, logBuffer);
+    printf("[ERROR] %s : %s\n", currentTimeBuffer, logBuffer);
 #ifdef _WIN32
     SetConsoleTextAttribute(winConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 #endif

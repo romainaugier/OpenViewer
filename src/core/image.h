@@ -5,10 +5,11 @@
 #pragma once
 
 #include "stdint.h"
+#include <filesystem>
 
 #include "GL/glew.h"
 
-#include "OpenImageIO/imagebuf.h"
+#include "OpenImageIO/imageio.h"
 #include "OpenEXR/ImfRgbaFile.h"
 
 #include "imgui.h"
@@ -68,12 +69,16 @@ namespace Core
 		{
 			this->m_Path = fp;
 			
-			// auto in = OIIO::ImageInput::open(fp);
-			auto buf = OIIO::ImageBuf(fp);
-			const OIIO::ImageSpec& spec = buf.spec();
+			auto in = OIIO::ImageInput::open(fp);
 			
-			std::cout << OIIO::geterror() << "\n";
-			// const OIIO::ImageSpec& spec = in->spec();
+			if (!in)
+			{
+				StaticErrorConsoleLog(OIIO::geterror().c_str());
+				return;
+			}
+
+			const OIIO::ImageSpec& spec = in->spec();
+
 
 			if(Utils::EndsWith(fp, ".exr"))
 			{
@@ -121,20 +126,13 @@ namespace Core
 				this->m_Xres = spec.width;
 				this->m_Yres = spec.height;
 				this->m_Channels = spec.nchannels;
-				int subImages = buf.nsubimages();
-				printf("Mp4 subimages : %d\n", subImages);
-				if (spec.getattribute("oiio::subimages", OIIO::TypeDesc::INT, &subImages))
-				{
-				}
 			}
 			else if(Utils::EndsWith(fp, ".mov"))
 			{
 				this->m_Type = FileType_Mov;
-				int subImages = buf.nsubimages();
-				printf("Mov subimages : %d\n", subImages);
-				if (spec.getattribute("oiio::subimages", OIIO::TypeDesc::INT, &subImages))
-				{
-				}
+				this->m_Xres = spec.width;
+				this->m_Yres = spec.height;
+				this->m_Channels = spec.nchannels;
 			}
 			else if(Utils::EndsWith(fp, ".hdr"))
 			{

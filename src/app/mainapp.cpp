@@ -14,6 +14,8 @@ int application(int argc, char** argv)
     logger.SetLevel(LogLevel_Diagnostic);
     logger.Log(LogLevel_Diagnostic, "[MAIN] : Initializing Logger");
     
+    Utils::GetFileSequenceFromFile("C:/Users/augie/Documents/test/seq/file_001_0500.00100.exr");
+
     // Profiler
     Profiler profiler;
     
