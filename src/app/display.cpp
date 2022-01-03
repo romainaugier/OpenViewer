@@ -342,7 +342,7 @@ namespace Interface
 	// Main function that contains the window drawing 
 	void Display::Draw(uint32_t frameIndex) noexcept
 	{
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar;
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 
 		bool p_open = true;
 
@@ -355,14 +355,13 @@ namespace Interface
 								       this->m_Height);
 
 			static ImVec2 scrolling;
-			static ImVec2 zoomedPos;
 			static float zoom = 1.0f;
 			const ImVec4 tint(1.0f, 1.0f, 1.0f, 1.0f);
 			const ImVec4 borderColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 			const bool isHovered = ImGui::IsWindowHovered();
 			const bool isFocused = ImGui::IsWindowFocused();
-			const bool isActive = isHovered && isFocused;
+			const bool isActive = isFocused;
 
 			ImGuiIO& io = ImGui::GetIO();
 
@@ -370,27 +369,34 @@ namespace Interface
 			{
 				scrolling.x += io.MouseDelta.x;
 				scrolling.y += io.MouseDelta.y;
+
+				this->m_DisplayPos += io.MouseDelta;
 			}
 
 			const float mouseWheel = io.MouseWheel;
+			bool hasZoomed = false;
+			
 
 			if (isActive && mouseWheel != 0.0f)
 			{
-				zoom += mouseWheel * 0.1f;
-				zoomedPos = io.MousePos;
+				ImVec2 mouseLocal = (ImGui::GetMousePos() - this->m_DisplayPos) / zoom;
+				
+				if (mouseWheel > 0.0f) zoom *= 1.1f;
+				else zoom /= 1.1f;
+
+				zoom = zoom < 0.01f ? 0.01f : zoom;
+				
+				mouseLocal = this->m_DisplayPos + mouseLocal * zoom;
+				
+				this->m_DisplayPos += ImGui::GetMousePos() - mouseLocal;
 			}
 
-			zoom = zoom < 0.01f ? 0.01f : zoom;
-
 			const ImVec2 zoomedSize = size * zoom;
-			const ImVec2 imagePos = (ImGui::GetWindowSize() - zoomedSize) * 0.5f + scrolling;
-			const ImVec2 dImagePos = (zoomedPos - imagePos) * (zoom - 1.0f); 
 
-			this->m_Logger->Log(LogLevel_Debug, "[DISPLAY] : Image Pos X = %f, Y = %f", imagePos.x, imagePos.y);
-			this->m_Logger->Log(LogLevel_Debug, "[DISPLAY] : Zoomed Pos X = %f, Y = %f", zoomedPos.x, zoomedPos.y);
+			ImGui::SetCursorScreenPos(this->m_DisplayPos);
 
-			ImGui::SetCursorPos(imagePos - dImagePos);
 			const ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
+
 			ImGui::Image((void*)(intptr_t)this->m_TransformedTexture, zoomedSize, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), tint, borderColor);
 
 			if (ImGui::IsItemHovered())

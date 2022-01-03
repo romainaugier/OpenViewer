@@ -33,7 +33,9 @@ namespace Interface
 		
 		Core::Loader* m_Loader;
 
-		ImVec2 m_HoverCoordinates = ImVec2(0, 0);
+		ImVec2 m_HoverCoordinates = ImVec2(0.0f, 0.0f);
+		ImVec2 m_DisplayPos = ImVec2(0.0f, 0.0f);
+		ImVec2 m_OldMousePos = ImVec2(0.0f, 0.0f);
 
 		GLuint m_RawTexture;
 		GLuint m_TransformedTexture;
