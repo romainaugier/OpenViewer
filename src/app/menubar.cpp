@@ -25,7 +25,7 @@ namespace Interface
 					if (ImGui::MenuItem("Open Single File", "CTRL + O"))
 					{
 						ifd::FileDialog::Instance().Open("SingleFileOpenDialog", "Select an image file", "Image File (*.exr,*.png;*.jpg;*.jpeg;*.bmp;*.tga){.exr,.png,.jpg,.jpeg,.bmp,.tga},.*");
-						this->m_HasOpenedIFD = 1;
+						this->m_HasOpenedIFD = true;
 					}
 
 					if (ImGui::MenuItem("Open Folder", "CTRL + K"))
