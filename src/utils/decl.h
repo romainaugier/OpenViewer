@@ -29,7 +29,7 @@
 #endif
 
 #ifndef OPENVIEWER_PLATFORM_STR
-#ifdef _WIN32 || _WIN64
+#ifdef _WIN32
 #ifdef OPENVIEWER_X64
 #define OPENVIEWER_PLATFORM_STR "WIN64"
 #else
