@@ -10,6 +10,7 @@
 #include "image.h"
 #include "utils/memory/alloc.h"
 #include "utils/logger.h"
+#include "tsl/robin_map.h"
 
 namespace Core
 {
@@ -42,7 +43,7 @@ namespace Core
             m_Size(size) {}
     };
 
-    using ImageCacheMap = std::unordered_map<uint32_t, ImageCacheItem>;
+    using ImageCacheMap = tsl::robin_map<uint32_t, ImageCacheItem>;
 
     struct ImageCache
     {

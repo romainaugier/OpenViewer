@@ -4,14 +4,14 @@
 
 #pragma once
 
-#include <unordered_map>
+#include "tsl/robin_map.h"
 
 #include "GLFW/glfw3.h"
 
 namespace Interface
 {
     using ShortcutCallback = void(*)(void*);
-    using Map = std::unordered_map<std::string, ShortcutCallback>;
+    using Map = tsl::robin_map<std::string, ShortcutCallback>;
 
     struct Shortcuts
     {

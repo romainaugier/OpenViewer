@@ -8,7 +8,7 @@
 #include <string>
 #include <filesystem>
 #include <cstring>
-#include <unordered_map>
+#include "tsl/robin_map.h"
 
 #include "utils/string_utils.h"
 #include "utils/logger.h"
@@ -25,7 +25,7 @@ CLI Flags
 
 namespace Core
 {
-	using Flags = std::unordered_map<std::string, bool>;
+	using Flags = tsl::robin_map<std::string, bool>;
 
 	struct CliParser
 	{

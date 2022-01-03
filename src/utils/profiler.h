@@ -5,8 +5,8 @@
 #pragma once
 
 #include <chrono>
-#include <unordered_map>
 #include <string>
+#include "tsl/robin_map.h"
 
 #include "decl.h"
 
@@ -17,8 +17,8 @@
 
 struct Profiler
 {
-	std::unordered_map<std::string, float> times;
-	std::unordered_map<std::string, float> mem_usage;
+	tsl::robin_map<std::string, float> times;
+	tsl::robin_map<std::string, float> mem_usage;
 
 	OPENVIEWER_FORCEINLINE void MemUsage(std::string name, float memory) noexcept
 	{
