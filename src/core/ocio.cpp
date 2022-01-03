@@ -45,8 +45,7 @@ namespace Core
             }
             catch(const std::exception& e)
             {
-                std::cerr << e.what() << '\n';
-                logger->Log(LogLevel_Warning, "[OCIO] : %s. Using default shipped configuration", e.what());
+                logger->Log(LogLevel_Warning, "[OCIO] : %s Using default shipped configuration", e.what());
 
                 config = OCIO::Config::CreateFromFile(default_config_path);
                 config_path = default_config_path;
@@ -63,7 +62,7 @@ namespace Core
             catch(const std::exception& e)
             {
                 logger->Log(LogLevel_Error, "[OCIO] : %s", e.what());
-                exit(1);
+                std::exit(EXIT_FAILURE);
             }
         }
 

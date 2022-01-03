@@ -22,19 +22,19 @@ namespace Interface
 			{
 				if (ImGui::BeginMenu("File"))
 				{
-					if (ImGui::MenuItem("Open Single File"))
+					if (ImGui::MenuItem("Open Single File", "CTRL + O"))
 					{
 						ifd::FileDialog::Instance().Open("SingleFileOpenDialog", "Select an image file", "Image File (*.exr,*.png;*.jpg;*.jpeg;*.bmp;*.tga){.exr,.png,.jpg,.jpeg,.bmp,.tga},.*");
 						this->m_HasOpenedIFD = 1;
 					}
 
-					if (ImGui::MenuItem("Open Folder"))
+					if (ImGui::MenuItem("Open Folder", "CTRL + K"))
 					{
 						ifd::FileDialog::Instance().Open("FolderOpenDialog", "Open a directory", "");
 						this->m_HasOpenedIFD = true;
 					}
 
-					if (ImGui::MenuItem("Media Explorer"))
+					if (ImGui::MenuItem("Media Explorer", "M"))
 					{
 						app.showMediaExplorerWindow = true;
 					}

@@ -247,6 +247,7 @@ namespace Core
 
         this->m_HasBeenInitialized = false;
 
-        this->m_Logger->Log(LogLevel_Diagnostic, "[CACHE] : Releasing cache");
+        // Logger is null if cache has not been initialized
+        if (this->m_Logger != nullptr) this->m_Logger->Log(LogLevel_Diagnostic, "[CACHE] : Releasing cache");
     }
 } // end namespace Core

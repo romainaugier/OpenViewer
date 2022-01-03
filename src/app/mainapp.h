@@ -17,12 +17,6 @@
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
-
-static void glfw_error_callback(int error, const char* description)
-{
-    fprintf(stderr, "Glfw Error %d: %s\n", error, description);
-}
-
 #include <thread>
 
 #include "menubar.h"
@@ -32,3 +26,22 @@ static void glfw_error_callback(int error, const char* description)
 #include "core/parser.h"
 
 int application(int argc, char** argv);
+
+// Glfw callbacks
+
+OPENVIEWER_STATIC_FUNC void GLFWErrorCallback(int error, const char* description)
+{
+    StaticErrorConsoleLog("[GLFW] : Code : %d : %s", error, description);
+}
+
+OPENVIEWER_STATIC_FUNC void GLFWDropEventCallback(GLFWwindow* window, int count, const char** paths)
+{
+    Interface::Application* app = static_cast<Interface::Application*>(glfwGetWindowUserPointer(window));
+
+    app->m_Logger->Log(LogLevel_Debug, "[MAIN] : Drop event detected");
+
+    for(uint32_t i = 0; i < count; i++)
+    {
+        app->m_Loader->Load(paths[i]);
+    }
+}

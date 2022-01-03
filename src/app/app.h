@@ -4,14 +4,14 @@
 
 #pragma once
 
-#include <unordered_map>
+#include "tsl/robin_map.h"
 
 #include "utils/logger.h"
 #include "display.h"
 
 namespace Interface
 {
-    using Displays = std::unordered_map<uint8_t, Display*>;
+    using Displays = tsl::robin_map<uint8_t, Display*>;
 
     struct Application
     {

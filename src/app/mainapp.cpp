@@ -30,7 +30,7 @@ int application(int argc, char** argv)
     Interface::Application app(&logger, &loader, &ocio);
 
     // Setup GLFW
-    glfwSetErrorCallback(glfw_error_callback);
+    glfwSetErrorCallback(GLFWErrorCallback);
 
     if (!glfwInit())
     {
@@ -49,6 +49,9 @@ int application(int argc, char** argv)
         logger.Log(LogLevel_Error, "[GLFW] : Failed to create window. Exiting application");
         std::exit(EXIT_FAILURE);
     }
+
+    glfwSetWindowUserPointer(window, static_cast<void*>(&app));
+    glfwSetDropCallback(window, GLFWDropEventCallback);
 
     glfwMakeContextCurrent(window);
     // Enable vsync

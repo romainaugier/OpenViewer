@@ -308,15 +308,15 @@ namespace Core
 
 	void Loader::Release() noexcept
 	{
-		// Release cache
-		this->m_Cache->Release();
-		delete this->m_Cache;
-
 		// Stop cache loader if active
 		this->StopCacheLoader();
 
 		// Join left workers
 		this->JoinWorkers();
+		
+		// Release cache
+		this->m_Cache->Release();
+		delete this->m_Cache;
 
 		// Clear the medias
 		for(auto& media : this->m_Medias) 
