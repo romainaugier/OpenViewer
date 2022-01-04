@@ -29,11 +29,11 @@ namespace Interface
 
 		// Generate the render buffer object
 		glGenRenderbuffers(1, &this->m_RBO);
-		BindRBO();
+		this->BindRBO();
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, this->m_Width, this->m_Height);
 
 		// Attach the texture and the frame buffer
-		BindFBO();
+		this->BindFBO();
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, this->m_TransformedTexture, 0);
 		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, this->m_RBO);
 
@@ -43,8 +43,8 @@ namespace Interface
 			this->m_Logger->Log(LogLevel_Error, "[DISPLAY] : OPENGL Framebuffer is not complete.");
 		}
 
-		UnbindFBO();
-		UnbindRBO();
+		this->UnbindFBO();
+		this->UnbindRBO();
 	}
 
 	// Binds the display frame buffer object
