@@ -13,9 +13,4 @@ namespace Interface
         if (action == GLFW_PRESS) m_Pressed[key] = true;
         else if (action == GLFW_RELEASE) m_Pressed[key] = false;
     }
-    
-    void Shortcuts::Handle() noexcept
-    {
-        
-    }
 }

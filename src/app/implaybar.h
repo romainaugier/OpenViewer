@@ -30,6 +30,12 @@ namespace Interface
 	{
 		std::vector<uint8_t> m_CachedIndices;
 
+		std::thread m_PlayerThread;
+
+		std::mutex m_Mutex;
+
+		std::condition_variable m_CV;
+
 		Core::Loader* m_Loader = nullptr;
 
 		ImVec2 m_Range;
@@ -41,7 +47,10 @@ namespace Interface
 		uint8_t m_FrameRate = 24;
 		
 		bool m_Play = false;
+		bool m_Pause = false;
 		bool m_Update = true;
+		bool m_Release = false;
+		bool m_IsDragging = false;
 
 		ImPlaybar(Core::Loader* loader, ImVec2 range) : 
 			m_Loader(loader),
@@ -49,12 +58,33 @@ namespace Interface
 		{
 			this->m_CachedIndices.resize(range.y);
 			for (uint32_t i = 0; i < range.y; i++) this->m_CachedIndices[i] = false;
+
+			this->m_PlayerThread = std::thread(&ImPlaybar::BackgroundTimeUpdate, this);
 		}
 
 		void Play() noexcept;
+
 		void Pause() noexcept;
+
+		void GoPreviousFrame() noexcept;
+
+		void GoNextFrame() noexcept;
+
+		void GoFirstFrame() noexcept;
+
+		void GoLastFrame() noexcept;
+
+		bool IsPlaying() const noexcept { return this->m_Play; }
+
 		void Update(Profiler* profiler) noexcept;
+
 		void SetRange(const ImVec2& newRange) noexcept;
+
+		void BackgroundTimeUpdate() noexcept;
+
+		void NeedUpdate(const bool need = true) noexcept;
+
+		void Release() noexcept;
 
 		void Draw() noexcept;
 	};

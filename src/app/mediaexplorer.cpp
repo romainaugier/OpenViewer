@@ -24,13 +24,13 @@ namespace Interface
                 {
                     const std::string mediaPath = this->m_Loader->m_Medias[i].m_Images[0].m_Path;
 
-                    const bool isSequence = this->m_Loader->m_Medias[i].m_Range.y > 0;
+                    const bool isSequence = this->m_Loader->m_Medias[i].m_Range.y > 1;
 
                     char selectableLabel[8192];
                     
-                    if (isSequence) Utils::Format(selectableLabel, "%s (sequence [%d images])", mediaPath.c_str(), 
-                                                                                            static_cast<uint32_t>(this->m_Loader->m_Medias[i].Size()));
-                    else Utils::Format(selectableLabel, "%s (single image)", mediaPath.c_str());
+                    if (isSequence) Utils::Str::Format(selectableLabel, "%s (%d images)", mediaPath.c_str(), 
+                                                                                          static_cast<uint32_t>(this->m_Loader->m_Medias[i].Size()));
+                    else Utils::Str::Format(selectableLabel, "%s (1 image)", mediaPath.c_str());
 
                     ImGui::Selectable(selectableLabel, selected);
 

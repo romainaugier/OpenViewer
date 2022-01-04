@@ -247,7 +247,7 @@ namespace Interface
 		auto getEnd = this->m_Profiler->End();
 		this->m_Profiler->Time("Display Image Get Time", getStart, getEnd);
 
-		if (currentImage != nullptr)
+		if (currentImage != nullptr && currentImage->m_CacheIndex > 0)
 		{
 			if (currentImage->m_Xres != this->m_Width || currentImage->m_Yres != this->m_Height)
 			{
@@ -333,9 +333,7 @@ namespace Interface
 		}
 		else
 		{
-			this->m_Logger->Log(LogLevel_Warning, "[DISPLAY] : Internal error, invalid image. Skipping to next frame.");
-
-			return;
+			this->m_Logger->Log(LogLevel_Debug, "[DISPLAY] : Skipping to next frame.");
 		}
 	}
 
@@ -347,7 +345,7 @@ namespace Interface
 		bool p_open = true;
 
 		char displayName[64];
-		Utils::Format(displayName, "Display %d", this->m_DisplayID);
+		Utils::Str::Format(displayName, "Display %d", this->m_DisplayID);
 
 		ImGui::Begin(displayName, &p_open, window_flags);
 		{

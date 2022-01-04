@@ -6,9 +6,61 @@
 
 namespace Interface
 {
-	void ImPlaybar::Play() noexcept { this->m_Play = true; }
+	void ImPlaybar::Play() noexcept 
+	{ 
+		std::unique_lock<std::mutex> playLock(this->m_Mutex);
 
-	void ImPlaybar::Pause() noexcept { this->m_Play = false; }
+		this->m_Play = true; 	
+		this->m_Pause = false;
+
+		playLock.unlock();
+
+		this->m_CV.notify_all();
+	}
+
+	void ImPlaybar::Pause() noexcept 
+	{ 
+		std::unique_lock<std::mutex> playLock(this->m_Mutex);
+
+		this->m_Play = false; 
+		this->m_Pause = true;	
+
+		playLock.unlock();
+
+		this->m_CV.notify_all();
+	}
+
+	void ImPlaybar::GoPreviousFrame() noexcept
+	{
+		this->Pause();
+		this->m_Frame = this->m_Frame - 1 <= static_cast<uint32_t>(this->m_Range.x) || this->m_Frame == 0 ? 
+						static_cast<uint32_t>(this->m_Range.y - 1) : 
+						this->m_Frame - 1;
+		this->NeedUpdate();	
+	}
+
+	void ImPlaybar::GoNextFrame() noexcept
+	{
+		this->Pause();
+		this->m_Frame = this->m_Frame + 1 >= static_cast<uint32_t>(this->m_Range.y) ? 
+						static_cast<uint32_t>(this->m_Range.x) : 
+						this->m_Frame + 1; 
+		this->NeedUpdate();
+	}
+
+	void ImPlaybar::GoFirstFrame() noexcept
+	{
+		this->Pause();
+		this->m_Frame = this->m_Range.x;
+		this->NeedUpdate();	
+	}
+
+	void ImPlaybar::GoLastFrame() noexcept
+	{
+		this->Pause();
+		this->m_Frame = this->m_Range.y - 1;
+		this->NeedUpdate();	
+	}
 
 	void ImPlaybar::Update(Profiler* profiler) noexcept
 	{
@@ -17,59 +69,7 @@ namespace Interface
 			// Update the range of the loader to match the one of the playbar
 			this->m_Loader->m_Range = this->m_Range;
 
-			if (this->m_Play)
-			{
-				// Update frame if we are playing
-				const uint32_t framecount = ImGui::GetFrameCount();
-				const uint32_t fps = ImGui::GetIO().Framerate;
-				const float time = static_cast<float>(fps) / static_cast<float>(this->m_FrameRate);
-
-				if (fmodf(static_cast<float>(framecount), time) < 1.0f)
-				{
-					this->m_Frame = fmodf(this->m_Frame + 1, (this->m_Range.y - 1.0f));
-					this->m_Update = true;
-				}
-				else
-				{
-					this->m_Update = false;
-				}
-
-				if (this->m_Update)
-				{
-					const auto playbarUpdateStart = profiler->Start();
-					
-					// Notify the background cache loader that we need to store some frames in the cache
-					if (this->m_Loader->m_UseCache)
-					{
-						// Urgent load in case of bug
-						// this->m_Loader->LoadImageToCache(this->m_Frame);
-
-						const uint32_t offset = this->m_Loader->m_Cache->m_Size - this->m_Loader->m_BgLoadChunkSize * 2;
-						const uint32_t frameIdx = static_cast<uint32_t>(fmodf((this->m_Frame + offset), (this->m_Range.y - 1)));
-
-						if (!this->m_CachedIndices[frameIdx])
-						{
-							std::unique_lock<std::mutex> playbarLock(this->m_Loader->m_Mutex);
-
-							this->m_Loader->m_NeedBgLoad = true;
-							this->m_Loader->m_BgLoadFrameIndex = frameIdx;
-
-							playbarLock.unlock();
-
-							this->m_Loader->m_CondVar.notify_all();
-						}
-					}
-					else
-					{
-						this->m_Loader->LoadImageToCache(this->m_Frame);
-					}
-					
-					const auto playbarUpdateEnd = profiler->End();
-					
-					profiler->Time("Playbar Update Time", playbarUpdateStart, playbarUpdateEnd);
-				}
-			}
-			else
+			if (!this->m_Play)
 			{
 				if (this->m_Update)
 				{
@@ -78,7 +78,7 @@ namespace Interface
 					this->m_Loader->LoadImageToCache(this->m_Frame);
 
 					// Load all the frames from the frame we clicked on
-					if (this->m_Loader->m_UseCache)
+					if (this->m_Loader->m_UseCache && !this->m_IsDragging)
 					{
 						this->m_Loader->m_Workers.emplace_back(&Core::Loader::LoadSequenceToCache, this->m_Loader, this->m_Frame, 0);
 					}
@@ -115,7 +115,7 @@ namespace Interface
 
 		this->m_Range = newRange;
 
-		this->m_Update = true;
+		this->NeedUpdate();
 
 		this->m_CachedIndices.resize(newRange.y);
 		for (uint32_t i = 0; i < newRange.y; i++) this->m_CachedIndices[i] = false;
@@ -198,42 +198,53 @@ namespace Interface
 				const float x_position = ImGui::GetIO().MouseClickedPos->x - ImGui::GetCursorScreenPos().x - ImGui::GetScrollX();
 				this->m_Frame = floor(x_position / step);
 				this->m_Scrolling = x_position;
-				this->m_Play = false;
-				this->m_Update = true;
+				this->Pause();
+				this->NeedUpdate();
 			}
 
 			// Dragging and play frames dragged
 			if (ImGui::IsItemActive() && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
 			{
+				this->m_IsDragging = true;
 				this->m_Scrolling += ImGui::GetIO().MouseDelta.x;
 				this->m_Scrolling = this->m_Scrolling < 0 ? 0.0f : this->m_Scrolling;
-				this->m_Scrolling = this->m_Scrolling > (this->m_Range.y - 1.0f) * step ? (this->m_Range.y - 2.0f) * step : this->m_Scrolling;
+				this->m_Scrolling = this->m_Scrolling > (this->m_Range.y - 1.0f) * step ? (this->m_Range.y - 1.0f) * step : this->m_Scrolling;
 				this->m_Frame = this->m_Scrolling / step;
-				this->m_Play = false;
-				this->m_Update = true;
+				this->Pause();
+				this->NeedUpdate();
 			}	
+			
+			if (ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+			{
+				this->m_IsDragging = false;
+				this->m_Update = true;
+			}
+
 
 			// Buttons
-			constexpr float buttonsWidth = 50.0f;
+			constexpr float buttonsWidth = 40.0f;
 			constexpr float buttonsHeight = 25.0f;
-			const ImVec2 buttonsP0 = ImVec2(timelineP1.x, timelineP0.y);
-			const ImVec2 buttonsP1 = ImVec2(timelineP1.x + 200.0f, timelineP0.y + buttonsHeight);
+
+			const ImVec2 buttonsP0 = ImVec2(timelineP1.x + 5.0f, timelineP0.y);
+			const ImVec2 buttonsP1 = ImVec2(timelineP1.x + 205.0f, timelineP0.y + buttonsHeight);
+			
 			ImGui::PushClipRect(buttonsP0, buttonsP1, true);
 
 			const ImVec2 mousePos = ImGui::GetMousePos();
 
-			// Left button
-			constexpr float leftOffset1 = 0.0f;
-			constexpr float leftOffset2 = 50.0f;
+			// Go Start Frame / Leftmost button
+			constexpr float leftOffset1 = 5.0f;
+			constexpr float leftOffset2 = leftOffset1 + buttonsWidth;
+			
 			const ImVec2 leftP0 = ImVec2(timelineP1.x + leftOffset1, timelineP0.y);
 			const ImVec2 leftP1 = ImVec2(timelineP1.x + leftOffset2, timelineP0.y + buttonsHeight);
 
-			drawList->AddTriangleFilled(ImVec2(leftP0.x + 10.0f, (leftP0.y + leftP1.y) / 2.0f), 
-										ImVec2(leftP0.x + 25.0f, leftP0.y + 5.0f), 
-										ImVec2(leftP0.x + 25.0f, leftP0.y + 20.0f), LIGHTGRAY);
-			drawList->AddTriangleFilled(ImVec2(leftP0.x + 25.0f, (leftP0.y + leftP1.y) / 2.0f), 
-										ImVec2(leftP0.x + 40.0f, leftP0.y + 5.0f), 
-										ImVec2(leftP0.x + 40.0f, leftP0.y + 20.0f), LIGHTGRAY);
+			drawList->AddTriangleFilled(ImVec2(leftP0.x + 7.5f, (leftP0.y + leftP1.y) / 2.0f), 
+										ImVec2(leftP0.x + 22.5f, leftP0.y + 5.0f), 
+										ImVec2(leftP0.x + 22.5f, leftP0.y + 20.0f), LIGHTGRAY);
+			drawList->AddTriangleFilled(ImVec2(leftP0.x + 17.5f, (leftP0.y + leftP1.y) / 2.0f), 
+										ImVec2(leftP0.x + 32.5f, leftP0.y + 5.0f), 
+										ImVec2(leftP0.x + 32.5f, leftP0.y + 20.0f), LIGHTGRAY);
 
 			if (Hover(leftP0, leftP1, mousePos))
 			{
@@ -241,58 +252,94 @@ namespace Interface
 
 				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) 
 				{
-					this->Pause();
-					this->m_Frame = this->m_Range.x;
-					this->m_Update = true;
+					this->GoFirstFrame();
 				}
 			}
 
-			// Play button
-			constexpr float playOffset1 = 50.0f;
-			constexpr float playOffset2 = 100.0f;
+			// Go Previous Frame / Button
+			constexpr float left2Offset1 = leftOffset2;
+			constexpr float left2Offset2 = left2Offset1 + buttonsWidth;
+
+			const ImVec2 left2P0 = ImVec2(timelineP1.x + left2Offset1, timelineP0.y);
+			const ImVec2 left2P1 = ImVec2(timelineP1.x + left2Offset2, timelineP0.y + buttonsHeight);
+
+			drawList->AddTriangleFilled(ImVec2(left2P0.x + 12.5f, (left2P0.y + left2P1.y) / 2.0f),
+										ImVec2(left2P0.x + 27.5f, left2P0.y + 5.0f),
+										ImVec2(left2P0.x + 27.5f, left2P0.y + 20.0f), LIGHTGRAY);
+
+			if (Hover(left2P0, left2P1, mousePos))
+			{
+				drawList->AddRectFilled(left2P0, left2P1, HOVERGRAY);
+
+				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) 
+				{
+					this->GoPreviousFrame();
+				}
+			}
+
+			// Play / Stop button
+			constexpr float playOffset1 = left2Offset2;
+			constexpr float playOffset2 = playOffset1 + buttonsWidth;
 			const ImVec2 playP0 = ImVec2(timelineP1.x + playOffset1, timelineP0.y);
 			const ImVec2 playP1 = ImVec2(timelineP1.x + playOffset2, timelineP0.y + buttonsHeight);
 
 			const ImColor playButtonColor = this->m_Play ? LIGHTBLUE : LIGHTGRAY;
 
-			drawList->AddTriangleFilled(ImVec2(playP0.x + 17.5f, leftP0.y + 5.0f),
-										ImVec2(playP0.x + 32.5f, (playP0.y + playP1.y) / 2.0f),
-										ImVec2(playP0.x + 17.5f, leftP0.y + 20.0f), playButtonColor);
-			
+			if (this->m_Play)
+			{
+				drawList->AddRectFilled(ImVec2(playP0.x + 12.5f, playP0.y + 5.0f),
+									    ImVec2(playP0.x + 27.5f, playP0.y + 20.0f), LIGHTGRAY);
+			}
+			else
+			{
+				drawList->AddTriangleFilled(ImVec2(playP0.x + 12.5f, leftP0.y + 5.0f),
+											ImVec2(playP0.x + 27.5f, (playP0.y + playP1.y) / 2.0f),
+											ImVec2(playP0.x + 12.5f, leftP0.y + 20.0f), playButtonColor);
+			}
+
 			if (Hover(playP0, playP1, mousePos))
 			{
 				drawList->AddRectFilled(playP0, playP1, HOVERGRAY);
 
-				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) this->Play();
+				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+				{
+					if (this->m_Play) this->Pause(); 
+					else this->Play();
+				}
+					
 			}
 
-			// Stop button
-			constexpr float stopOffset1 = 100.0f;
-			constexpr float stopOffset2 = 150.0f;
-			const ImVec2 stopP0 = ImVec2(timelineP1.x + stopOffset1, timelineP0.y);
-			const ImVec2 stopP1 = ImVec2(timelineP1.x + stopOffset2, timelineP0.y + buttonsHeight);
+			// Go Next Frame // Button
+			constexpr float right2Offset1 = playOffset2;
+			constexpr float right2Offset2 = right2Offset1 + buttonsWidth;
+			const ImVec2 right2P0 = ImVec2(timelineP1.x + right2Offset1, timelineP0.y);
+			const ImVec2 right2P1 = ImVec2(timelineP1.x + right2Offset2, timelineP0.y + buttonsHeight);
 
-			drawList->AddRectFilled(ImVec2(stopP0.x + 17.5f, stopP0.y + 5.0f),
-									ImVec2(stopP0.x + 32.5f, stopP0.y + 20.0f), LIGHTGRAY);
+			drawList->AddTriangleFilled(ImVec2(right2P0.x + 12.5f, right2P0.y + 5.0f),
+										ImVec2(right2P0.x + 27.5f, (right2P0.y + right2P1.y) / 2.0f),
+										ImVec2(right2P0.x + 12.5f, right2P0.y + 20.0f), LIGHTGRAY);
 
-			if (Hover(stopP0, stopP1, mousePos))
+			if (Hover(right2P0, right2P1, mousePos))
 			{
-				drawList->AddRectFilled(stopP0, stopP1, HOVERGRAY);
-				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left)) this->Pause();
+				drawList->AddRectFilled(right2P0, right2P1, HOVERGRAY);
+				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+				{
+					this->GoNextFrame();
+				}
 			}
 
-			// Right button
-			constexpr float rightOffset1 = 150.0f;
-			constexpr float rightOffset2 = 200.0f;
+			// Go Last Frame / Right button
+			constexpr float rightOffset1 = right2Offset2;
+			constexpr float rightOffset2 = rightOffset1 + buttonsWidth;
 			const ImVec2 rightP0 = ImVec2(timelineP1.x + rightOffset1, timelineP0.y);
 			const ImVec2 rightP1 = ImVec2(timelineP1.x + rightOffset2, timelineP0.y + buttonsHeight);
 
-			drawList->AddTriangleFilled(ImVec2(rightP0.x + 10.0f, rightP0.y + 5.0f), 
-										ImVec2(rightP0.x + 25.0f, (rightP0.y + rightP1.y) / 2.0f),
-										ImVec2(rightP0.x + 10.0f, rightP0.y + 20.0f), LIGHTGRAY);
-			drawList->AddTriangleFilled(ImVec2(rightP0.x + 25.0f, rightP0.y + 5.0f), 
-										ImVec2(rightP0.x + 40.0f, (rightP0.y + rightP1.y) / 2.0f),
-										ImVec2(rightP0.x + 25.0f, rightP0.y + 20.0f), LIGHTGRAY);
+			drawList->AddTriangleFilled(ImVec2(rightP0.x + 7.5f, rightP0.y + 5.0f), 
+										ImVec2(rightP0.x + 22.5f, (rightP0.y + rightP1.y) / 2.0f), 
+										ImVec2(rightP0.x + 7.5f, rightP0.y + 20.0f), LIGHTGRAY);
+			drawList->AddTriangleFilled(ImVec2(rightP0.x + 17.5f, rightP0.y + 5.0f), 
+										ImVec2(rightP0.x + 32.5f, (rightP0.y + rightP1.y) / 2.0f), 
+										ImVec2(rightP0.x + 17.5f, rightP0.y + 20.0f), LIGHTGRAY);
 
 			if(Hover(rightP0, rightP1, mousePos))
 			{
@@ -300,9 +347,7 @@ namespace Interface
 
 				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
 				{
-					this->Pause();
-					this->m_Update = true;
-					this->m_Frame = this->m_Range.y - 1;
+					this->GoLastFrame();
 				}
 			}
 
@@ -314,22 +359,110 @@ namespace Interface
 			
 			ImGui::PushClipRect(frameInfosP0, frameInfosP1, true);
 
-			char frameNumberText[16];
-			sprintf(frameNumberText, "%d", (this->m_Frame + 1));
+			const uint32_t frame = (this->m_Frame) % this->m_FrameRate + 1;
+			const uint32_t seconds = static_cast<uint32_t>(std::floor(static_cast<float>(this->m_Frame) / static_cast<float>(this->m_FrameRate))) % 60;
+			const uint32_t minutes = std::floor(static_cast<float>(seconds) / 60.0f);
+			const uint32_t hours = std::floor(static_cast<float>(minutes) / 60.0f);
 
-			drawList->AddText(nullptr, 20.0f, ImVec2(frameInfosP0.x + 5.0f, frameInfosP0.y + 10.0f), LIGHTGRAY, frameNumberText);
+			char frameNumberText[32];
+			Utils::Str::Format(frameNumberText, "%02d:%02d:%02d:%02d", hours, minutes, seconds, frame);
+			drawList->AddText(nullptr, 20.0f, ImVec2(frameInfosP0.x + 10.0f, frameInfosP0.y + 10.0f), LIGHTGRAY, frameNumberText);
+
+			char framerateText[4];
+			Utils::Str::Format(framerateText, "%d", this->m_FrameRate);
+			drawList->AddText(nullptr, 20.0f, ImVec2(frameInfosP0.x + 170.0f, frameInfosP0.y + 10.0f), LIGHTGRAY, framerateText);
 
 			ImGui::PopClipRect();
 			
 			static int framerateTmp = this->m_FrameRate;
-			
-			// ImGui::SetCursorPos(ImVec2(frameInfosP0.x + 5.0f, frameInfosP0.y + 10.0f));
-			ImGui::SameLine();
-			ImGui::SetCursorPos(ImGui::GetCursorPos() - ImVec2(-50.0f, -37.5f));
-			ImGui::SetNextItemWidth(100.0f);
-			ImGui::InputInt("", &framerateTmp, 0);
-			if (ImGui::IsItemEdited()) this->m_FrameRate = static_cast<uint8_t>(framerateTmp);
 		}
+
 		ImGui::End();
+	}
+
+	void ImPlaybar::BackgroundTimeUpdate() noexcept
+	{
+		uint32_t sleepTime = static_cast<uint32_t>(1.0f / static_cast<float>(this->m_FrameRate) * 1000.0f);
+		
+		while (true)
+		{
+			std::unique_lock<std::mutex> bgUpdateLock(this->m_Mutex);
+
+			this->m_CV.wait_for(bgUpdateLock, std::chrono::milliseconds(sleepTime), [this] { return this->m_Release || this->m_Pause; });
+
+			sleepTime = static_cast<uint32_t>(1.0f / static_cast<float>(this->m_FrameRate) * 1000.0f);
+
+			if (this->m_Release)
+			{
+				bgUpdateLock.unlock();
+				break;
+			}
+
+			if (this->m_Pause) goto endwhile;
+			else if (this->m_Play)
+			{
+				const auto updateStart = Profiler::StaticStart();
+
+				this->m_Frame = fmodf(this->m_Frame + 1, (this->m_Range.y - 1.0f));
+				this->m_Update = true;
+
+				// Notify the background cache loader that we need to store some frames in the cache
+				if (this->m_Loader->m_UseCache)
+				{
+					// Urgent load in case of fast scrolling while cache is activated
+					if (!this->m_CachedIndices[this->m_Frame]) this->m_Loader->LoadImageToCache(this->m_Frame);
+
+					const uint32_t offset = this->m_Loader->m_Cache->m_Size - this->m_Loader->m_BgLoadChunkSize * 2;
+					const uint32_t frameIdx = static_cast<uint32_t>(fmodf((this->m_Frame + offset), (this->m_Range.y - 1)));
+
+					if (!this->m_CachedIndices[frameIdx])
+					{
+						std::unique_lock<std::mutex> playbarLock(this->m_Loader->m_Mutex);
+
+						this->m_Loader->m_NeedBgLoad = true;
+						this->m_Loader->m_BgLoadFrameIndex = frameIdx;
+
+						playbarLock.unlock();
+
+						this->m_Loader->m_CondVar.notify_all();
+					}
+				}
+				else
+				{
+					this->m_Loader->LoadImageToCache(this->m_Frame);
+				}
+
+				const auto updateEnd = Profiler::StaticEnd();
+
+				sleepTime = sleepTime - std::min(static_cast<uint32_t>(Profiler::StaticTime(updateStart, updateEnd)), sleepTime);
+			}
+
+endwhile:
+			bgUpdateLock.unlock();
+		}
+	}
+
+	void ImPlaybar::NeedUpdate(const bool need) noexcept
+	{
+		std::unique_lock<std::mutex> lock(this->m_Mutex);
+		this->m_Update = need;
+		lock.unlock();
+
+		m_CV.notify_all();
+	}
+
+	void ImPlaybar::Release() noexcept
+	{
+		std::unique_lock<std::mutex> lock(this->m_Mutex);
+		this->m_Release = true;
+		lock.unlock();
+
+		m_CV.notify_all();
+
+		// Make sure the thread has finished working
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+		// Join it
+		if (this->m_PlayerThread.joinable()) this->m_PlayerThread.join();
 	}
 } // End namespace Interface

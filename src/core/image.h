@@ -80,7 +80,7 @@ namespace Core
 			const OIIO::ImageSpec& spec = in->spec();
 
 
-			if(Utils::EndsWith(fp, ".exr"))
+			if(Utils::Str::EndsWith(fp, ".exr"))
 			{
 				this->m_Type = FileType_Exr;
 				this->m_Format = Format_RGBA_HALF;
@@ -93,7 +93,7 @@ namespace Core
 				this->m_Size = this->m_Xres * this->m_Yres * (this->m_Channels > 4 ? 4 : this->m_Channels);
 				this->m_Stride = m_Size * Size::Size16;
 			}
-			else if(Utils::EndsWith(fp, ".png"))
+			else if(Utils::Str::EndsWith(fp, ".png"))
 			{
 				const bool hasAlpha = spec.alpha_channel >= 0;
 				this->m_Type = FileType_Png;
@@ -107,7 +107,7 @@ namespace Core
 				this->m_Size = m_Xres * m_Yres * m_Channels;
 				this->m_Stride = m_Size * Size::Size8;
 			}
-			else if(Utils::EndsWith(fp, ".jpg") || Utils::EndsWith(fp, ".jpeg"))
+			else if(Utils::Str::EndsWith(fp, ".jpg") || Utils::Str::EndsWith(fp, ".jpeg"))
 			{
 				this->m_Type = FileType_Jpg;
 				this->m_Format = Format_RGB_U8;
@@ -120,21 +120,21 @@ namespace Core
 				this->m_Size = m_Xres * m_Yres * m_Channels;
 				this->m_Stride = m_Size * Size::Size8;
 			}
-			else if(Utils::EndsWith(fp, ".mp4"))
+			else if(Utils::Str::EndsWith(fp, ".mp4"))
 			{
 				this->m_Type = FileType_Mp4;
 				this->m_Xres = spec.width;
 				this->m_Yres = spec.height;
 				this->m_Channels = spec.nchannels;
 			}
-			else if(Utils::EndsWith(fp, ".mov"))
+			else if(Utils::Str::EndsWith(fp, ".mov"))
 			{
 				this->m_Type = FileType_Mov;
 				this->m_Xres = spec.width;
 				this->m_Yres = spec.height;
 				this->m_Channels = spec.nchannels;
 			}
-			else if(Utils::EndsWith(fp, ".hdr"))
+			else if(Utils::Str::EndsWith(fp, ".hdr"))
 			{
 				this->m_Type = FileType_Hdr;
 				this->m_Format = Format_RGB_FLOAT;
@@ -147,7 +147,7 @@ namespace Core
 				this->m_Size = m_Xres * m_Yres * m_Channels;
 				this->m_Stride = m_Size * Size::Size32;
 			}
-			else if(Utils::EndsWith(fp, ".tiff"))
+			else if(Utils::Str::EndsWith(fp, ".tiff"))
 			{
 				this->m_Type = FileType_Tiff;
 				this->m_Format = Format_RGB_HALF;

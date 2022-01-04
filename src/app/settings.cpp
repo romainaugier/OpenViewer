@@ -19,22 +19,22 @@ namespace Interface
 
 	void Settings_Windows::Draw(ImPlaybar& playbar, Profiler* prof, Core::Ocio& ocio, Application& app) noexcept
 	{	
-		if (p_open_playback_window)
+		if (showPlaybackWindow)
 		{
 			ImGui::SetNextWindowBgAlpha(settings.interface_windows_bg_alpha);
 
-			ImGui::Begin("Playback Settings", &p_open_playback_window);
+			ImGui::Begin("Playback Settings", &showPlaybackWindow);
 			{
 				ImGui::InputInt("FPS", (int*)&playbar.m_FrameRate);
 			}
 			ImGui::End();
 		}
 
-		if (p_open_ocio_window)
+		if (showOcioWindow)
 		{
 			ImGui::SetNextWindowBgAlpha(settings.interface_windows_bg_alpha);
 		
-			ImGui::Begin("OCIO Settings", &p_open_ocio_window);
+			ImGui::Begin("OCIO Settings", &showOcioWindow);
 			{
 				ImGui::Text("Current configuration : %s", settings.current_config);
 				ImGui::Text("");
@@ -76,25 +76,25 @@ namespace Interface
 			ImGui::End();
 		}
 
-		if (p_open_interface_window)
+		if (showInterfaceWindow)
 		{
 			ImGui::SetNextWindowBgAlpha(settings.interface_windows_bg_alpha);
 			
-			ImGui::Begin("Interface Settings", &p_open_interface_window);
+			ImGui::Begin("Interface Settings", &showInterfaceWindow);
 			{
 				ImGui::InputFloat("Background Alpha", &settings.interface_windows_bg_alpha);
 			}
 			ImGui::End();
 		}
 
-		if (p_open_debug_window)
+		if (showDebugWindow)
 		{
 			ImGui::SetNextWindowBgAlpha(settings.interface_windows_bg_alpha);
 		
-			ImGui::Begin("Debug", &p_open_debug_window);
+			ImGui::Begin("Debug", &showDebugWindow);
 			{
 				// Log Level
-				const char* logLevels[6] = { "Error", "Warning", "Message", "Diagnostic", "Verbose", "Debug" };
+				const char* logLevels[6] = { "Error", "Warning", "Message", "Verbose", "Diagnostic", "Debug" };
 				
 				static int logLevelIndex = 1;
 

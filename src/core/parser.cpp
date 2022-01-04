@@ -38,7 +38,7 @@ namespace Core
                 }
 
                 this->m_Flags["Has Paths"] = true;
-                Utils::Split(this->m_Paths, argv[i + 1], ';');
+                Utils::Str::Split(this->m_Paths, argv[i + 1], ';');
                 return;
             }
         }

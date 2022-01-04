@@ -11,6 +11,93 @@ namespace Interface
         this->m_Logger = logger;
         this->m_Loader = loader;
         this->m_OcioModule = ocio;
+
+        // Make sure all keys are set to 0
+        for (int i = 0; i < GLFW_KEY_COUNT; i++) this->m_Shortcuts.m_Pressed[i] = false;
+    }
+
+    void Application::HandleShortcuts() noexcept
+    {
+        for (uint16_t i = 0; i < GLFW_KEY_COUNT; i++)
+        {
+            if (!this->m_Shortcuts.m_Pressed[i]) continue;
+            
+            switch (i)
+            {
+                case GLFW_KEY_E:
+                {
+                    this->ShowMediaExplorerWindow();
+                    break;
+                }
+
+                case GLFW_KEY_O:
+                {
+                    if (this->m_Shortcuts.m_Pressed[GLFW_KEY_LEFT_CONTROL] ||
+                        this->m_Shortcuts.m_Pressed[GLFW_KEY_RIGHT_CONTROL])
+                    {
+                        printf("Ctrl + O\n");
+                        break;
+                    }
+                    else
+                    {
+                        
+                    }
+                }
+
+                case GLFW_KEY_SPACE:
+                {
+                    if (this->m_Playbar->IsPlaying()) this->m_Playbar->Pause();
+                    else this->m_Playbar->Play();
+                    break;
+                }
+
+                // Arrows
+
+                case GLFW_KEY_UP:
+                {
+                    const uint8_t modeCount = this->m_Menubar->GetModeCount();
+                    const uint8_t currentMode = this->m_Menubar->GetMode();
+                    const uint8_t newMode = currentMode == 0 ? (modeCount - 1) : (currentMode - 1); 
+
+                    this->m_Menubar->SetMode(newMode);
+                    break;
+                }
+
+                case GLFW_KEY_DOWN:
+                {
+                    const uint8_t modeCount = this->m_Menubar->GetModeCount();
+                    const uint8_t currentMode = this->m_Menubar->GetMode();
+                    const uint8_t newMode = currentMode == (modeCount - 1) ? 0 : currentMode + 1; 
+                    
+                    this->m_Menubar->SetMode(newMode);
+                    break;
+                }
+
+                case GLFW_KEY_LEFT:
+                {
+                    if (this->m_Shortcuts.m_Pressed[GLFW_KEY_LEFT_CONTROL] ||
+                        this->m_Shortcuts.m_Pressed[GLFW_KEY_RIGHT_CONTROL])
+                    {
+                        this->m_Playbar->GoFirstFrame();
+                    }
+                    else this->m_Playbar->GoPreviousFrame();
+                    break;
+                }
+                
+                case GLFW_KEY_RIGHT:
+                {
+                    if (this->m_Shortcuts.m_Pressed[GLFW_KEY_LEFT_CONTROL] ||
+                        this->m_Shortcuts.m_Pressed[GLFW_KEY_RIGHT_CONTROL])
+                    {
+                        this->m_Playbar->GoLastFrame();
+                    }
+                    else this->m_Playbar->GoNextFrame();
+                    break;
+                }
+            }
+
+            glfwWaitEventsTimeout(0.25);
+        }
     }
 
     void Application::Release() noexcept

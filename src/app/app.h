@@ -8,18 +8,27 @@
 
 #include "utils/logger.h"
 #include "display.h"
+#include "shortcuts.h"
+#include "implaybar.h"
+#include "menubar.h"
 
 namespace Interface
 {
     using Displays = tsl::robin_map<uint8_t, Display*>;
 
+    struct Menubar;
+
     struct Application
     {
         Displays m_Displays;
 
+        Shortcuts m_Shortcuts;
+
         Core::Loader* m_Loader = nullptr;
         Core::Ocio* m_OcioModule = nullptr;
         Logger* m_Logger = nullptr;
+        ImPlaybar* m_Playbar = nullptr;
+        Menubar* m_Menubar = nullptr;
 
         uint8_t m_ActiveDisplayID = 0;
         uint8_t m_DisplayCount = 0;
@@ -30,7 +39,20 @@ namespace Interface
         bool showMediaInfosWindow = false;
         bool showMediaExplorerWindow = false;
 
-        Application(Logger* logger, Core::Loader* loader, Core::Ocio* ocio);     
+        Application(Logger* logger, Core::Loader* loader, Core::Ocio* ocio);    
+        
+        // Few setters and getters
+        void SetPlaybar(ImPlaybar* playbar) noexcept { this->m_Playbar = playbar; } 
+        void SetMenubar(Menubar* menubar) noexcept { this->m_Menubar = menubar; }
+
+        // Windows openers
+        void ShowImageInfosWindow() noexcept { this->showImageInfosWindow = !this->showImageInfosWindow; }
+        void ShowPixelInfosWindow() noexcept { this->showPixelInfosWindow = !this->showPixelInfosWindow; }
+        void ShowMediaInfosWindow() noexcept { this->showMediaInfosWindow = !this->showMediaInfosWindow; }
+        void ShowMediaExplorerWindow() noexcept { this->showMediaExplorerWindow = !this->showMediaExplorerWindow; }
+
+        // Shortcut handling
+        void HandleShortcuts() noexcept;
 
         void Release() noexcept;   
     };

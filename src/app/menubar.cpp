@@ -109,10 +109,10 @@ namespace Interface
 
 				if (ImGui::BeginMenu("Settings"))
 				{
-					if (ImGui::MenuItem("Playback")) { currentSettings.p_open_playback_window = true; }
-					if (ImGui::MenuItem("OCIO")) { currentSettings.p_open_ocio_window = true; }
-					if (ImGui::MenuItem("Interface")) { currentSettings.p_open_interface_window = true; }
-					if (ImGui::MenuItem("Debug")) { currentSettings.p_open_debug_window = true; }
+					if (ImGui::MenuItem("Playback")) { currentSettings.showPlaybackWindow = true; }
+					if (ImGui::MenuItem("OCIO")) { currentSettings.showOcioWindow = true; }
+					if (ImGui::MenuItem("Interface")) { currentSettings.showInterfaceWindow = true; }
+					if (ImGui::MenuItem("Debug")) { currentSettings.showDebugWindow = true; }
 
 
 					ImGui::EndMenu();

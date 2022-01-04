@@ -13,8 +13,6 @@ int application(int argc, char** argv)
     Logger logger;
     logger.SetLevel(LogLevel_Diagnostic);
     logger.Log(LogLevel_Diagnostic, "[MAIN] : Initializing Logger");
-    
-    // Utils::GetFileSequenceFromFile("C:/Users/augie/Documents/test/seq/file_001_0500.00100.exr");
 
     // Profiler
     Profiler profiler;
@@ -27,7 +25,7 @@ int application(int argc, char** argv)
     Core::Loader loader(&logger, &profiler);
     loader.Initialize(false);
 
-    Interface::Application app(&logger, &loader, &ocio);
+    Interface::Application application(&logger, &loader, &ocio);
 
     // Setup GLFW
     glfwSetErrorCallback(GLFWErrorCallback);
@@ -50,8 +48,9 @@ int application(int argc, char** argv)
         std::exit(EXIT_FAILURE);
     }
 
-    glfwSetWindowUserPointer(window, static_cast<void*>(&app));
+    glfwSetWindowUserPointer(window, static_cast<void*>(&application));
     glfwSetDropCallback(window, GLFWDropEventCallback);
+    glfwSetKeyCallback(window, GLFWKeyEventCallback);
 
     glfwMakeContextCurrent(window);
     // Enable vsync
@@ -116,12 +115,12 @@ int application(int argc, char** argv)
             loader.SetMediaActive(0);
             loader.LoadImageToCache(0);
                                 
-            Interface::Display* newDisplay = new Interface::Display(app.m_Loader->m_Profiler, app.m_Logger, app.m_Loader, 1);
+            Interface::Display* newDisplay = new Interface::Display(application.m_Loader->m_Profiler, application.m_Logger, application.m_Loader, 1);
 
-            newDisplay->Initialize(*app.m_OcioModule);
+            newDisplay->Initialize(*application.m_OcioModule);
             
-            app.m_Displays[++app.m_DisplayCount] = newDisplay;
-            app.m_ActiveDisplayID = 1;
+            application.m_Displays[++application.m_DisplayCount] = newDisplay;
+            application.m_ActiveDisplayID = 1;
         }
     }
 
@@ -134,6 +133,9 @@ int application(int argc, char** argv)
     Interface::MediaExplorer mediaExplorerWindow(&loader, &logger);
     Interface::ImPlaybar playbar(&loader, ImVec2(0.0f, 1.0f));
     Interface::Menubar menubar;
+
+    application.SetMenubar(&menubar);
+    application.SetPlaybar(&playbar);
 
     // initialize ImFileDialog
     ifd::FileDialog::Instance().CreateTexture = [](uint8_t* data, int w, int h, char fmt) -> void* {
@@ -163,10 +165,10 @@ int application(int argc, char** argv)
     while (!glfwWindowShouldClose(window))
     {
         // update memory profiler
-        profiler.MemUsage("Application Total Memory Usage", ToMB(GetCurrentRss()));
-        profiler.MemUsage("Application Memory Usage", ToMB(GetCurrentRss()) - ToMB(loader.m_Cache->m_BytesSize));
-        profiler.MemUsage("Ocio Module Memory Usage", ToMB((sizeof(ocio) + ocio.GetSize()) / 8));
-        profiler.MemUsage("Cache Memory Usage", ToMB(loader.m_Cache->m_BytesSize));
+        profiler.MemUsage("Application Total", ToMB(GetCurrentRss()));
+        profiler.MemUsage("Application", ToMB(GetCurrentRss()) - ToMB(loader.m_Cache->m_BytesSize));
+        profiler.MemUsage("Ocio Module", ToMB((sizeof(ocio) + ocio.GetSize()) / 8));
+        profiler.MemUsage("Cache", ToMB(loader.m_Cache->m_BytesSize));
 
         // The current media changed, reset the playbar and flush the cache
         if (mediaExplorerWindow.m_CurrentMediaChanged)
@@ -177,7 +179,7 @@ int application(int argc, char** argv)
         }
 
         // Update the playbar
-        if (app.m_DisplayCount > 0)
+        if (application.m_DisplayCount > 0)
         {
             playbar.Update(&profiler);
         }
@@ -198,15 +200,16 @@ int application(int argc, char** argv)
 
         // displays
         
-        for(auto[id, display] : app.m_Displays)
+        for(auto[id, display] : application.m_Displays)
         {
             if (changeHappened || playbar.m_Update) 
             {
                 const auto startDpUpdate = profiler.Start();
                 
-                display->Update(ocio, frameIndex);
+                playbar.NeedUpdate(false);
                 changeHappened = false;
-                playbar.m_Update = false;
+
+                display->Update(ocio, frameIndex);
                 
                 const auto endDpUpdate = profiler.End();
                 profiler.Time("Displays Update", startDpUpdate, endDpUpdate);
@@ -215,20 +218,20 @@ int application(int argc, char** argv)
             display->Draw(frameIndex);
 
             // One info window per display
-            const Core::Image currentImage = *app.m_Loader->GetImage(frameIndex);
+            const Core::Image currentImage = *application.m_Loader->GetImage(frameIndex);
 
-            imageInfosWindow.Draw(currentImage, app.showImageInfosWindow);
-            pixelInfosWindow.Draw(&loader, currentImage, display, app.showPixelInfosWindow);
+            imageInfosWindow.Draw(currentImage, application.showImageInfosWindow);
+            pixelInfosWindow.Draw(&loader, currentImage, display, application.showPixelInfosWindow);
         }
 
         // settings windows
-        settings.Draw(playbar, &profiler, ocio, app);
+        settings.Draw(playbar, &profiler, ocio, application);
 
         // menubar
-        menubar.Draw(settings, app, playbar, ocio, profiler, changeHappened);
+        menubar.Draw(settings, application, playbar, ocio, profiler, changeHappened);
 
         // Media Explorer
-        mediaExplorerWindow.Draw(&app, app.showMediaExplorerWindow);
+        mediaExplorerWindow.Draw(&application, application.showMediaExplorerWindow);
     
         // playbar 
         playbar.Draw();
@@ -252,13 +255,16 @@ int application(int argc, char** argv)
             glfwMakeContextCurrent(backup_current_context);
         }
 
+        application.HandleShortcuts();
+
         glfwSwapBuffers(window);
     }
 
     // Release everything
+    playbar.Release();
     ocio.Release();
     loader.Release();
-    app.Release();
+    application.Release();
 
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();

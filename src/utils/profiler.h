@@ -20,7 +20,7 @@ struct Profiler
 	tsl::robin_map<std::string, float> times;
 	tsl::robin_map<std::string, float> mem_usage;
 
-	OPENVIEWER_FORCEINLINE void MemUsage(std::string name, float memory) noexcept
+	OPENVIEWER_FORCEINLINE void MemUsage(const std::string& name, float memory) noexcept
 	{
 		if(mem_usage.find(name) != mem_usage.end()) mem_usage[name] = memory;
 		else mem_usage.emplace(name, memory);
@@ -30,18 +30,34 @@ struct Profiler
 	{
 		return std::chrono::system_clock::now();
 	}
+	
+	OPENVIEWER_FORCEINLINE OPENVIEWER_STATIC_FUNC auto StaticStart() noexcept
+	{
+		return std::chrono::system_clock::now();
+	}
 
 	OPENVIEWER_FORCEINLINE auto End() const noexcept
 	{
 		return std::chrono::system_clock::now();
 	}
+	
+	OPENVIEWER_FORCEINLINE OPENVIEWER_STATIC_FUNC auto StaticEnd() noexcept
+	{
+		return std::chrono::system_clock::now();
+	}
 
-	OPENVIEWER_FORCEINLINE void Time(const std::string name,
+	OPENVIEWER_FORCEINLINE void Time(const std::string& name,
 									 const std::chrono::time_point<std::chrono::system_clock>& start, 
 			  						 const std::chrono::time_point<std::chrono::system_clock>& end) noexcept
 	{
 		const float time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 		
 		times[name] = time;
+	}
+	
+	OPENVIEWER_FORCEINLINE OPENVIEWER_STATIC_FUNC float StaticTime(const std::chrono::time_point<std::chrono::system_clock>& start, 
+			  						 						 	   const std::chrono::time_point<std::chrono::system_clock>& end) noexcept
+	{
+		return std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 	}
 };

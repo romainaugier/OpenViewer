@@ -53,10 +53,16 @@ namespace Interface
                 ImGui::Text("Raw Color");
 
                 void* currentImageBuffer = loader->m_Cache->m_Items[currentImage.m_CacheIndex].m_DataPtr;
-                const ImVec4 currentColorRaw = ImClamp(currentImage.GetPixel(X, Y, currentImageBuffer), 
-                                                       ImVec4(0.0f, 0.0f, 0.0f, 0.0f), 
-                                                       ImVec4(100.0f, 100.0f, 100.0f, 100.0f));
                 
+                ImVec4 currentColorRaw = currentColorCorrected;
+
+                if (currentImage.m_CacheIndex > 0)
+                {
+                    currentColorRaw = ImClamp(currentImage.GetPixel(X, Y, currentImageBuffer), 
+                                                        ImVec4(0.0f, 0.0f, 0.0f, 0.0f), 
+                                                        ImVec4(100.0f, 100.0f, 100.0f, 100.0f));
+                }
+
                 ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "R : %f", currentColorRaw.x);
                 ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "G : %f", currentColorRaw.y);
                 ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), "B : %f", currentColorRaw.z);

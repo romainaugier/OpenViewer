@@ -17,7 +17,7 @@ namespace Core
 	void Loader::Initialize(const bool useCache, const size_t cacheSize) noexcept
 	{
 		this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : Initializing loader");
-		this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loader OIIO version : %s", Utils::GetOIIOVersionStr().c_str());
+		this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loader OIIO version : %s", Utils::Str::GetOIIOVersionStr().c_str());
 
 		this->m_HasBeenInitialized = true;
 
@@ -30,17 +30,18 @@ namespace Core
 
 	void Loader::Load(const std::string& mediaPath) noexcept
 	{
-		const std::string cleanMediaPath = Utils::CleanOSPath(mediaPath);
+		const std::string cleanMediaPath = Utils::Str::CleanOSPath(mediaPath);
 
 		this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : Loading media %s", cleanMediaPath.c_str());
 
+		// Load every image there is in a directory
 		if (std::filesystem::is_directory(cleanMediaPath))
 		{
-			this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : Directory detected, loading image sequence");
+			this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : Directory detected");
 
 			Media newTmpMedia;
 
-			uint32_t itemCount = Utils::FileCountInDirectory(cleanMediaPath);
+			uint32_t itemCount = Utils::Fs::FileCountInDirectory(cleanMediaPath);
 
 			uint64_t biggestImageByteSize = 0;
 
@@ -52,7 +53,7 @@ namespace Core
 				{
 					std::string itemPath = item.path().u8string();
 
-					Utils::CleanOSPath(itemPath);
+					Utils::Str::CleanOSPath(itemPath);
 
 					newTmpMedia.m_Images.emplace_back(itemPath);
 
@@ -101,37 +102,79 @@ namespace Core
 			this->m_Medias.push_back(std::move(newTmpMedia));
 			++this->m_MediaCount;
 		}
+		// Load a given file
+		// If the auto detect file sequence is on, it will load the file sequence
+		// the given file belongs to (if there is one)
 		else if (std::filesystem::is_regular_file(cleanMediaPath))
 		{
-			this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : Single image detected, loading single image");
+			uint64_t biggestImageByteSize = 0;
+			
+			if (this->m_AutoDetectFileSequence)
+			{
+				Utils::Fs::FileSequence fileSeq;
+				Utils::Fs::GetFileSequenceFromFile(fileSeq, cleanMediaPath);
 
-			Media newTmpMedia;
+				if (fileSeq.size() > 1)
+				{
+					this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : File sequence detected");
 
-			newTmpMedia.m_Images.emplace_back(cleanMediaPath);
+					Media newTmpMedia;
 
-			this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loaded : %s", cleanMediaPath.c_str());
+					for (const auto& fileSeqItem : fileSeq)
+					{
+						newTmpMedia.m_Images.emplace_back(fileSeqItem.first);
 
+						this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loaded %s", fileSeqItem.first.c_str());
+
+						biggestImageByteSize = biggestImageByteSize < newTmpMedia.m_Images[newTmpMedia.m_Range.y].m_Stride ? 
+																  newTmpMedia.m_Images[newTmpMedia.m_Range.y].m_Stride : 
+																  biggestImageByteSize;
+
+						++newTmpMedia.m_Range.y;
+					}
+
+					newTmpMedia.m_ID = this->m_MediaCount;
+
+					// Move the media into the media vector of the loader
+					this->m_Medias.push_back(std::move(newTmpMedia));
+					++this->m_MediaCount;
+
+					goto cacheInit;
+				}
+			}
+			
+			{
+				this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : Single image detected");
+
+				Media newTmpMedia;
+
+				newTmpMedia.m_Images.emplace_back(cleanMediaPath);
+
+				biggestImageByteSize = newTmpMedia.m_Images[0].m_Stride;
+
+				this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loaded : %s", cleanMediaPath.c_str());
+				
+				newTmpMedia.m_Range = ImVec2(0, 1);
+				newTmpMedia.m_ID = this->m_MediaCount;
+
+				// Move the media into the media vector of the loader
+				this->m_Medias.push_back(std::move(newTmpMedia));
+				++this->m_MediaCount;
+			}
+
+cacheInit:
 			// Same as in the sequence loading
 			if (!this->m_UseCache)
 			{
-				const uint64_t loadedImgByteSize = newTmpMedia.m_Images[0].m_Stride;
-
 				if (this->m_Cache->m_HasBeenInitialized)
 				{
-					if (loadedImgByteSize > this->m_Cache->m_BytesCapacity) this->m_Cache->Resize(loadedImgByteSize, false);
+					if (biggestImageByteSize > this->m_Cache->m_BytesCapacity) this->m_Cache->Resize(biggestImageByteSize, false);
 				}
 				else
 				{
-					this->m_Cache->Initialize(loadedImgByteSize, this->m_Logger, false);
+					this->m_Cache->Initialize(biggestImageByteSize, this->m_Logger, false);
 				}
 			}
-
-        	newTmpMedia.m_Range = ImVec2(0, 1);
-			newTmpMedia.m_ID = this->m_MediaCount;
-
-			// Move the media into the media vector of the loader
-			this->m_Medias.push_back(std::move(newTmpMedia));
-			++this->m_MediaCount;
 		}
 		else
 		{
@@ -226,17 +269,17 @@ namespace Core
 				if (accumulatedByteSize > this->m_Cache->m_BytesCapacity) break;
 
 				++endIndex;
-				index = (index + 1) % static_cast<uint32_t>(this->m_Range.y - 1);
+				index = (index + 1) % static_cast<uint32_t>(this->m_Range.y);
 			}
 
 			endIndex += startIndex;
 		}
 
-		if (startIndex != this->m_Range.x) --endIndex;
+		// if (startIndex != this->m_Range.x) --endIndex;
 
 		for (uint32_t i = startIndex; i < endIndex; i++)
 		{
-			const uint32_t idx = i % static_cast<uint32_t>(this->m_Range.y - 1);
+			const uint32_t idx = i % static_cast<uint32_t>(this->m_Range.y);
 
 			this->LoadImageToCache(idx);
 		}

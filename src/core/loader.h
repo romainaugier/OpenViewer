@@ -57,6 +57,7 @@ namespace Core
 
 		uint8_t m_BgLoadChunkSize = 4; // Number of images to load in the cache at the same time in the background
 
+		bool m_AutoDetectFileSequence = true;
 		bool m_UseCache = false;
 		bool m_HasBeenInitialized = false;
 		bool m_IsWorking = false; // State for the worker thread doing the load job
