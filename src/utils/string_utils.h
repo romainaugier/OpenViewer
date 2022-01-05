@@ -14,22 +14,22 @@
 
 #include "OpenImageIO/imageio.h"
 
-#ifdef OPENVIEWER_MSVC
-#include <string_view>
-#elif OPENVIEWER_GCC
-#include "string_view"
-#endif
+// #ifdef OPENVIEWER_MSVC
+// #include <string_view>
+// #elif OPENVIEWER_GCC
+// #include "string_view"
+// #endif
 
 namespace Utils
 {
     namespace Str
     {
-        OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE bool EndsWith(const std::string_view& str, const std::string_view& suffix) noexcept
+        OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE bool EndsWith(const std::string& str, const std::string& suffix) noexcept
         {
             return str.size() >= suffix.size() && 0 == str.compare(str.size()-suffix.size(), suffix.size(), suffix);
         }
 
-        OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE bool StartsWith(const std::string_view& str, const std::string_view& prefix) noexcept
+        OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE bool StartsWith(const std::string& str, const std::string& prefix) noexcept
         {
             return str.size() >= prefix.size() && 0 == str.compare(0, prefix.size(), prefix);
         }

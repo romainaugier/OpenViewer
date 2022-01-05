@@ -5,8 +5,9 @@
 #pragma once
 
 #include "GL/glew.h"
-#include <cstdio>
 
+#include "string_utils.h"
+#include "logger.h"
 
 inline void CheckOpenGLError(const char* stmt, const char* fname, int line)
 {
@@ -25,3 +26,22 @@ inline void CheckOpenGLError(const char* stmt, const char* fname, int line)
 #else
 #define GL_CHECK(stmt) stmt
 #endif
+
+namespace Utils
+{
+    namespace GL
+    {
+        struct Shader
+        {
+            uint32_t m_ID;
+
+            void LoadAndCompile(const char* vertexShaderPath, const char* fragmentShaderPath) noexcept;
+
+            void Use() noexcept;
+
+            void SetInt(const char* name, int value) const noexcept;
+
+            void SetFloat(const char* name, float value) const noexcept;
+        };
+    } // End namespace GL
+} // End namespace Utils

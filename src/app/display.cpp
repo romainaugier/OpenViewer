@@ -152,8 +152,6 @@ namespace Interface
 
 		// Unbind our texture
 		glBindTexture(GL_TEXTURE_2D, 0);
-		
-		UnbindFBO();
 	}
 
 	void Display::ReInitialize(const Core::Image& image, Core::Ocio& ocio) noexcept
@@ -234,8 +232,6 @@ namespace Interface
 
 		// Unbind our texture
 		glBindTexture(GL_TEXTURE_2D, 0);
-		
-		UnbindFBO();
 	}
 
 	// Updates the gl texture that displays the images
@@ -266,7 +262,7 @@ namespace Interface
 
 				// Update the texture
 				const auto texUpdateStart = this->m_Profiler->Start();
-
+				
 				glActiveTexture(GL_TEXTURE0);
 				glBindTexture(GL_TEXTURE_2D, this->m_RawTexture);
 				glTexImage2D(GL_TEXTURE_2D, 
@@ -325,10 +321,9 @@ namespace Interface
 
 					const auto ocio_end = this->m_Profiler->End();
 					this->m_Profiler->Time("Ocio Transform Time", ocio_start, ocio_end);
-
-					// Unbind our texture
-					glBindTexture(GL_TEXTURE_2D, 0);
 				}
+
+				glBindTexture(GL_TEXTURE_2D, 0);
 			}
 		}
 		else

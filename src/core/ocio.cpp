@@ -424,6 +424,9 @@ namespace Core
 
     void Ocio::Process(const uint16_t width, const uint16_t height)
     {
+        ogl_builder->useProgram();
+        glUniform1i(glGetUniformLocation(ogl_builder->getProgramHandle(), "img"), 0);
+        ogl_builder->useAllTextures();
         ogl_builder->useAllUniforms();
         // try
         // {

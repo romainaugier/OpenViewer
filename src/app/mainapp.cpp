@@ -133,6 +133,8 @@ int application(int argc, char** argv)
     Interface::MediaExplorer mediaExplorerWindow(&loader, &logger);
     Interface::ImPlaybar playbar(&loader, ImVec2(0.0f, 1.0f));
     Interface::Menubar menubar;
+    Interface::Plot::Parade rgbParade;
+    rgbParade.Initialize();
 
     application.SetMenubar(&menubar);
     application.SetPlaybar(&playbar);
@@ -213,6 +215,8 @@ int application(int argc, char** argv)
                 
                 const auto endDpUpdate = profiler.End();
                 profiler.Time("Displays Update", startDpUpdate, endDpUpdate);
+
+                rgbParade.Update(display->m_TransformedTexture);
             }
 
             display->Draw(frameIndex);
@@ -222,6 +226,8 @@ int application(int argc, char** argv)
 
             imageInfosWindow.Draw(currentImage, application.showImageInfosWindow);
             pixelInfosWindow.Draw(&loader, currentImage, display, application.showPixelInfosWindow);
+
+            rgbParade.Draw();
         }
 
         // settings windows

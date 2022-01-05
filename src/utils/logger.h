@@ -12,6 +12,9 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#ifdef max
+#undef max
+#endif
 #endif
 
 #ifdef IMGUI_CONSOLE

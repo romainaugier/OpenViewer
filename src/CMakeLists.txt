@@ -8,7 +8,6 @@ add_executable(${PROJECT_NAME} main.cpp)
 
 target_link_libraries(${PROJECT_NAME} app core)
 
-
 # cpp 17
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_17)
 
@@ -57,3 +56,10 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_SOURCE_DIR}/configs
         $<TARGET_FILE_DIR:${PROJECT_NAME}>/configs)
+
+# GLSL Shaders
+add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_SOURCE_DIR}/shaders
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders)

@@ -11,6 +11,7 @@
 #include "shortcuts.h"
 #include "implaybar.h"
 #include "menubar.h"
+#include "plot.h"
 
 namespace Interface
 {
