@@ -34,16 +34,12 @@ namespace Utils
             return str.size() >= prefix.size() && 0 == str.compare(0, prefix.size(), prefix);
         }
 
-        OPENVIEWER_STATIC_FUNC const char* RemoveSpaces(char* s) noexcept
+        OPENVIEWER_STATIC_FUNC void RemoveSpaces(std::string& s) noexcept
         {
-            std::string tmp = s;
+            char space = ' ';
 
-            char space[2] = " ";
-
-            if ((char*)tmp[0] == space) tmp.erase(0, 1);
-            if ((char*)tmp[tmp.size() - 1] == space) tmp.erase(tmp.size() - 1);
-
-            return tmp.c_str();
+            if ((char)s[0] == space) s.erase(0, 1);
+            if ((char)s[s.size() - 1] == space) s.erase(s.size() - 1);
         }
 
         OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE void Replace(std::string& string, char substr, char replace) noexcept

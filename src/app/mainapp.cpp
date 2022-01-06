@@ -24,7 +24,8 @@ int application(int argc, char** argv)
     // Loader/Cache
     Core::Loader loader(&logger, &profiler);
     loader.Initialize(false);
-    av_register_all();
+    
+    // av_register_all();
 
     Interface::Application application(&logger, &loader, &ocio);
 
@@ -76,6 +77,7 @@ int application(int argc, char** argv)
 
     // Setup Dear ImGui style
     Interface::DarkTheme();
+    Interface::GetFonts();
 
     // Docking
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;

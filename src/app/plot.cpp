@@ -15,13 +15,13 @@ namespace Interface
 
 			Utils::Str::CleanOSPath(currentPath);
 
-			char vertexShaderPath[2048];
-			Utils::Str::Format(vertexShaderPath, "%s/shaders/common.vert", currentPath.c_str());
+			const std::string vertexShaderPath = Utils::Fs::ExpandCwd("/shaders/common.vert");
 			
-			char fragmentShaderPath[2048];
-			Utils::Str::Format(fragmentShaderPath, "%s/shaders/parade.frag", currentPath.c_str());
+			const std::string plotFragShaderPath = Utils::Fs::ExpandCwd("/shaders/parade.frag");
 
-			this->m_Shader.LoadAndCompile(vertexShaderPath, fragmentShaderPath);
+			const std::string resetFragShaderPath = Utils::Fs::ExpandCwd("/shaders/reset.frag");
+
+			this->m_PlotShader.LoadAndCompile(vertexShaderPath.c_str(), plotFragShaderPath.c_str());
 
 			// Generate the image for load/store
 			glGenTextures(1, &this->m_DrawTexture);
@@ -80,14 +80,14 @@ namespace Interface
 
 		void Parade::Update(const GLuint imageTextureID) noexcept
 		{
-			glClear(GL_COLOR_BUFFER_BIT);
+			glClearTexImage(this->m_DrawTexture, 0, GL_RGBA, GL_FLOAT, NULL);
 
 			// Bind the image texture at binding point 1
-			glBindImageTexture(1, this->m_DrawTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
+			glBindImageTexture(1, this->m_DrawTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);		
 
 			glBindVertexArray(this->m_VAO);
 
-			this->m_Shader.Use();
+			this->m_PlotShader.Use();
 
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, imageTextureID);
@@ -105,11 +105,11 @@ namespace Interface
 		{
 			if (this->m_ShowWindow)
 			{
-				ImGui::Begin("RGB Parade", (bool*)&this->m_ShowWindow);
+				ImGui::Begin("RGB Waveform", (bool*)&this->m_ShowWindow);
 				{
 					const ImVec4 tint(1.0f, 1.0f, 1.0f, 1.0f);
 					const ImVec4 borderColor(0.0f, 0.0f, 0.0f, 1.0f);
-					const ImVec2 size = ImVec2(this->m_Width, this->m_Height);
+					const ImVec2 size = ImVec2(ImGui::GetWindowSize().x, ImGui::GetWindowSize().y - 40.0f); //ImVec2(this->m_Width, this->m_Height);
 
 					ImGui::Image((void*)(intptr_t)this->m_DrawTexture, size, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), tint, borderColor);
 				}

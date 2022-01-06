@@ -136,5 +136,12 @@ namespace Utils
 
             return false;
         }
+
+        OPENVIEWER_STATIC_FUNC std::string ExpandCwd(const std::string& pathToExpand) noexcept
+        {
+            std::string cwd = std::filesystem::current_path().string();
+            Str::CleanOSPath(cwd);
+            return cwd + pathToExpand;
+        }
     } // End namespace Fs
 } // End namespace Utils

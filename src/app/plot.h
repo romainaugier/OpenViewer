@@ -21,7 +21,7 @@ namespace Interface
 	{
 		struct Parade
 		{
-			Utils::GL::Shader m_Shader;
+			Utils::GL::Shader m_PlotShader;
 
 			GLuint m_RenderTexture;
 			GLuint m_DrawTexture;

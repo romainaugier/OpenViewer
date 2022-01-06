@@ -74,7 +74,7 @@ namespace Core
 
         Utils::Str::Split(views, activeViews, ',');
 
-        for (auto& view : views) Utils::Str::Replace(view, " ", "");
+        for (auto& view : views) Utils::Str::RemoveSpaces(view);
 
         this->m_Views = std::move(views);
     }
@@ -92,7 +92,7 @@ namespace Core
             
             if (tmp.empty()) break;
 
-            Utils::Str::Replace(tmp, " ", "");
+            Utils::Str::RemoveSpaces(tmp);
 
             this->m_Views.push_back(tmp);
 
@@ -112,7 +112,7 @@ namespace Core
 
         Utils::Str::Split(displays, activeDisplays, ',');
 
-        for (auto& display : displays) Utils::Str::Replace(display, " ", "");
+        for (auto& display : displays) Utils::Str::RemoveSpaces(display);
 
         this->m_Displays = std::move(displays);
     }

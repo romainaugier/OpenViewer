@@ -6,7 +6,7 @@
 
 #include "imgui.h"
 
-#include "utils/decl.h"
+#include "utils/filesystem_utils.h"
 
 // Borrowed from https://github.com/ocornut/imgui/issues/707#issuecomment-917151020
 
@@ -94,5 +94,12 @@ namespace Interface
     style.GrabRounding                      = 3;
     style.LogSliderDeadzone                 = 4;
     style.TabRounding                       = 4;
+    }
+
+    OPENVIEWER_STATIC_FUNC void GetFonts() noexcept
+    {
+        ImGuiIO io = ImGui::GetIO();
+
+        io.Fonts->AddFontFromFileTTF(Utils::Fs::ExpandCwd("/resources/fonts/OpenSans/OpenSans-Light.ttf").c_str(), 16.0f);
     }
 } // End namespace Interface
