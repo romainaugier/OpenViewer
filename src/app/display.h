@@ -17,7 +17,7 @@
 #include "OpenEXR/half.h"
 #include <immintrin.h>
 
-#include "plot.h"
+#include "scopes.h"
 #include "core/loader.h"
 #include "core/ocio.h"
 #include "utils/profiler.h"

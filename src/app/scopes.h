@@ -7,7 +7,12 @@
 
 #include <stdint.h>
 
+#ifdef OPENVIEWER_WIN
 #include "gl/glew.h"
+#elif OPENVIEWER_LINUX
+#include "GL/glew.h"
+#endif
+
 #include "implot.h"
 #include "imgui.h"
 
@@ -17,11 +22,11 @@
 
 namespace Interface
 {
-	namespace Plot
+	namespace Scopes
 	{
-		struct Parade
+		struct Waveform
 		{
-			Utils::GL::Shader m_PlotShader;
+			Utils::GL::Shader m_ScopeShader;
 
 			GLuint m_RenderTexture;
 			GLuint m_DrawTexture;
@@ -38,14 +43,14 @@ namespace Interface
 
 			void Initialize() noexcept;
 
-			void Update(const GLuint imageTextureID) noexcept;
+			void Update(const GLuint imageTextureID, const uint16_t imageWidth, const uint16_t imageHeight) noexcept;
 
 			void Draw() const noexcept;
 
 			void Release() noexcept;
 		};
 
-		struct Waveform
+		struct Parade
 		{
 
 		};

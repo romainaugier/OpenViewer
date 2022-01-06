@@ -17,6 +17,10 @@
 #endif
 #endif
 
+#ifdef __linux__
+#include <execinfo.h>
+#endif
+
 #ifdef IMGUI_CONSOLE
 #include "imgui.h"
 #endif

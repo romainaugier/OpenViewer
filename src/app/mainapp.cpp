@@ -136,8 +136,8 @@ int application(int argc, char** argv)
     Interface::MediaExplorer mediaExplorerWindow(&loader, &logger);
     Interface::ImPlaybar playbar(&loader, ImVec2(0.0f, 1.0f));
     Interface::Menubar menubar;
-    Interface::Plot::Parade rgbParade;
-    rgbParade.Initialize();
+    Interface::Scopes::Waveform waveform;
+    waveform.Initialize();
 
     application.SetMenubar(&menubar);
     application.SetPlaybar(&playbar);
@@ -206,6 +206,9 @@ int application(int argc, char** argv)
         
         for(auto[id, display] : application.m_Displays)
         {
+            // One info window per display
+            const Core::Image currentImage = *application.m_Loader->GetImage(frameIndex);
+
             if (changeHappened || playbar.m_Update) 
             {
                 const auto startDpUpdate = profiler.Start();
@@ -218,18 +221,15 @@ int application(int argc, char** argv)
                 const auto endDpUpdate = profiler.End();
                 profiler.Time("Displays Update", startDpUpdate, endDpUpdate);
 
-                rgbParade.Update(display->m_TransformedTexture);
+                waveform.Update(display->m_TransformedTexture, currentImage.m_Xres, currentImage.m_Yres);
             }
 
             display->Draw(frameIndex);
 
-            // One info window per display
-            const Core::Image currentImage = *application.m_Loader->GetImage(frameIndex);
-
             imageInfosWindow.Draw(currentImage, application.showImageInfosWindow);
             pixelInfosWindow.Draw(&loader, currentImage, display, application.showPixelInfosWindow);
 
-            rgbParade.Draw();
+            waveform.Draw();
         }
 
         // settings windows

@@ -2,26 +2,24 @@
 // Copyright (c) 2021 Romain Augier
 // All rights reserved.
 
-#include "plot.h"
+#include "scopes.h"
 
 namespace Interface
 {
-	namespace Plot
+	namespace Scopes
 	{
-		void Parade::Initialize() noexcept
+		void Waveform::Initialize() noexcept
 		{
 			// Load and compile shaders
 			std::string currentPath = std::filesystem::current_path().string();
 
 			Utils::Str::CleanOSPath(currentPath);
 
-			const std::string vertexShaderPath = Utils::Fs::ExpandCwd("/shaders/common.vert");
+			const std::string vertexShaderPath = Utils::Fs::ExpandCwd("/shaders/parade.vert");
 			
 			const std::string plotFragShaderPath = Utils::Fs::ExpandCwd("/shaders/parade.frag");
 
-			const std::string resetFragShaderPath = Utils::Fs::ExpandCwd("/shaders/reset.frag");
-
-			this->m_PlotShader.LoadAndCompile(vertexShaderPath.c_str(), plotFragShaderPath.c_str());
+			this->m_ScopeShader.LoadAndCompile(vertexShaderPath.c_str(), plotFragShaderPath.c_str());
 
 			// Generate the image for load/store
 			glGenTextures(1, &this->m_DrawTexture);
@@ -78,30 +76,36 @@ namespace Interface
 			glEnableVertexAttribArray(1);
 		}
 
-		void Parade::Update(const GLuint imageTextureID) noexcept
+		void Waveform::Update(const GLuint imageTextureID, const uint16_t imageWidth, const uint16_t imageHeight) noexcept
 		{
 			glClearTexImage(this->m_DrawTexture, 0, GL_RGBA, GL_FLOAT, NULL);
 
 			// Bind the image texture at binding point 1
 			glBindImageTexture(1, this->m_DrawTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);		
 
-			glBindVertexArray(this->m_VAO);
+			// glBindVertexArray(this->m_VAO);
 
-			this->m_PlotShader.Use();
+			this->m_ScopeShader.Use();
+			this->m_ScopeShader.SetInt("width", this->m_Width);
+			this->m_ScopeShader.SetInt("height", this->m_Height);
+			this->m_ScopeShader.SetInt("imageWidth", imageWidth);
+			this->m_ScopeShader.SetInt("imageHeight", imageHeight);
 
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, imageTextureID);
 			
-			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+			// glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+			glDrawArrays(GL_POINTS, 0, this->m_Width * this->m_Height);
 
 			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-			glBindVertexArray(0);
+			// glBindVertexArray(0);
 
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 
-		void Parade::Draw() const noexcept
+		void Waveform::Draw() const noexcept
 		{
 			if (this->m_ShowWindow)
 			{
@@ -117,7 +121,7 @@ namespace Interface
 			}
 		}
 
-		void Parade::Release() noexcept
+		void Waveform::Release() noexcept
 		{
 			glDeleteVertexArrays(1, &this->m_VAO);
 			glDeleteBuffers(1, &this->m_VBO);
