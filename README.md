@@ -42,8 +42,8 @@ If you want to build the project and match the dependencies versions I use to de
 You first need to install vcpkg and OpenViewer's dependencies. Depending on your machine capabilities, it can take a non negligeable amount of time to build, so take a coffee and relax until everything is built.
 ### Linux
 ```shell
-# Needed to build glew and link glu with the app
-sudo apt-get install libxmu-dev libxi-dev libgl-dev libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev libxrandr-dev libxxf86vm-dev
+# Needed to build glew, glfw3 and link glu with the app
+sudo apt-get install libxmu-dev libxi-dev libgl-dev libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev libxrandr-dev libxxf86vm-dev libxinerama-dev libxcursor-dev xorg-dev
 
 # Required to build ffmpeg with vcpkg
 sudo apt-get install nasm

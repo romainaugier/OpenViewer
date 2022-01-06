@@ -28,7 +28,7 @@ jobs:
       run: sudo apt-get install nasm
 
     - name: Install GL dependencies
-      run: sudo apt-get install libxmu-dev libxi-dev libgl-dev libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev libxrandr-dev libxxf86vm-dev
+      run: sudo apt-get install libxmu-dev libxi-dev libgl-dev libglfw3-dev libgl1-mesa-dev libglu1-mesa-dev mesa-common-dev libxrandr-dev libxxf86vm-dev libxinerama-dev libxcursor-dev xorg-dev
     
     - name: Install OpenImageIO
       run: $VCPKG_ROOT/vcpkg install openimageio[ffmpeg,libraw]:x64-linux --recurse
