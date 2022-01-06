@@ -26,51 +26,12 @@ namespace Interface
 			// Generate the image for load/store
 			glGenTextures(1, &this->m_DrawTexture);
 			glBindTexture(GL_TEXTURE_2D, this->m_DrawTexture);
-			glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA8UI, this->m_Width, this->m_Height);
+			glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, this->m_Width, this->m_Height);
 			glBindTexture(GL_TEXTURE_2D, 0);
-
-			// Generate the frame buffer object
-			glGenFramebuffers(1, &this->m_FBO);
 
 			// Generate the color attachement texture
 			glGenTextures(1, &this->m_RenderTexture);
 			glBindTexture(GL_TEXTURE_2D, this->m_RenderTexture);
-			glTexImage2D(GL_TEXTURE_2D, 
-						 0, 
-						 GL_RGB8,
-						 this->m_Width, 
-						 this->m_Height, 
-						 0, 
-						 GL_RGB, 
-						 GL_UNSIGNED_BYTE, 
-						 nullptr);
-
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-			// Generate the render buffer object
-			glGenRenderbuffers(1, &this->m_RBO);
-			glBindRenderbuffer(GL_RENDERBUFFER, this->m_RBO);
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, this->m_Width, this->m_Height);
-
-			// Attach the texture and the frame buffer
-			glBindFramebuffer(GL_FRAMEBUFFER, this->m_FBO);
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, this->m_RenderTexture, 0);
-			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, this->m_RBO);
-
-			// Verify that the framebuffer is complete
-			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) 
-			{
-				StaticErrorConsoleLog("[DISPLAY] : OPENGL Framebuffer is not complete.");
-			}
-
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
-			glBindRenderbuffer(GL_RENDERBUFFER, 0);
-			glBindTexture(GL_TEXTURE_2D, 0);
-
-			// Generate the texture to process in the framebuffer
-			glGenTextures(1, &this->m_DrawTexture);
-			glBindTexture(GL_TEXTURE_2D, this->m_DrawTexture);
 			glTexImage2D(GL_TEXTURE_2D, 
 						 0, 
 						 GL_RGB8,
@@ -119,35 +80,25 @@ namespace Interface
 
 		void Parade::Update(const GLuint imageTextureID) noexcept
 		{
-			// Bind the image texture at binding point 3
-			glBindImageTexture(0, this->m_DrawTexture, 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8UI);
+			glClear(GL_COLOR_BUFFER_BIT);
 
-			// Bind the framebuffer
-			glBindFramebuffer(GL_FRAMEBUFFER, this->m_FBO); 
-			glViewport(0, 0, this->m_Width, this->m_Height);
-			glDisable(GL_DEPTH_TEST);
+			// Bind the image texture at binding point 1
+			glBindImageTexture(1, this->m_DrawTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);
 
-			// Clear the framebuffer
-			glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			// Draw the quad
-			//glEnable(GL_TEXTURE_2D);
+			glBindVertexArray(this->m_VAO);
 
 			this->m_Shader.Use();
 
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, imageTextureID);
-			glBindVertexArray(this->m_VAO);
+			
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
 			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
 			glBindVertexArray(0);
+
 			glBindTexture(GL_TEXTURE_2D, 0);
-
-			//glDisable(GL_TEXTURE_2D);
-
-			// Unbind frame buffer object and clear
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		}
 
 		void Parade::Draw() const noexcept

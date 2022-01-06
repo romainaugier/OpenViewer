@@ -24,6 +24,7 @@
 #include "mediaexplorer.h"
 #include "core/loader.h"
 #include "core/parser.h"
+#include "style.h"
 
 int application(int argc, char** argv);
 

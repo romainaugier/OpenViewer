@@ -21,8 +21,6 @@ namespace Interface
 	{	
 		if (showPlaybackWindow)
 		{
-			ImGui::SetNextWindowBgAlpha(settings.interface_windows_bg_alpha);
-
 			ImGui::Begin("Playback Settings", &showPlaybackWindow);
 			{
 				ImGui::InputInt("FPS", (int*)&playbar.m_FrameRate);
@@ -32,8 +30,6 @@ namespace Interface
 
 		if (showOcioWindow)
 		{
-			ImGui::SetNextWindowBgAlpha(settings.interface_windows_bg_alpha);
-		
 			ImGui::Begin("OCIO Settings", &showOcioWindow);
 			{
 				ImGui::Text("Current configuration : %s", settings.current_config);
@@ -78,19 +74,22 @@ namespace Interface
 
 		if (showInterfaceWindow)
 		{
-			ImGui::SetNextWindowBgAlpha(settings.interface_windows_bg_alpha);
-			
 			ImGui::Begin("Interface Settings", &showInterfaceWindow);
 			{
 				ImGui::InputFloat("Background Alpha", &settings.interface_windows_bg_alpha);
+				if (ImGui::IsItemEdited())
+				{
+					ImVec4* colors = ImGui::GetStyle().Colors;
+    				ImVec4 tmpColor = colors[ImGuiCol_WindowBg];
+					tmpColor.w = settings.interface_windows_bg_alpha;
+					colors[ImGuiCol_WindowBg] = tmpColor;
+				}
 			}
 			ImGui::End();
 		}
 
 		if (showDebugWindow)
 		{
-			ImGui::SetNextWindowBgAlpha(settings.interface_windows_bg_alpha);
-		
 			ImGui::Begin("Debug", &showDebugWindow);
 			{
 				// Log Level

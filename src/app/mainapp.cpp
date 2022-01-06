@@ -74,7 +74,7 @@ int application(int argc, char** argv)
     ImGuiIO& io = ImGui::GetIO(); (void)io;
 
     // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
+    Interface::DarkTheme();
 
     // Docking
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;

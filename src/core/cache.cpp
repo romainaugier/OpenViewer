@@ -203,7 +203,7 @@ namespace Core
     
     void ImageCache::Resize(const size_t newSize, const bool sizeInMB) noexcept
     {
-        const uint64_t newSizeBytes = sizeInMB ? newSize * 1000000 : newSize;
+        const uint64_t newSizeBytes = sizeInMB ? newSize * 1000000 : newSize + 1000000; // We add one MB to be sure it fits in case of rounding/error
         
         OvFree(this->m_MemoryArena);
         

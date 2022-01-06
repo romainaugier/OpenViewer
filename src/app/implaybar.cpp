@@ -175,8 +175,8 @@ namespace Interface
 
 				if (this->m_CachedIndices[static_cast<int>(x)])
 				{
-					drawList->AddQuadFilled(ImVec2(timelineP0.x + (step * x) + 2.0f, timelineP1.y - 10.0f),
-											ImVec2(timelineP0.x + (step * (x + 1.0f)) + 2.0f, timelineP1.y - 10.0f),
+					drawList->AddQuadFilled(ImVec2(timelineP0.x + (step * x) + 2.0f, timelineP1.y - 2.5f),
+											ImVec2(timelineP0.x + (step * (x + 1.0f)) + 2.0f, timelineP1.y - 2.5f),
 											ImVec2(timelineP0.x + (step * (x + 1.0f)) + 2.0f, timelineP1.y),
 											ImVec2(timelineP0.x + (step * x) + 2.0f, timelineP1.y), LIGHTGREEN);
 				}
@@ -366,11 +366,11 @@ namespace Interface
 
 			char frameNumberText[32];
 			Utils::Str::Format(frameNumberText, "%02d:%02d:%02d:%02d", hours, minutes, seconds, frame);
-			drawList->AddText(nullptr, 20.0f, ImVec2(frameInfosP0.x + 10.0f, frameInfosP0.y + 10.0f), LIGHTGRAY, frameNumberText);
+			drawList->AddText(nullptr, 20.0f, ImVec2(frameInfosP0.x + 10.0f, frameInfosP0.y + 10.0f), WHITE, frameNumberText);
 
 			char framerateText[4];
 			Utils::Str::Format(framerateText, "%d", this->m_FrameRate);
-			drawList->AddText(nullptr, 20.0f, ImVec2(frameInfosP0.x + 170.0f, frameInfosP0.y + 10.0f), LIGHTGRAY, framerateText);
+			drawList->AddText(nullptr, 20.0f, ImVec2(frameInfosP0.x + 170.0f, frameInfosP0.y + 10.0f), WHITE, framerateText);
 
 			ImGui::PopClipRect();
 			
