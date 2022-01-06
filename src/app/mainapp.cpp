@@ -24,6 +24,7 @@ int application(int argc, char** argv)
     // Loader/Cache
     Core::Loader loader(&logger, &profiler);
     loader.Initialize(false);
+    av_register_all();
 
     Interface::Application application(&logger, &loader, &ocio);
 
@@ -169,7 +170,6 @@ int application(int argc, char** argv)
         // update memory profiler
         profiler.MemUsage("Application Total", ToMB(GetCurrentRss()));
         profiler.MemUsage("Application", ToMB(GetCurrentRss()) - ToMB(loader.m_Cache->m_BytesSize));
-        profiler.MemUsage("Ocio Module", ToMB((sizeof(ocio) + ocio.GetSize()) / 8));
         profiler.MemUsage("Cache", ToMB(loader.m_Cache->m_BytesSize));
 
         // The current media changed, reset the playbar and flush the cache

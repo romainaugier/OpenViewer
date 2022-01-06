@@ -10,7 +10,7 @@ namespace Interface
 	// Little method to get the current ocio config path
 	void Settings_Windows::GetOcioConfig(Core::Ocio& ocio) noexcept
 	{
-		const std::string tmp = ocio.config_path;
+		const std::string tmp = ocio.m_ConfigPath;
 		char* path = new char [tmp.size() + 1];
 		memcpy(path, tmp.c_str(), tmp.size() + 1);
 		settings.current_config = path;

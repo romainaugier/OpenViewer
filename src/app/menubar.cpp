@@ -320,54 +320,54 @@ namespace Interface
 
 				ImGui::Text("Channels");
 				ImGui::PushID(0);
-				const float channelsWidth = ImGui::CalcTextSize(channels[ocio.current_channel_idx]).x + 30.0f;
+				const float channelsWidth = ImGui::CalcTextSize(channels[ocio.m_CurrentChannelIdx]).x + 30.0f;
 				ImGui::SetNextItemWidth(channelsWidth);
-				ImGui::Combo("", &ocio.current_channel_idx, &channels[0], IM_ARRAYSIZE(channels));
+				ImGui::Combo("", &ocio.m_CurrentChannelIdx, &channels[0], IM_ARRAYSIZE(channels));
 				ImGui::PopID();
 
 				if (ImGui::IsItemEdited())
 				{
-					if (ocio.current_channel_idx == 0) // RGB
+					if (ocio.m_CurrentChannelIdx == 0) // RGB
 					{
-						ocio.channel_hot[0] = 1;
-						ocio.channel_hot[1] = 1;
-						ocio.channel_hot[2] = 1;
-						ocio.channel_hot[3] = 1;
+						ocio.m_ChannelsHot[0] = 1;
+						ocio.m_ChannelsHot[1] = 1;
+						ocio.m_ChannelsHot[2] = 1;
+						ocio.m_ChannelsHot[3] = 1;
 					}
-					else if (ocio.current_channel_idx == 1) // R
+					else if (ocio.m_CurrentChannelIdx == 1) // R
 					{
-						ocio.channel_hot[0] = 1;
-						ocio.channel_hot[2] = 0;
-						ocio.channel_hot[3] = 0;
-						ocio.channel_hot[1] = 0;
+						ocio.m_ChannelsHot[0] = 1;
+						ocio.m_ChannelsHot[2] = 0;
+						ocio.m_ChannelsHot[3] = 0;
+						ocio.m_ChannelsHot[1] = 0;
 					}
-					else if (ocio.current_channel_idx == 2) // G
+					else if (ocio.m_CurrentChannelIdx == 2) // G
 					{
-						ocio.channel_hot[0] = 0;
-						ocio.channel_hot[1] = 1;
-						ocio.channel_hot[2] = 0;
-						ocio.channel_hot[3] = 0;
+						ocio.m_ChannelsHot[0] = 0;
+						ocio.m_ChannelsHot[1] = 1;
+						ocio.m_ChannelsHot[2] = 0;
+						ocio.m_ChannelsHot[3] = 0;
 					}						  
-					else if (ocio.current_channel_idx == 3) // B
+					else if (ocio.m_CurrentChannelIdx == 3) // B
 					{
-						ocio.channel_hot[0] = 0;
-						ocio.channel_hot[1] = 0;
-						ocio.channel_hot[2] = 1;
-						ocio.channel_hot[3] = 0;
+						ocio.m_ChannelsHot[0] = 0;
+						ocio.m_ChannelsHot[1] = 0;
+						ocio.m_ChannelsHot[2] = 1;
+						ocio.m_ChannelsHot[3] = 0;
 					}
-					else if (ocio.current_channel_idx == 4) // A
+					else if (ocio.m_CurrentChannelIdx == 4) // A
 					{
-						ocio.channel_hot[0] = 0;
-						ocio.channel_hot[1] = 0;
-						ocio.channel_hot[2] = 0;
-						ocio.channel_hot[3] = 1;
+						ocio.m_ChannelsHot[0] = 0;
+						ocio.m_ChannelsHot[1] = 0;
+						ocio.m_ChannelsHot[2] = 0;
+						ocio.m_ChannelsHot[3] = 1;
 					}
-					else if (ocio.current_channel_idx == 5) // Luminance
+					else if (ocio.m_CurrentChannelIdx == 5) // Luminance
 					{
-						ocio.channel_hot[0] = 1;
-						ocio.channel_hot[1] = 1;
-						ocio.channel_hot[2] = 1;
-						ocio.channel_hot[3] = 0;
+						ocio.m_ChannelsHot[0] = 1;
+						ocio.m_ChannelsHot[1] = 1;
+						ocio.m_ChannelsHot[2] = 1;
+						ocio.m_ChannelsHot[3] = 0;
 					}
 
 					ocio.UpdateProcessor();
@@ -382,18 +382,26 @@ namespace Interface
 				// Role
 				ImGui::Text("Role");
 				ImGui::PushID(1);
-				const float roleWidth = ImGui::CalcTextSize(ocio.current_role).x + 30.0f;
+				const float roleWidth = ImGui::CalcTextSize(ocio.m_CurrentRole.c_str()).x + 30.0f;
 				ImGui::SetNextItemWidth(roleWidth);
-				ImGui::Combo("", &ocio.current_role_idx, &ocio.roles[0], ocio.roles.size());
+				
+				// ImGui::Combo("", &ocio.m_CurrentRoleIdx, &ocio.m_Roles[0], ocio.m_Roles.size());
+
+				ImGui::Combo("", &ocio.m_CurrentRoleIdx, 
+					         [](void* vec, int idx, const char** out_text){
+					         	std::vector<std::string>* vector = reinterpret_cast<std::vector<std::string>*>(vec);
+					         	if (idx < 0 || idx >= vector ->size()) return false;
+					         	*out_text = vector->at(idx).c_str();
+					         	return true;
+					         }, reinterpret_cast<void*>(&ocio.m_Roles), ocio.m_Roles.size());
+
 				ImGui::PopID();
 
 				if (ImGui::IsItemEdited())
 				{
-					ocio.current_role = ocio.roles[ocio.current_role_idx];
+					ocio.m_CurrentRole = ocio.m_Roles[ocio.m_CurrentRoleIdx];
 
 					ocio.UpdateProcessor();
-
-					//display.Update(loader, ocio, playbar.playbar_frame);
 
 					change = true;
 				}
@@ -403,14 +411,24 @@ namespace Interface
 				// Display
 				ImGui::Text("Display");
 				ImGui::PushID(2);
-				const float displayWidth = ImGui::CalcTextSize(ocio.current_display).x + 30.0f;
+				const float displayWidth = ImGui::CalcTextSize(ocio.m_CurrentDisplay.c_str()).x + 30.0f;
 				ImGui::SetNextItemWidth(displayWidth);
-				ImGui::Combo("", &ocio.current_display_idx, &ocio.displays[0], ocio.displays.size());
+				
+				// ImGui::Combo("", &ocio.m_CurrentDisplayIdx, &ocio.m_Displays[0], ocio.m_Displays.size());
+				
+				ImGui::Combo("", &ocio.m_CurrentDisplayIdx, 
+					         [](void* vec, int idx, const char** out_text){
+					         	std::vector<std::string>* vector = reinterpret_cast<std::vector<std::string>*>(vec);
+					         	if (idx < 0 || idx >= vector ->size()) return false;
+					         	*out_text = vector->at(idx).c_str();
+					         	return true;
+					         }, reinterpret_cast<void*>(&ocio.m_Displays), ocio.m_Displays.size());
+
 				ImGui::PopID();
 
 				if (ImGui::IsItemEdited())
 				{
-					ocio.current_display = ocio.displays[ocio.current_display_idx];
+					ocio.m_CurrentDisplay = ocio.m_Displays[ocio.m_CurrentDisplayIdx];
 
 					ocio.GetOcioDisplayViews();
 					ocio.UpdateProcessor();
@@ -425,14 +443,24 @@ namespace Interface
 				// View
 				ImGui::Text("View");
 				ImGui::PushID(3);
-				const float viewWidth = ImGui::CalcTextSize(ocio.current_view).x + 30.0f;
+				const float viewWidth = ImGui::CalcTextSize(ocio.m_CurrentView.c_str()).x + 30.0f;
 				ImGui::SetNextItemWidth(viewWidth);
-				ImGui::Combo("", &ocio.current_view_idx, &ocio.views[0], ocio.views.size());
+
+				// ImGui::Combo("", &ocio.m_CurrentViewIdx, &ocio.m_Views[0], ocio.m_Views.size());
+				
+				ImGui::Combo("", &ocio.m_CurrentViewIdx, 
+					         [](void* vec, int idx, const char** out_text){
+					         	std::vector<std::string>* vector = reinterpret_cast<std::vector<std::string>*>(vec);
+					         	if (idx < 0 || idx >= vector ->size()) return false;
+					         	*out_text = vector->at(idx).c_str();
+					         	return true;
+					         }, reinterpret_cast<void*>(&ocio.m_Views), ocio.m_Views.size());
+
 				ImGui::PopID();
 
 				if (ImGui::IsItemEdited())
 				{
-					ocio.current_view = ocio.views[ocio.current_view_idx];
+					ocio.m_CurrentView = ocio.m_Views[ocio.m_CurrentViewIdx];
 					ocio.UpdateProcessor();
 
 					//display.Update(loader, ocio, playbar.playbar_frame);
@@ -445,14 +473,24 @@ namespace Interface
 				// Look
 				ImGui::Text("Look");
 				ImGui::PushID(4);
-				const float lookWidth = ImGui::CalcTextSize(ocio.current_look).x + 30.0f;
+				const float lookWidth = ImGui::CalcTextSize(ocio.m_CurrentLook.c_str()).x + 30.0f;
 				ImGui::SetNextItemWidth(lookWidth);
-				ImGui::Combo("", &ocio.current_look_idx, &ocio.looks[0], ocio.looks.size());
+				
+				//ImGui::Combo("", &ocio.m_CurrentLookIdx, &ocio.m_Looks[0], ocio.m_Looks.size());
+				
+				ImGui::Combo("", &ocio.m_CurrentLookIdx, 
+					         [](void* vec, int idx, const char** out_text){
+					         	std::vector<std::string>* vector = reinterpret_cast<std::vector<std::string>*>(vec);
+					         	if (idx < 0 || idx >= vector ->size()) return false;
+					         	*out_text = vector->at(idx).c_str();
+					         	return true;
+					         }, reinterpret_cast<void*>(&ocio.m_Looks), ocio.m_Looks.size());
+				
 				ImGui::PopID();
 
 				if (ImGui::IsItemEdited())
 				{
-					ocio.current_look = ocio.looks[ocio.current_look_idx];
+					ocio.m_CurrentLook = ocio.m_Looks[ocio.m_CurrentLookIdx];
 					ocio.UpdateProcessor();
 
 					//display.Update(loader, ocio, playbar.playbar_frame);
@@ -466,7 +504,7 @@ namespace Interface
 				ImGui::Text("Exp");
 				ImGui::PushID(5);
 				ImGui::SetNextItemWidth(150.0f);
-				ImGui::SliderFloat("", &ocio.exposure_stops, -10.0f, 10.0f);
+				ImGui::SliderFloat("", &ocio.m_ExposureStops, -10.0f, 10.0f);
 				ImGui::PopID();
 
 				if (ImGui::IsItemEdited())
@@ -484,7 +522,7 @@ namespace Interface
 				ImGui::Text("Gamma");
 				ImGui::PushID(6);
 				ImGui::SetNextItemWidth(150.0f);
-				ImGui::SliderFloat("", &ocio.gamma, 0.0f, 4.0f);
+				ImGui::SliderFloat("", &ocio.m_Gamma, 0.0f, 4.0f);
 				ImGui::PopID();
 
 				if (ImGui::IsItemEdited())
@@ -501,8 +539,8 @@ namespace Interface
 				// Reset button for Exponent/Gamma
 				if (ImGui::Button("Reset"))
 				{
-					ocio.exposure_stops = 0.0f;
-					ocio.gamma = 1.0f;
+					ocio.m_ExposureStops = 0.0f;
+					ocio.m_Gamma = 1.0f;
 
 					ocio.UpdateProcessor();
 

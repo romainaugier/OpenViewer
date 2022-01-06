@@ -12,6 +12,14 @@
 #include "OpenImageIO/imageio.h"
 #include "OpenEXR/ImfRgbaFile.h"
 
+extern "C" {
+	#include <libavformat/avformat.h>
+	#include <libavcodec/avcodec.h>
+	#include <libavutil/avutil.h>
+	#include <libavutil/pixdesc.h>
+	#include <libswscale/swscale.h>
+}
+
 #include "imgui.h"
 
 #include "utils/string_utils.h"
@@ -55,7 +63,7 @@ namespace Core
 		uint32_t m_Yres = 0;
 		uint32_t m_Channels = 0;
 		uint32_t m_CacheIndex = 0; // zero means it is not cached
-		uint32_t m_Frame = 0; // used for reading video
+		uint32_t m_Frame = 0; // used for reading video streams
 		
 		FileType_ m_Type;
 		Format_ m_Format;

@@ -40,6 +40,8 @@ namespace Interface
 		GLuint m_RawTexture;
 		GLuint m_TransformedTexture;
 		GLuint m_FBO, m_RBO;
+
+		int32_t m_MediaID = -1;
 		
 		uint16_t m_Width;
 		uint16_t m_Height;

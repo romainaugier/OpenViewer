@@ -82,6 +82,9 @@ include_directories(dependencies/ociov2/include)
 # OpenImageIO
 find_package(OpenImageIO CONFIG REQUIRED)
 
+# FFMPEG
+find_package(FFMPEG REQUIRED)
+
 # Hack to get the vcpkg include directory working
 find_path(VCPKG_INCLUDE_DIR zlib.h)
 include_directories(${VCPKG_INCLUDE_DIR})

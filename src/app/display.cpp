@@ -104,7 +104,7 @@ namespace Interface
 					 this->m_Loader->m_Cache->m_Items[1].m_DataPtr); // The first item starts at 1, index 0 is to signal it is not cached
 
 		// OCIO GPU Processing
-		if (ocio.use_gpu > 0)
+		if (ocio.m_UseGPU)
 		{
 			auto ocio_start = this->m_Profiler->Start();
 
@@ -184,7 +184,7 @@ namespace Interface
 					 this->m_Loader->m_Cache->m_Items[image.m_CacheIndex].m_DataPtr); // The first item starts at 1, index 0 is to signal it is not cached
 
 		// OCIO GPU Processing
-		if (ocio.use_gpu > 0)
+		if (ocio.m_UseGPU)
 		{
 			auto ocio_start = this->m_Profiler->Start();
 
@@ -279,7 +279,7 @@ namespace Interface
 				this->m_Profiler->Time("Display Texture Update Time", texUpdateStart, texUpdateEnd);
 
 				// OCIO GPU Processing
-				if (ocio.use_gpu > 0)
+				if (ocio.m_UseGPU)
 				{
 					const auto ocio_start = this->m_Profiler->Start();
 

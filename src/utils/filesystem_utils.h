@@ -107,5 +107,34 @@ namespace Utils
 
             fileSequence = std::move(fileSeq);
         }
+
+        OPENVIEWER_STATIC_FUNC bool IsImage(const std::string& path) noexcept
+        {
+            constexpr char* imageExtensions[] = { "exr", "jpg", "jpeg", "bmp", "tif", "tiff", "png",
+                                                  "raw", "cr2", "arw", "sr2", "nef", "orf", "psd",
+                                                  "bmp", "ppm", "cin", "dds", "dcm", "dpx", "fits",
+                                                  "hdr", "heic", "avif", "ico", "iff", "jp2", "j2k",
+                                                  "pbm", "pgm", "ptex", "rla", "pic", "tga", "tpic",
+                                                  "zfile" };
+
+            for (uint8_t i = 0; i < OVARRAYSIZE(imageExtensions); i++)
+            {
+                if (Str::EndsWith(path, imageExtensions[i])) return true;
+            }
+
+            return false;
+        }
+
+        OPENVIEWER_STATIC_FUNC bool IsVideo(const std::string& path) noexcept
+        {
+            constexpr char* videoExtensions[] = { "mp4", "m4p", "m4v", "mov", "qt", "avi", "yuv", "mkv" };
+
+            for (uint8_t i = 0; i < OVARRAYSIZE(videoExtensions); i++)
+            {
+                if (Str::EndsWith(path, videoExtensions[i])) return true;
+            }
+
+            return false;
+        }
     } // End namespace Fs
 } // End namespace Utils

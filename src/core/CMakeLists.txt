@@ -9,6 +9,7 @@ target_link_libraries(core OpenImageIO::OpenImageIO OpenImageIO::OpenImageIO_Uti
 target_link_libraries(core wuffs utils)
 target_link_libraries(core IlmBase::Iex IlmBase::Half IlmBase::Imath IlmBase::IexMath)
 target_link_libraries(core OpenEXR::IlmImf OpenEXR::IlmImfUtil OpenEXR::IlmImfConfig)
+target_link_libraries(core ${FFMPEG_LIBRARIES})
 # target_link_libraries(core OpenColorIO::OpenColorIO)
 target_link_libraries(core ocio_gpu_helper)
 

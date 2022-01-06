@@ -44,7 +44,12 @@
 #endif
 #endif
 
+// few utilities
+
 #define OPENVIEWER_STATIC_FUNC static
+
+// Borrowed from : https://stackoverflow.com/questions/4415524/common-array-length-macro-for-c
+#define OVARRAYSIZE(array) ((sizeof(array)/sizeof(0[array])) / ((size_t)(!(sizeof(array) % sizeof(0[array])))))
 
 // utility constants
 constexpr int SIZEOF_FLOAT = sizeof(float);

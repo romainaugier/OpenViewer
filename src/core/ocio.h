@@ -33,46 +33,61 @@ namespace Core
 {
     struct Ocio
     {
-        OCIO::ConstConfigRcPtr config;
-        OCIO::OpenGLBuilderRcPtr ogl_builder;
-        OCIO::ConstCPUProcessorRcPtr cpu;
-        OCIO::ConstGPUProcessorRcPtr gpu;
-        std::vector<const char*> views;
-        std::vector<const char*> displays;
-        std::vector<const char*> roles;
-        std::vector<const char*> looks;
-        const char* config_path = nullptr;
-        const char* current_view = nullptr;
-        const char* current_display = nullptr;
-        const char* current_role = nullptr;
-        const char* current_look = nullptr;
-        Logger* logger;
-        int channel_hot[4] = { 1, 1, 1, 1 };
-        int current_channel_idx = 0;
-        int current_view_idx = 0;
-        int current_display_idx = 0;
-        int current_role_idx = 0;
-        int current_look_idx = 0;
-        float exposure_stops = 0.0f;
-        float gamma = 1.0f;
-        unsigned int use_gpu : 1;
+        OCIO::ConstConfigRcPtr m_Config;
+        
+        OCIO::OpenGLBuilderRcPtr m_OGLBuilder;
+        
+        OCIO::ConstCPUProcessorRcPtr m_CPU;
+        OCIO::ConstGPUProcessorRcPtr m_GPU;
+
+        std::vector<std::string> m_Views;
+        std::vector<std::string> m_Displays;
+        std::vector<std::string> m_Roles;
+        std::vector<std::string> m_Looks;
+        
+        std::string m_ConfigPath;
+        std::string m_CurrentView;
+        std::string m_CurrentDisplay;
+        std::string m_CurrentRole;
+        std::string m_CurrentLook;
+        
+        Logger* m_Logger;
+        
+        int m_ChannelsHot[4] = { 1, 1, 1, 1 };
+        int m_CurrentChannelIdx = 0;
+        int m_CurrentViewIdx = 0;
+        int m_CurrentDisplayIdx = 0;
+        int m_CurrentRoleIdx = 0;
+        int m_CurrentLookIdx = 0;
+        
+        float m_ExposureStops = 0.0f;
+        float m_Gamma = 1.0f;
+        
+        bool m_UseGPU = true;
 
         Ocio(Logger* log)
         {
-            use_gpu = 1;
-            logger = log;
+            m_Logger = log;
         }
 
-        uint32_t GetSize() const noexcept;
         void Initialize();
+
         void GetOcioActiveViews() noexcept;
+
         void GetOcioDisplayViews() noexcept;
+
         void GetOcioActiveDisplays() noexcept;
+
         void GetRoles() noexcept;
+
         void GetLooks() noexcept;
-        void ChangeConfig(const char* config_path);
+
+        void ChangeConfig(const char* configPath);
+
         void UpdateProcessor();
+
         void Process(const uint16_t width, const uint16_t height);
+
         void Release() noexcept;
     };
 } // End namespace Core
