@@ -52,5 +52,10 @@ OPENVIEWER_STATIC_FUNC void GLFWDropEventCallback(GLFWwindow* window, int count,
 OPENVIEWER_STATIC_FUNC void GLFWKeyEventCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     Interface::Application* app = static_cast<Interface::Application*>(glfwGetWindowUserPointer(window));
-    app->m_Shortcuts.Keys(window, key, scancode, action, mods);
+
+    if (action == GLFW_PRESS || action == GLFW_RELEASE) 
+    {
+        app->m_Shortcuts.Keys(window, key, scancode, action, mods);
+        app->HandleShortcuts();
+    }
 }

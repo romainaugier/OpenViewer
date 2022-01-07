@@ -103,7 +103,7 @@ namespace Core
 			}
 			else if(Utils::Str::EndsWith(fp, ".png"))
 			{
-				const bool hasAlpha = spec.alpha_channel >= 0;
+				const bool hasAlpha = spec.alpha_channel > -1;
 				this->m_Type = FileType_Png;
 				this->m_Format = hasAlpha ? Format_RGBA_U8 : Format_RGB_U8;
 				this->m_GLInternalFormat = hasAlpha ? GL_RGBA8 : GL_RGB8;
@@ -112,7 +112,7 @@ namespace Core
 				this->m_Xres = spec.width;
 				this->m_Yres = spec.height;
 				this->m_Channels = spec.nchannels;
-				this->m_Size = m_Xres * m_Yres * m_Channels;
+				this->m_Size = m_Xres * m_Yres * this->m_Channels;
 				this->m_Stride = m_Size * Size::Size8;
 			}
 			else if(Utils::Str::EndsWith(fp, ".jpg") || Utils::Str::EndsWith(fp, ".jpeg"))
@@ -182,7 +182,7 @@ namespace Core
 				this->m_Stride = this->m_Size * Size::Size16;
 			}
 
-			// in->close();
+			in->close();
 		}
 
 		void Release() noexcept;

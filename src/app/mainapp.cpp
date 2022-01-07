@@ -263,8 +263,6 @@ int application(int argc, char** argv)
             glfwMakeContextCurrent(backup_current_context);
         }
 
-        application.HandleShortcuts();
-
         glfwSwapBuffers(window);
     }
 
