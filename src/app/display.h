@@ -37,16 +37,19 @@ namespace Interface
 		ImVec2 m_DisplayPos = ImVec2(0.0f, 0.0f);
 		ImVec2 m_OldMousePos = ImVec2(0.0f, 0.0f);
 
+		Utils::GL::Shader m_AlphaBlendingShader;
+
 		GLuint m_RawTexture;
 		GLuint m_TransformedTexture;
+		GLuint m_DisplayTexture;
 		GLuint m_FBO, m_RBO;
 
 		int32_t m_MediaID = -1;
+		int32_t m_BackGroundMode = 0;
 		
 		uint16_t m_Width;
 		uint16_t m_Height;
 
-		uint8_t m_MipMapIndex;
 		uint8_t m_DisplayID = 0;
 
 		bool m_IsOpen = true;
@@ -62,15 +65,25 @@ namespace Interface
 		}
 
 		void Initialize(Core::Ocio& ocio) noexcept;
+
 		void ReInitialize(const Core::Image& image, Core::Ocio& ocio) noexcept;
+
 		void InitializeOpenGL(const Core::Image& image) noexcept;
+		
 		OPENVIEWER_FORCEINLINE void BindFBO() const noexcept;
+		
 		OPENVIEWER_FORCEINLINE void UnbindFBO() const noexcept;
+		
 		OPENVIEWER_FORCEINLINE void BindRBO() const noexcept;
+		
 		OPENVIEWER_FORCEINLINE void UnbindRBO() const noexcept;
+		
 		void Update(Core::Ocio& ocio, const uint32_t frameIndex) noexcept;
+		
 		void Draw(uint32_t frameIndex) noexcept;
+		
 		ImVec4 GetPixel(const uint16_t x, const uint16_t y) const noexcept;
+		
 		void Release() noexcept;
 	};
 } // End namespace Interface

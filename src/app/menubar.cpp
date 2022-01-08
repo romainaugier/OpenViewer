@@ -550,13 +550,37 @@ namespace Interface
 				}
 			}
 
+			// Display
+			else if (this->m_BarMode == 3)
+			{
+				if (app.m_DisplayCount > 0)
+				{
+					const ImVec2 availWidth = ImGui::GetContentRegionAvail();
+
+					ImGui::Text("This section is in progress");
+
+					ImGui::Dummy(ImVec2(10.0f, 10.0f));
+
+					ImGui::Text("Background");
+					static const char* backgroundModes[] = { "Black", "Gray", "Checker" };
+					ImGui::PushID(0);
+					ImGui::SetNextItemWidth(75.0f);
+					ImGui::Combo("", &app.m_Displays[1]->m_BackGroundMode, &backgroundModes[0], IM_ARRAYSIZE(backgroundModes));
+					ImGui::PopID();
+				}
+				else
+				{
+					ImGui::Text("No active display");
+				}
+			}
+
 			// Combo to select the bar mode
 
 			const ImVec2 avail_width = ImGui::GetContentRegionAvail();
 
 			ImGui::Dummy(ImVec2(avail_width.x - 100.0f, avail_width.y));
 
-			static const char* modes[] = {"Menu", "Cache", "Ocio"};
+			static const char* modes[] = {"Menu", "Cache", "OCIO", "Display"};
 
 			ImGui::PushID(99);
 			ImGui::SetNextItemWidth(100.0f);

@@ -45,6 +45,12 @@ namespace Interface
 
 		this->UnbindFBO();
 		this->UnbindRBO();
+
+		// Get the alpha blending shader
+		const std::string vertShaderPath = Utils::Fs::ExpandCwd("/shaders/alpha_blend.vert");
+		const std::string fragShaderPath = Utils::Fs::ExpandCwd("/shaders/alpha_blend.frag");
+
+		this->m_AlphaBlendingShader.LoadAndCompile(vertShaderPath.c_str(), fragShaderPath.c_str());
 	}
 
 	// Binds the display frame buffer object
@@ -81,9 +87,18 @@ namespace Interface
 		this->m_Width = initImage->m_Xres;
 		this->m_Height = initImage->m_Yres;
 
+		this->m_BackGroundMode = 2;
+
 		InitializeOpenGL(*initImage);
 
-		// Generate the display texture
+		// Generate the image to make the alpha blending
+		glGenTextures(1, &this->m_DisplayTexture);
+		glBindTexture(GL_TEXTURE_2D, this->m_DisplayTexture);
+		glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, this->m_Width, this->m_Height);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		// Generate the texture that reads the pixels from the image
+		// They are raw, meaning no transformation has been applied yet
 		glGenTextures(1, &this->m_RawTexture);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, this->m_RawTexture);
@@ -104,54 +119,71 @@ namespace Interface
 					 initImage->m_GLType, 
 					 this->m_Loader->m_Cache->m_Items[1].m_DataPtr); // The first item starts at 1, index 0 is to signal it is not cached
 
-		// OCIO GPU Processing
-		if (ocio.m_UseGPU)
-		{
-			auto ocio_start = this->m_Profiler->Start();
+		// OCIO transform
+		auto ocio_start = this->m_Profiler->Start();
 
-			// Bind the framebuffer
-			BindFBO();
-			glViewport(0, 0, this->m_Width, this->m_Height);
-			glEnable(GL_DEPTH_TEST);
+		// Bind the framebuffer
+		BindFBO();
+		glViewport(0, 0, this->m_Width, this->m_Height);
+		glEnable(GL_DEPTH_TEST);
 
-			// Clear the framebuffer
-			glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		// Clear the framebuffer
+		glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			// Update OCIO Processor and process the image
-			ocio.UpdateProcessor();
-			ocio.Process(this->m_Width, this->m_Height);
+		// Update OCIO Processor and process the image
+		ocio.UpdateProcessor();
+		ocio.Process(this->m_Width, this->m_Height);
 
-			// Draw the quad
-			glEnable(GL_TEXTURE_2D);
 
-			glPushMatrix();
-				glBegin(GL_QUADS);
-					glTexCoord2f(1.0f, 1.0f);
-					glVertex2f(1.0f, 1.0f);
+		// Draw the quad
+		glEnable(GL_TEXTURE_2D);
 
-					glTexCoord2f(1.0f, 0.0f);
-					glVertex2f(1.0f, -1.0f);
+		glPushMatrix();
+			glBegin(GL_QUADS);
+				glTexCoord2f(1.0f, 1.0f);
+				glVertex2f(1.0f, 1.0f);
 
-					glTexCoord2f(0.0f, 0.0f);
-					glVertex2f(-1.0f, -1.0f);
+				glTexCoord2f(1.0f, 0.0f);
+				glVertex2f(1.0f, -1.0f);
 
-					glTexCoord2f(0.0f, 1.0f);
-					glVertex2f(-1.0f, 1.0f);
-				glEnd();
-			glPopMatrix();
+				glTexCoord2f(0.0f, 0.0f);
+				glVertex2f(-1.0f, -1.0f);
 
-			glDisable(GL_TEXTURE_2D);
+				glTexCoord2f(0.0f, 1.0f);
+				glVertex2f(-1.0f, 1.0f);
+			glEnd();
+		glPopMatrix();
 
-			// Unbind frame buffer object and clear
-			UnbindFBO();
-			glDisable(GL_DEPTH_TEST);
+		glDisable(GL_TEXTURE_2D);
 
-			auto ocio_end = this->m_Profiler->End();
-			this->m_Profiler->Time("Ocio Transform Time", ocio_start, ocio_end);
-		}
+		// Unbind frame buffer object and clear
+		UnbindFBO();
+		glDisable(GL_DEPTH_TEST);
 
+		auto ocio_end = this->m_Profiler->End();
+		this->m_Profiler->Time("Ocio Transform Time", ocio_start, ocio_end);
+		
 		// Unbind our texture
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		// Now that we have the ocio transformed texture, make a correct alpha blending
+		// Bind the image texture at binding point 1
+		glBindImageTexture(1, this->m_DisplayTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);	
+
+		this->m_AlphaBlendingShader.Use();
+		this->m_AlphaBlendingShader.SetInt("mode", this->m_BackGroundMode);
+		this->m_AlphaBlendingShader.SetInt("width", this->m_Width);
+		this->m_AlphaBlendingShader.SetInt("height", this->m_Height);
+
+		// Bind the ocio transformed texture
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, this->m_TransformedTexture);
+
+		glDrawArrays(GL_POINTS, 0, this->m_Width * this->m_Height);
+
+		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
@@ -162,7 +194,18 @@ namespace Interface
 		this->m_Width = image.m_Xres;
 		this->m_Height = image.m_Yres;
 
+		// Delete all the textures
+		glDeleteTextures(1, &this->m_RawTexture);
+		glDeleteTextures(1, &this->m_TransformedTexture);
+		glDeleteTextures(1, &this->m_DisplayTexture);
+
 		InitializeOpenGL(image);
+
+		// Generate the image to make the alpha blending
+		glGenTextures(1, &this->m_DisplayTexture);
+		glBindTexture(GL_TEXTURE_2D, this->m_DisplayTexture);
+		glTexStorage2D(GL_TEXTURE_2D, 1, GL_RGBA32F, this->m_Width, this->m_Height);
+		glBindTexture(GL_TEXTURE_2D, 0);
 
 		// Generate the display texture
 		glGenTextures(1, &this->m_RawTexture);
@@ -184,54 +227,71 @@ namespace Interface
 					 image.m_GLType, 
 					 this->m_Loader->m_Cache->m_Items[image.m_CacheIndex].m_DataPtr); // The first item starts at 1, index 0 is to signal it is not cached
 
-		// OCIO GPU Processing
-		if (ocio.m_UseGPU)
-		{
-			auto ocio_start = this->m_Profiler->Start();
+		// OCIO transform
+		auto ocio_start = this->m_Profiler->Start();
 
-			// Bind the framebuffer
-			BindFBO();
-			glViewport(0, 0, this->m_Width, this->m_Height);
-			glEnable(GL_DEPTH_TEST);
+		// Bind the framebuffer
+		BindFBO();
+		glViewport(0, 0, this->m_Width, this->m_Height);
+		glEnable(GL_DEPTH_TEST);
 
-			// Clear the framebuffer
-			glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		// Clear the framebuffer
+		glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			// Update OCIO Processor and process the image
-			ocio.UpdateProcessor();
-			ocio.Process(this->m_Width, this->m_Height);
+		// Update OCIO Processor and process the image
+		ocio.UpdateProcessor();
+		ocio.Process(this->m_Width, this->m_Height);
 
-			// Draw the quad
-			glEnable(GL_TEXTURE_2D);
 
-			glPushMatrix();
-				glBegin(GL_QUADS);
-					glTexCoord2f(1.0f, 1.0f);
-					glVertex2f(1.0f, 1.0f);
+		// Draw the quad
+		glEnable(GL_TEXTURE_2D);
 
-					glTexCoord2f(1.0f, 0.0f);
-					glVertex2f(1.0f, -1.0f);
+		glPushMatrix();
+			glBegin(GL_QUADS);
+				glTexCoord2f(1.0f, 1.0f);
+				glVertex2f(1.0f, 1.0f);
 
-					glTexCoord2f(0.0f, 0.0f);
-					glVertex2f(-1.0f, -1.0f);
+				glTexCoord2f(1.0f, 0.0f);
+				glVertex2f(1.0f, -1.0f);
 
-					glTexCoord2f(0.0f, 1.0f);
-					glVertex2f(-1.0f, 1.0f);
-				glEnd();
-			glPopMatrix();
+				glTexCoord2f(0.0f, 0.0f);
+				glVertex2f(-1.0f, -1.0f);
 
-			glDisable(GL_TEXTURE_2D);
+				glTexCoord2f(0.0f, 1.0f);
+				glVertex2f(-1.0f, 1.0f);
+			glEnd();
+		glPopMatrix();
 
-			// Unbind frame buffer object and clear
-			UnbindFBO();
-			glDisable(GL_DEPTH_TEST);
+		glDisable(GL_TEXTURE_2D);
 
-			auto ocio_end = this->m_Profiler->End();
-			this->m_Profiler->Time("Ocio Transform Time", ocio_start, ocio_end);
-		}
+		// Unbind frame buffer object and clear
+		UnbindFBO();
+		glDisable(GL_DEPTH_TEST);
 
+		auto ocio_end = this->m_Profiler->End();
+		this->m_Profiler->Time("Ocio Transform Time", ocio_start, ocio_end);
+		
 		// Unbind our texture
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		// Now that we have the ocio transformed texture, make a correct alpha blending
+		// Bind the image texture at binding point 1
+		glBindImageTexture(1, this->m_DisplayTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);	
+
+		this->m_AlphaBlendingShader.Use();
+		this->m_AlphaBlendingShader.SetInt("mode", this->m_BackGroundMode);
+		this->m_AlphaBlendingShader.SetInt("width", this->m_Width);
+		this->m_AlphaBlendingShader.SetInt("height", this->m_Height);
+
+		// Bind the ocio transformed texture
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, this->m_TransformedTexture);
+
+		glDrawArrays(GL_POINTS, 0, this->m_Width * this->m_Height);
+
+		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
@@ -279,50 +339,68 @@ namespace Interface
 				const auto texUpdateEnd = this->m_Profiler->End();
 				this->m_Profiler->Time("Display Texture Update Time", texUpdateStart, texUpdateEnd);
 
-				// OCIO GPU Processing
-				if (ocio.m_UseGPU)
-				{
-					const auto ocio_start = this->m_Profiler->Start();
+				// OCIO transform
+				auto ocio_start = this->m_Profiler->Start();
 
-					// Bind the framebuffer
-					BindFBO();
-					glViewport(0, 0, currentImageXRes, currentImageYRes);
-					glEnable(GL_DEPTH_TEST);
+				// Bind the framebuffer
+				BindFBO();
+				glViewport(0, 0, this->m_Width, this->m_Height);
+				glEnable(GL_DEPTH_TEST);
 
-					// Clear the framebuffer
-					glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				// Clear the framebuffer
+				glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-					ocio.Process(currentImageXRes, currentImageYRes);
+				// Update OCIO Processor and process the image
+				ocio.Process(this->m_Width, this->m_Height);
 
-					// Draw the quad
-					glEnable(GL_TEXTURE_2D);
+				// Draw the quad
+				glEnable(GL_TEXTURE_2D);
 
-					glPushMatrix();
-						glBegin(GL_QUADS);
-							glTexCoord2f(1.0f, 1.0f);
-							glVertex2f(1.0f, 1.0f);
+				glPushMatrix();
+					glBegin(GL_QUADS);
+						glTexCoord2f(1.0f, 1.0f);
+						glVertex2f(1.0f, 1.0f);
 
-							glTexCoord2f(1.0f, 0.0f);
-							glVertex2f(1.0f, -1.0f);
+						glTexCoord2f(1.0f, 0.0f);
+						glVertex2f(1.0f, -1.0f);
 
-							glTexCoord2f(0.0f, 0.0f);
-							glVertex2f(-1.0f, -1.0f);
+						glTexCoord2f(0.0f, 0.0f);
+						glVertex2f(-1.0f, -1.0f);
 
-							glTexCoord2f(0.0f, 1.0f);
-							glVertex2f(-1.0f, 1.0f);
-						glEnd();
-					glPopMatrix();
+						glTexCoord2f(0.0f, 1.0f);
+						glVertex2f(-1.0f, 1.0f);
+					glEnd();
+				glPopMatrix();
 
-					glDisable(GL_TEXTURE_2D);
+				glDisable(GL_TEXTURE_2D);
 
-					// Unbind frame buffer object and clear
-					UnbindFBO();
-					glDisable(GL_DEPTH_TEST);
+				// Unbind frame buffer object and clear
+				UnbindFBO();
+				glDisable(GL_DEPTH_TEST);
 
-					const auto ocio_end = this->m_Profiler->End();
-					this->m_Profiler->Time("Ocio Transform Time", ocio_start, ocio_end);
-				}
+				auto ocio_end = this->m_Profiler->End();
+				this->m_Profiler->Time("Ocio Transform Time", ocio_start, ocio_end);
+				
+				// Unbind our texture
+				glBindTexture(GL_TEXTURE_2D, 0);
+
+				// Now that we have the ocio transformed texture, make a correct alpha blending
+				// Bind the image texture at binding point 1
+				glBindImageTexture(1, this->m_DisplayTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);	
+
+				this->m_AlphaBlendingShader.Use();
+				this->m_AlphaBlendingShader.SetInt("mode", this->m_BackGroundMode);
+				this->m_AlphaBlendingShader.SetInt("width", this->m_Width);
+				this->m_AlphaBlendingShader.SetInt("height", this->m_Height);
+
+				// Bind the ocio transformed texture
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, this->m_TransformedTexture);
+
+				glDrawArrays(GL_POINTS, 0, this->m_Width * this->m_Height);
+
+				glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
 				glBindTexture(GL_TEXTURE_2D, 0);
 			}
@@ -359,7 +437,7 @@ namespace Interface
 
 			ImGuiIO& io = ImGui::GetIO();
 
-			if (isActive && ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+			if (isActive && ImGui::IsMouseDragging(ImGuiMouseButton_Right))
 			{
 				scrolling.x += io.MouseDelta.x;
 				scrolling.y += io.MouseDelta.y;
@@ -391,7 +469,9 @@ namespace Interface
 
 			const ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
 
-			ImGui::Image((void*)(intptr_t)this->m_TransformedTexture, zoomedSize, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), tint, borderColor);
+			ImDrawList* drawlist = ImGui::GetWindowDrawList();
+
+			ImGui::Image((void*)(intptr_t)this->m_DisplayTexture, zoomedSize, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), tint, borderColor);
 
 			if (ImGui::IsItemHovered())
 			{
@@ -436,6 +516,7 @@ namespace Interface
 		// delete the gl textures
 		glDeleteTextures(1, &this->m_RawTexture);
 		glDeleteTextures(1, &this->m_TransformedTexture);
+		glDeleteTextures(1, &this->m_DisplayTexture);
 
 		this->m_Logger->Log(LogLevel_Diagnostic, "[DISPLAY] : Released display %d", this->m_DisplayID);
 	}

@@ -24,7 +24,7 @@ namespace Interface
 	{
 		int m_BarMode = 0;
 
-		uint8_t m_ModeCount = 3;
+		uint8_t m_ModeCount = 4;
 
 		bool m_HasOpenedIFD = false;
 
