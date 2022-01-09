@@ -83,7 +83,7 @@ int application(int argc, char** argv)
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     
     // MultiViewport
-    //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
     // Style
     ImGuiStyle* style = &ImGui::GetStyle();

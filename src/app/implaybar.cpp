@@ -126,17 +126,15 @@ namespace Interface
 		bool p_open = true;
 
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | 
-										ImGuiWindowFlags_NoMove | 
 										ImGuiWindowFlags_NoNav | 
 										ImGuiWindowFlags_NoScrollbar | 
-										ImGuiWindowFlags_NoCollapse |
-										ImGuiWindowFlags_NoResize;
+										ImGuiWindowFlags_NoCollapse;
 
 		constexpr float playbarHeight = 80.0f;
 
 		ImGui::SetNextWindowBgAlpha(0.3f);
-		ImGui::SetNextWindowPos(ImVec2(0.0f, ImGui::GetIO().DisplaySize.y - playbarHeight));
-		ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, playbarHeight));
+		// ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, playbarHeight));
+		// ImGui::SetNextWindowPos(ImVec2(0.0f, ImGui::GetIO().DisplaySize.y - playbarHeight));
 
 		ImGui::Begin("Playbar", &p_open, window_flags);
 		{	

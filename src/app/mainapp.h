@@ -32,9 +32,7 @@ int application(int argc, char** argv);
 
 OPENVIEWER_STATIC_FUNC void GLFWErrorCallback(int error, const char* description)
 {
-    StaticErrorConsoleLog("[GLFW] : Code : %d : %s. Exiting application", error, description);
-
-    std::exit(EXIT_FAILURE);
+    StaticErrorConsoleLog("[GLFW] : Code : %d : %s.", error, description);
 }
 
 OPENVIEWER_STATIC_FUNC void GLFWDropEventCallback(GLFWwindow* window, int count, const char** paths)
