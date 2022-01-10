@@ -97,6 +97,7 @@ namespace Core
 
 			newTmpMedia.m_Images.shrink_to_fit();
 			newTmpMedia.m_ID = this->m_MediaCount;
+			newTmpMedia.SetLayers();
 
 			// Move the newly created media into the media vector of the loader
 			this->m_Medias.push_back(std::move(newTmpMedia));
@@ -138,6 +139,7 @@ namespace Core
 					// Move the media into the media vector of the loader
 					this->m_Medias.push_back(std::move(newTmpMedia));
 					++this->m_MediaCount;
+					newTmpMedia.SetLayers();
 
 					goto cacheInit;
 				}
@@ -156,6 +158,7 @@ namespace Core
 				
 				newTmpMedia.m_Range = ImVec2(0, 1);
 				newTmpMedia.m_ID = this->m_MediaCount;
+				newTmpMedia.SetLayers();
 
 				// Move the media into the media vector of the loader
 				this->m_Medias.push_back(std::move(newTmpMedia));

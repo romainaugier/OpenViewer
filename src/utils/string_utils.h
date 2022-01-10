@@ -10,6 +10,8 @@
 #include <sstream>
 #include <stdio.h>
 #include <stdarg.h>
+#include <regex>
+
 #include "decl.h"
 
 #include "OpenImageIO/imageio.h"
@@ -47,9 +49,9 @@ namespace Utils
             std::replace(string.begin(), string.end(), substr, replace);
         }
         
-        OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE void Replace(std::string& string, const std::string& substr, const std::string& replace) noexcept
+        OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE void ReReplace(std::string& string, const std::regex& pattern, const std::string& replace) noexcept
         {
-            // std::replace(string.begin(), string.end(), substr, replace);
+            string = std::regex_replace(string, pattern, replace);
         }
 
         OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE void CleanOSPath(std::string& string) noexcept

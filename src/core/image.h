@@ -87,7 +87,6 @@ namespace Core
 
 			const OIIO::ImageSpec& spec = in->spec();
 
-
 			if(Utils::Str::EndsWith(fp, ".exr"))
 			{
 				this->m_Type = FileType_Exr;

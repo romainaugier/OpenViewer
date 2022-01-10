@@ -148,7 +148,7 @@ namespace Core
         {
             std::string tmp = this->m_Config->getLookNameByIndex(i);
 
-            Utils::Str::Replace(tmp, " ", "");
+            Utils::Str::RemoveSpaces(tmp);
 
             m_Looks.push_back(tmp);
         }

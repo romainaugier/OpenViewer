@@ -19,10 +19,14 @@ namespace Core
     {
         std::vector<Image> m_Images; // Holds the images of the sequence 
 
+        std::vector<std::string> m_Layers; // Holds the layer names if the image has any
+
         ImVec2 m_Range = ImVec2(0, 0); // "Raw" range of the sequence
         ImVec2 m_TimelineRange = ImVec2(0, 0); // Range in the timeline
 
         uint32_t m_ID;
+
+        uint16_t currentLayer = 0;
 
         bool m_IsActive = false; // The media is in the timeline, and so is/will be displayed
 
@@ -30,5 +34,6 @@ namespace Core
         bool InRange(const uint32_t index) const noexcept; 
         void SetActive() noexcept;
         void SetInactive() noexcept;
+        void SetLayers() noexcept;
     };
 }

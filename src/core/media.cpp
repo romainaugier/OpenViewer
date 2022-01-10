@@ -27,4 +27,31 @@ namespace Core
         this->m_IsActive = false;
         this->m_TimelineRange = ImVec2(0, 0);
     }
+
+    void Media::SetLayers() noexcept
+    {
+        const Image firstImage = this->m_Images[0];
+
+        auto in = OIIO::ImageInput::open(firstImage.m_Path);
+        const OIIO::ImageSpec& spec = in->spec();
+        const uint16_t channelsCount = spec.channelnames.size();
+
+        const std::regex channelNamePattern("\\.R|^R$|\\.G|^G$|\\.B|^B$|\\.A|^A$");
+
+        if (channelsCount > 4)
+        {
+            this->m_Layers.reserve(channelsCount / 4);
+
+            for (uint16_t i = 0; i < channelsCount; i += 4)
+            {
+                std::string layerName = spec.channelnames[i];
+
+                Utils::Str::ReReplace(layerName, channelNamePattern, "");
+
+                if (layerName == "") layerName = "Beauty";
+                
+                this->m_Layers.emplace_back(layerName);
+            }
+        }
+    }
 }
