@@ -122,7 +122,7 @@ int application(int argc, char** argv)
 
             newDisplay->Initialize(*application.m_OcioModule);
             
-            application.m_Displays[++application.m_DisplayCount] = newDisplay;
+            application.m_Displays[++application.m_DisplayCount] = std::make_pair(true, newDisplay);
             application.m_ActiveDisplayID = 1;
         }
     }
@@ -204,12 +204,14 @@ int application(int argc, char** argv)
 
         // displays
         
-        for(auto[id, display] : application.m_Displays)
+        for(auto[id, displayPair] : application.m_Displays)
         {
+            Interface::Display* display = displayPair.second;
+            
             // One info window per display
             const Core::Image currentImage = *application.m_Loader->GetImage(frameIndex);
 
-            if (changeHappened || playbar.m_Update) 
+            if (changeHappened || playbar.m_Update || application.SomethingChanged()) 
             {
                 const auto startDpUpdate = profiler.Start();
                 
@@ -243,6 +245,11 @@ int application(int argc, char** argv)
     
         // playbar 
         playbar.Draw();
+
+        // Clear changes if any happened
+        application.ClearChange();
+
+        application.UpdateDisplays();
 
         // Rendering
         ImGui::Render();

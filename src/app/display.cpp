@@ -416,78 +416,78 @@ namespace Interface
 	{
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 
-		bool p_open = true;
-
 		char displayName[64];
 		Utils::Str::Format(displayName, "Display %d", this->m_DisplayID);
 
-		ImGui::Begin(displayName, &p_open, window_flags);
+		if (this->m_IsOpen)
 		{
-			const ImVec2 size = ImVec2(this->m_Width, 
-								       this->m_Height);
-
-			static ImVec2 scrolling;
-			static float zoom = 1.0f;
-			const ImVec4 tint(1.0f, 1.0f, 1.0f, 1.0f);
-			const ImVec4 borderColor(0.0f, 0.0f, 0.0f, 1.0f);
-
-			const bool isHovered = ImGui::IsWindowHovered();
-			const bool isFocused = ImGui::IsWindowFocused();
-			const bool isActive = isFocused;
-
-			ImGuiIO& io = ImGui::GetIO();
-
-			if (isActive && ImGui::IsMouseDragging(ImGuiMouseButton_Right))
+			ImGui::Begin(displayName, &this->m_IsOpen, window_flags);
 			{
-				scrolling.x += io.MouseDelta.x;
-				scrolling.y += io.MouseDelta.y;
+				const ImVec2 size = ImVec2(this->m_Width, 
+										this->m_Height);
 
-				this->m_DisplayPos += io.MouseDelta;
+				static ImVec2 scrolling;
+				static float zoom = 1.0f;
+				const ImVec4 tint(1.0f, 1.0f, 1.0f, 1.0f);
+				const ImVec4 borderColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+				const bool isHovered = ImGui::IsWindowHovered();
+				const bool isFocused = ImGui::IsWindowFocused();
+				const bool isActive = isFocused;
+
+				ImGuiIO& io = ImGui::GetIO();
+
+				if (isActive && ImGui::IsMouseDragging(ImGuiMouseButton_Right))
+				{
+					scrolling.x += io.MouseDelta.x;
+					scrolling.y += io.MouseDelta.y;
+
+					this->m_DisplayPos += io.MouseDelta;
+				}
+
+				const float mouseWheel = io.MouseWheel;
+				bool hasZoomed = false;
+
+				if (isActive && mouseWheel != 0.0f)
+				{
+					ImVec2 mouseLocal = (ImGui::GetMousePos() - this->m_DisplayPos) / zoom;
+					
+					if (mouseWheel > 0.0f) zoom *= 1.1f;
+					else zoom /= 1.1f;
+
+					zoom = zoom < 0.01f ? 0.01f : zoom;
+					
+					mouseLocal = this->m_DisplayPos + mouseLocal * zoom;
+					
+					this->m_DisplayPos += ImGui::GetMousePos() - mouseLocal;
+				}
+
+				const ImVec2 zoomedSize = size * zoom;
+
+				ImGui::SetCursorScreenPos(this->m_DisplayPos);
+
+				const ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
+
+				ImDrawList* drawlist = ImGui::GetWindowDrawList();
+
+				ImGui::Image((void*)(intptr_t)this->m_DisplayTexture, zoomedSize, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), tint, borderColor);
+
+				if (ImGui::IsItemHovered())
+				{
+					this->m_IsImageHovered = true;
+					this->m_HoverCoordinates = ImClamp(ImGui::Fit(ImGui::GetMousePos() - cursorScreenPos, 
+																ImVec2(0, 0),
+																size * zoom,
+																ImVec2(0, 0),
+																size), ImVec2(0, 0), size);
+				}                 
+				else
+				{
+					this->m_IsImageHovered = false;
+				}
 			}
-
-			const float mouseWheel = io.MouseWheel;
-			bool hasZoomed = false;
-			
-
-			if (isActive && mouseWheel != 0.0f)
-			{
-				ImVec2 mouseLocal = (ImGui::GetMousePos() - this->m_DisplayPos) / zoom;
-				
-				if (mouseWheel > 0.0f) zoom *= 1.1f;
-				else zoom /= 1.1f;
-
-				zoom = zoom < 0.01f ? 0.01f : zoom;
-				
-				mouseLocal = this->m_DisplayPos + mouseLocal * zoom;
-				
-				this->m_DisplayPos += ImGui::GetMousePos() - mouseLocal;
-			}
-
-			const ImVec2 zoomedSize = size * zoom;
-
-			ImGui::SetCursorScreenPos(this->m_DisplayPos);
-
-			const ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
-
-			ImDrawList* drawlist = ImGui::GetWindowDrawList();
-
-			ImGui::Image((void*)(intptr_t)this->m_DisplayTexture, zoomedSize, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f), tint, borderColor);
-
-			if (ImGui::IsItemHovered())
-			{
-				this->m_IsImageHovered = true;
-				this->m_HoverCoordinates = ImClamp(ImGui::Fit(ImGui::GetMousePos() - cursorScreenPos, 
-												              ImVec2(0, 0),
-												              size * zoom,
-												              ImVec2(0, 0),
-												              size), ImVec2(0, 0), size);
-			}                 
-			else
-			{
-				this->m_IsImageHovered = false;
-			}
+			ImGui::End();
 		}
-		ImGui::End();
 	}
 
 	ImVec4 Display::GetPixel(const uint16_t x, const uint16_t y) const noexcept

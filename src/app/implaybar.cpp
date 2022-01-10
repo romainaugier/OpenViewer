@@ -132,10 +132,6 @@ namespace Interface
 
 		constexpr float playbarHeight = 80.0f;
 
-		ImGui::SetNextWindowBgAlpha(0.3f);
-		// ImGui::SetNextWindowSize(ImVec2(ImGui::GetIO().DisplaySize.x, playbarHeight));
-		// ImGui::SetNextWindowPos(ImVec2(0.0f, ImGui::GetIO().DisplaySize.y - playbarHeight));
-
 		ImGui::Begin("Playbar", &p_open, window_flags);
 		{	
 			ImDrawList* drawList = ImGui::GetWindowDrawList();

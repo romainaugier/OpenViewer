@@ -16,6 +16,22 @@ namespace Interface
         for (int i = 0; i < GLFW_KEY_COUNT; i++) this->m_Shortcuts.m_Pressed[i] = false;
     }
 
+    void Application::UpdateDisplays() noexcept
+    {
+        for (auto it = this->m_Displays.cbegin(); it != this->m_Displays.cend();)
+        {
+            if (!it.value().second->m_IsOpen)
+            {
+                this->m_Displays.erase(it++);
+                --this->m_DisplayCount;
+            }
+            else
+            {
+                ++it;
+            }
+        }
+    }
+
     void Application::HandleShortcuts() noexcept
     {
         for (uint16_t i = 0; i < GLFW_KEY_COUNT; i++)
@@ -104,7 +120,7 @@ namespace Interface
     {
         for (auto& [id, display] : this->m_Displays)
         {
-            display->Release();
+            display.second->Release();
         }
 
         this->m_Logger->Log(LogLevel_Diagnostic, "[MAIN] : Released OpenViewer");

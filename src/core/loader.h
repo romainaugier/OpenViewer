@@ -74,6 +74,10 @@ namespace Core
 		// Sets a media active
 		OPENVIEWER_FORCEINLINE void SetMediaActive(const uint32_t mediaId) noexcept { this->m_Medias[mediaId].SetActive(); }
 
+		OPENVIEWER_FORCEINLINE void SetMediaInactive(const uint32_t mediaId) noexcept { this->m_Medias[mediaId].SetInactive(); }
+		
+		OPENVIEWER_FORCEINLINE void SetAllMediasInactive() noexcept { for (auto& media : this->m_Medias) media.SetInactive(); }
+
 		OPENVIEWER_FORCEINLINE void SetRange(const ImVec2& range) noexcept { this->m_Range = range; }
 
 		OPENVIEWER_FORCEINLINE uint16_t GetMediaCount() const noexcept { return this->m_MediaCount; }

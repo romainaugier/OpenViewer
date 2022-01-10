@@ -41,15 +41,15 @@ namespace Interface
                             if (this->m_Loader->m_Medias[i].m_IsActive) continue;
                             else
                             {
-                                this->m_Loader->m_Medias[i].SetActive();
+                                for (uint32_t j = 0; j < this->m_Loader->m_MediaCount; j++) 
+                                {
+                                    this->m_Loader->SetMediaInactive(j);
+                                }
 
                                 this->m_Logger->Log(LogLevel_Diagnostic, "[MEDIA] : Media %s [ID : %d] is now active", mediaPath.c_str(), this->m_Loader->m_Medias[i].m_ID);
 
-                                for (uint32_t j = 0; j < this->m_Loader->m_MediaCount; j++) 
-                                {
-                                    if (this->m_Loader->m_Medias[j].m_ID == this->m_Loader->m_Medias[i].m_ID) continue;
-                                    else this->m_Loader->m_Medias[j].SetInactive();
-                                }
+                                this->m_Loader->SetMediaActive(i);
+                                this->m_Loader->LoadImageToCache(0);
 
                                 this->m_CurrentMediaRange = this->m_Loader->m_Medias[i].m_TimelineRange;
 
@@ -65,7 +65,7 @@ namespace Interface
 
                                 newDisplay->Initialize(*app->m_OcioModule);
                                 
-                                app->m_Displays[++app->m_DisplayCount] = newDisplay;
+                                app->m_Displays[++app->m_DisplayCount] = std::make_pair(true, newDisplay);
                                 app->m_ActiveDisplayID = 1;
                             }
                             
@@ -73,6 +73,7 @@ namespace Interface
                     }
                 }
             }
+
             ImGui::End();
         }
     }

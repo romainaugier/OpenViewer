@@ -41,10 +41,43 @@ OPENVIEWER_STATIC_FUNC void GLFWDropEventCallback(GLFWwindow* window, int count,
 
     app->m_Logger->Log(LogLevel_Debug, "[MAIN] : Drop event detected");
 
+    const uint32_t mediaCount = app->m_Loader->GetMediaCount();
+
     for(uint32_t i = 0; i < count; i++)
     {
         app->m_Loader->Load(paths[i]);
     }
+
+    // If no display is active, create one
+    if (app->m_DisplayCount == 0)
+    {
+        app->m_Loader->SetAllMediasInactive();
+
+        app->m_Loader->SetMediaActive(mediaCount);
+
+        app->m_Loader->LoadImageToCache(0);
+        
+        Interface::Display* newDisplay = new Interface::Display(app->m_Loader->m_Profiler, app->m_Logger, app->m_Loader, 1);
+
+        newDisplay->Initialize(*app->m_OcioModule);
+        
+        app->m_Displays[++app->m_DisplayCount] = std::make_pair(true, newDisplay);
+        app->m_ActiveDisplayID = 1;
+    }
+    else
+    {
+        app->m_Loader->m_Cache->Flush();
+
+        app->m_Loader->SetAllMediasInactive();
+
+        app->m_Loader->SetMediaActive(mediaCount);
+
+        app->m_Loader->LoadImageToCache(0);
+
+        app->Changed();
+    }
+    
+    app->m_Playbar->SetRange(app->m_Loader->m_Medias[mediaCount].m_TimelineRange);
 }
 
 OPENVIEWER_STATIC_FUNC void GLFWKeyEventCallback(GLFWwindow* window, int key, int scancode, int action, int mods)

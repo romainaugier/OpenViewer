@@ -565,7 +565,7 @@ namespace Interface
 					static const char* backgroundModes[] = { "Black", "Gray", "Checker" };
 					ImGui::PushID(0);
 					ImGui::SetNextItemWidth(75.0f);
-					ImGui::Combo("", &app.m_Displays[1]->m_BackGroundMode, &backgroundModes[0], IM_ARRAYSIZE(backgroundModes));
+					ImGui::Combo("", &app.m_Displays[1].second->m_BackGroundMode, &backgroundModes[0], IM_ARRAYSIZE(backgroundModes));
 					ImGui::PopID();
 				}
 				else
