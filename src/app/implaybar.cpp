@@ -392,7 +392,10 @@ namespace Interface
 				break;
 			}
 
-			if (this->m_Pause) goto endwhile;
+			if (this->m_Pause)
+			{
+				bgUpdateLock.unlock();
+			}
 			else if (this->m_Play)
 			{
 				const auto updateStart = Profiler::StaticStart();
@@ -428,11 +431,10 @@ namespace Interface
 
 				const auto updateEnd = Profiler::StaticEnd();
 
-				sleepTime = sleepTime - std::min(static_cast<uint32_t>(Profiler::StaticTime(updateStart, updateEnd)), sleepTime);
+				sleepTime = sleepTime - std::min(static_cast<uint32_t>(Profiler::StaticTime(updateStart, updateEnd)), sleepTime) + 1;
+				
+				bgUpdateLock.unlock();
 			}
-
-endwhile:
-			bgUpdateLock.unlock();
 		}
 	}
 

@@ -22,6 +22,7 @@ namespace Interface
         {
             if (!it.value().second->m_IsOpen)
             {
+                it.value().second->Release();
                 this->m_Displays.erase(it++);
                 --this->m_DisplayCount;
             }

@@ -135,11 +135,11 @@ namespace Core
 					}
 
 					newTmpMedia.m_ID = this->m_MediaCount;
+					newTmpMedia.SetLayers();
 
 					// Move the media into the media vector of the loader
 					this->m_Medias.push_back(std::move(newTmpMedia));
 					++this->m_MediaCount;
-					newTmpMedia.SetLayers();
 
 					goto cacheInit;
 				}
