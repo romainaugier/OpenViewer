@@ -125,9 +125,7 @@ namespace Interface
 	{
 		bool p_open = true;
 
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | 
-										ImGuiWindowFlags_NoNav | 
-										ImGuiWindowFlags_NoScrollbar | 
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | 
 										ImGuiWindowFlags_NoCollapse;
 
 		constexpr float playbarHeight = 80.0f;
@@ -363,7 +361,7 @@ namespace Interface
 			drawList->AddText(nullptr, 20.0f, ImVec2(frameInfosP0.x + 10.0f, frameInfosP0.y + 10.0f), WHITE, frameNumberText);
 
 			char framerateText[4];
-			Utils::Str::Format(framerateText, "%d", this->m_FrameRate);
+			Utils::Str::Format(framerateText, "%.2f", this->m_RealFramerate);
 			drawList->AddText(nullptr, 20.0f, ImVec2(frameInfosP0.x + 170.0f, frameInfosP0.y + 10.0f), WHITE, framerateText);
 
 			ImGui::PopClipRect();
@@ -400,7 +398,7 @@ namespace Interface
 			{
 				const auto updateStart = Profiler::StaticStart();
 
-				this->m_Frame = fmodf(this->m_Frame + 1, (this->m_Range.y - 1.0f));
+				this->m_Frame = fmodf(this->m_Frame + 1, (this->m_Range.y));
 				this->m_Update = true;
 
 				// Notify the background cache loader that we need to store some frames in the cache
@@ -431,10 +429,16 @@ namespace Interface
 
 				const auto updateEnd = Profiler::StaticEnd();
 
-				sleepTime = sleepTime - std::min(static_cast<uint32_t>(Profiler::StaticTime(updateStart, updateEnd)), sleepTime) + 1;
+				const float loadTime = Profiler::StaticTime(updateStart, updateEnd);
+
+				this->m_RealFramerate = 1000.0f / std::max(loadTime, static_cast<float>(sleepTime));
+
+				sleepTime = sleepTime - std::min(static_cast<uint32_t>(loadTime), sleepTime) + 1;
 				
 				bgUpdateLock.unlock();
 			}
+
+			this->m_CV.notify_all();
 		}
 	}
 

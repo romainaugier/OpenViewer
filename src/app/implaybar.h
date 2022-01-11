@@ -43,6 +43,8 @@ namespace Interface
 
 		float m_Scrolling = 0.0f;
 
+		float m_RealFramerate = 24.0f;
+
 		uint32_t m_Frame = 0;
 		
 		uint8_t m_FrameRate = 24;

@@ -2,7 +2,6 @@
 // Copyright (c) 2021 Romain Augier
 // All rights reserved.
 
-
 #pragma once
 
 // header only utility to track memory usage
