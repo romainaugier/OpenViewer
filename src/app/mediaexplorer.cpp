@@ -35,45 +35,42 @@ namespace Interface
                     ImGui::Selectable(selectableLabel, selected);
 
                     if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
-                    {
-                        if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+                    {    
+                        if (this->m_Loader->m_Medias[i].m_IsActive) continue;
+                        else
                         {
-                            if (this->m_Loader->m_Medias[i].m_IsActive) continue;
+                            for (uint32_t j = 0; j < this->m_Loader->m_MediaCount; j++) 
+                            {
+                                this->m_Loader->SetMediaInactive(j);
+                            }
+
+                            this->m_Logger->Log(LogLevel_Diagnostic, "[MEDIA] : Media %s [ID : %d] is now active", mediaPath.c_str(), this->m_Loader->m_Medias[i].m_ID);
+
+                            this->m_Loader->SetMediaActive(i);
+                            this->m_Loader->LoadImageToCache(0);
+
+                            this->m_CurrentMediaRange = this->m_Loader->m_Medias[i].m_TimelineRange;
+
+                            // If no display is active, create one
+                            if (app->m_DisplayCount == 0)
+                            {
+                                this->m_Loader->LoadImageToCache(0);
+                                
+                                Interface::Display* newDisplay = new Interface::Display(app->m_Loader->m_Profiler, app->m_Logger, app->m_Loader, 1);
+
+                                newDisplay->Initialize(*app->m_OcioModule, i);
+                                
+                                app->m_Displays[++app->m_DisplayCount] = std::make_pair(true, newDisplay);
+                                app->m_ActiveDisplayID = 1;
+                            }
                             else
                             {
-                                for (uint32_t j = 0; j < this->m_Loader->m_MediaCount; j++) 
-                                {
-                                    this->m_Loader->SetMediaInactive(j);
-                                }
-
-                                this->m_Logger->Log(LogLevel_Diagnostic, "[MEDIA] : Media %s [ID : %d] is now active", mediaPath.c_str(), this->m_Loader->m_Medias[i].m_ID);
-
-                                this->m_Loader->SetMediaActive(i);
-                                this->m_Loader->LoadImageToCache(0);
-
-                                this->m_CurrentMediaRange = this->m_Loader->m_Medias[i].m_TimelineRange;
-
-                                // If no display is active, create one
-                                if (app->m_DisplayCount == 0)
-                                {
-                                    this->m_Loader->LoadImageToCache(0);
-                                    
-                                    Interface::Display* newDisplay = new Interface::Display(app->m_Loader->m_Profiler, app->m_Logger, app->m_Loader, 1);
-
-                                    newDisplay->Initialize(*app->m_OcioModule, i);
-                                    
-                                    app->m_Displays[++app->m_DisplayCount] = std::make_pair(true, newDisplay);
-                                    app->m_ActiveDisplayID = 1;
-                                }
-                                else
-                                {
-                                    Interface::Display* activeDisplay = app->GetActiveDisplay();
-                                    activeDisplay->NeedReinit();
-                                    activeDisplay->m_MediaID = i;
-                                }
-
-                                this->m_CurrentMediaChanged = true;
+                                Interface::Display* activeDisplay = app->GetActiveDisplay();
+                                activeDisplay->NeedReinit();
+                                activeDisplay->m_MediaID = i;
                             }
+
+                            this->m_CurrentMediaChanged = true;
                         }
                     }
                 }

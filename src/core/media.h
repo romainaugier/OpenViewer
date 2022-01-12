@@ -45,6 +45,8 @@ namespace Core
         
         void SetLayers() noexcept;
 
+        bool HasLayers() const noexcept { return this->m_Layers.size() > 0; }
+
         std::string GetCurrentChannels() const noexcept { return this->m_Layers[this->m_CurrentLayerID].second; }
 
         void UpdateCurrentLayer() noexcept { this->m_CurrentLayerStr = this->m_Layers[this->m_CurrentLayerID].first; }

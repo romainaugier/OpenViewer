@@ -14,8 +14,7 @@ namespace Core
 
         const std::string currentPath = std::filesystem::current_path().string();
 
-        char defaultConfigPath[4096];
-        Utils::Str::Format(defaultConfigPath, "%s/configs/default.ocio", currentPath.c_str());
+        const std::string defaultConfigPath = Utils::Fs::ExpandCwd("/configs/default/default.ocio");
         
         if(envPath != nullptr)
         {
@@ -29,7 +28,7 @@ namespace Core
             {
                 this->m_Logger->Log(LogLevel_Warning, "[OCIO] : %s Using default shipped configuration", e.what());
 
-                this->m_Config = OCIO::Config::CreateFromFile(defaultConfigPath);
+                this->m_Config = OCIO::Config::CreateFromFile(defaultConfigPath.c_str());
                 this->m_ConfigPath = defaultConfigPath;
             }
         }
@@ -38,7 +37,7 @@ namespace Core
             try
             {
                 this->m_Logger->Log(LogLevel_Warning, "[OCIO] : Environment variable can't be found. Using default shipped configuration");
-                this->m_Config = OCIO::Config::CreateFromFile(defaultConfigPath);
+                this->m_Config = OCIO::Config::CreateFromFile(defaultConfigPath.c_str());
                 this->m_ConfigPath = defaultConfigPath;
             }
             catch(const std::exception& e)

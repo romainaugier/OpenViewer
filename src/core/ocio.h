@@ -7,6 +7,7 @@
 #include <GL/glew.h>
 #include "utils/gl_utils.h"
 #include "utils/logger.h"
+#include "utils/filesystem_utils.h"
 
 #undef max
 #undef min

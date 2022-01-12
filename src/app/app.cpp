@@ -32,9 +32,15 @@ namespace Interface
         {
             if (!it.value().second->m_IsOpen)
             {
+                this->m_Logger->Log(LogLevel_Debug, "[DISPLAY] : Releasing display %d", it.value().second->m_DisplayID);
+
+                this->m_Loader->SetMediaInactive(it.value().second->m_MediaID);
+
                 it.value().second->Release();
                 this->m_Displays.erase(it++);
                 --this->m_DisplayCount;
+
+                this->m_Logger->Log(LogLevel_Debug, "[DISPLAY] : Display count : %d", this->m_DisplayCount);
             }
             else
             {

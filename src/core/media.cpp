@@ -38,39 +38,39 @@ namespace Core
 
         const std::regex channelNamePattern("\\.R|^R$|\\.G|^G$|\\.B|^B$|\\.A|^A$|\\.X|\\.Y|\\.Z");
 
-        if (channelsCount > 4)
+        this->m_Layers.reserve(channelsCount);
+
+        std::string previousLayerName = "Beauty";
+        std::string layerName = "";
+
+        std::string layerNames = "";
+
+        for (uint16_t i = 0; i < (channelsCount + 1); i++)
         {
-            this->m_Layers.reserve(channelsCount);
+            if (i == channelsCount) layerName = "lastvirtuallayer";
+            else layerName = spec.channelnames[i];
+            
+            std::string layerNameClean = layerName;
 
-            std::string previousLayerName = "Beauty";
+            Utils::Str::ReReplace(layerNameClean, channelNamePattern, "");
 
-            std::string layerNames = "";
+            if (layerNameClean == "") layerNameClean = "Beauty";
 
-            for (uint16_t i = 0; i < channelsCount; i++)
+            if (!(layerNameClean == previousLayerName))
             {
-                const std::string layerName = spec.channelnames[i];
-                std::string layerNameClean = layerName;
+                this->m_Layers.emplace_back(std::make_pair(previousLayerName, layerNames));
+                
+                previousLayerName = layerNameClean;
 
-                Utils::Str::ReReplace(layerNameClean, channelNamePattern, "");
-
-                if (layerNameClean == "") layerNameClean = "Beauty";
-
-                if (!(layerNameClean == previousLayerName))
-                {
-                    this->m_Layers.emplace_back(std::make_pair(previousLayerName, layerNames));
-                 
-                    previousLayerName = layerNameClean;
-
-                    layerNames = layerName;
-                }
-                else
-                {
-                    layerNames += layerNames != "" ? (";" + layerName) : layerName;
-                    previousLayerName = layerNameClean;
-                }
+                layerNames = layerName;
             }
-
-            this->m_Layers.shrink_to_fit();
+            else
+            {
+                layerNames += layerNames != "" ? (";" + layerName) : layerName;
+                previousLayerName = layerNameClean;
+            }
         }
+
+        this->m_Layers.shrink_to_fit();
     }
 }

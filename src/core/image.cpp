@@ -92,21 +92,22 @@ namespace Core
 		std::vector<std::string> channelNames;
 
 		Utils::Str::Split(channelNames, layers, ';');
-
-		if (channelNames.size() == 3 && !this->m_Format & Format_RGB_HALF)
+		
+		if (channelNames.size() == 3 && !(this->m_Format & Format_RGB_HALF))
 		{
 			this->m_Format = Format_RGB_HALF;
 			this->m_GLInternalFormat = GL_RGB16F;
 			this->m_GLFormat = GL_RGB;
 			this->m_Stride = this->m_Xres * this->m_Yres * 3 * Size::Size16;
 		}
-		else if (channelNames.size() == 4 && !this->m_Format & Format_RGBA_HALF)
+		else if (channelNames.size() == 4 && !(this->m_Format & Format_RGBA_HALF))
 		{
 			this->m_Format = Format_RGBA_HALF;
 			this->m_GLInternalFormat = GL_RGBA16F;
 			this->m_GLFormat = GL_RGBA;
 			this->m_Stride = this->m_Xres * this->m_Yres * 4 * Size::Size16;
 		}
+
 	}
 
 	void Image::LoadPng(uint8_t* __restrict buffer) const noexcept

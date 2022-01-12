@@ -52,6 +52,8 @@ OV_STATIC_FUNC void GLFWDropEventCallback(GLFWwindow* window, int count, const c
     // If no display is active, create one
     if (app->m_DisplayCount == 0)
     {
+        app->m_Loader->m_Cache->Flush();
+        
         app->m_Loader->SetAllMediasInactive();
 
         app->m_Loader->SetMediaActive(mediaCount);
