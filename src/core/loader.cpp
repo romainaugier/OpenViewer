@@ -203,6 +203,13 @@ cacheInit:
 		return nullptr;
 	}
 
+	Media* Loader::GetMedia(const uint32_t mediaId) noexcept
+	{
+		// OVASSERT(mediaId < this->m_MediaCount);
+		
+		return &this->m_Medias[mediaId];
+	}
+
 	void Loader::LoadImageToCache(const uint32_t index) noexcept
 	{
 		const Image* tmpImg = this->GetImage(index);
@@ -224,7 +231,12 @@ cacheInit:
 					const uint32_t imageIndex = index - media.m_TimelineRange.x;
 					const uint32_t cachedIndex = this->m_Cache->Add(&media.m_Images[imageIndex]);
 
-					media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_DataPtr, this->m_Profiler);
+					if (media.m_Layers.size() > 0) media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_DataPtr, 
+																				   this->m_Profiler,
+																				   media.m_CurrentLayerStr);
+
+					else media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_DataPtr, 
+														 this->m_Profiler);
 
 					break;
 				}
@@ -243,7 +255,12 @@ cacheInit:
 					const uint32_t imageIndex = index - media.m_TimelineRange.x;
 					const uint32_t cachedIndex = this->m_Cache->Add(&media.m_Images[imageIndex]);
 
-					media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_DataPtr, this->m_Profiler);
+					if (media.m_Layers.size() > 0) media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_DataPtr, 
+																				   this->m_Profiler,
+																				   media.m_CurrentLayerStr);
+
+					else media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_DataPtr, 
+														 this->m_Profiler);
 
 					break;
 				}

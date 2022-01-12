@@ -169,6 +169,7 @@ public:
     }
 };
 
+// Simple assertion
 inline static void Assert(int expression) noexcept
 {
     assert(expression);

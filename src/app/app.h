@@ -52,6 +52,8 @@ namespace Interface
         bool SomethingChanged() noexcept { return this->m_ChangeEvent; }
         void ClearChange() noexcept { this->m_ChangeEvent = false; }
 
+        Display* GetActiveDisplay() noexcept;
+
         // Windows openers
         void ShowImageInfosWindow() noexcept { this->showImageInfosWindow = !this->showImageInfosWindow; }
         void ShowPixelInfosWindow() noexcept { this->showPixelInfosWindow = !this->showPixelInfosWindow; }

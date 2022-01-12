@@ -64,19 +64,19 @@ namespace Interface
 			this->m_DisplayID = id;
 		}
 
-		void Initialize(Core::Ocio& ocio) noexcept;
+		void Initialize(Core::Ocio& ocio, const uint32_t mediaId) noexcept;
 
-		void ReInitialize(const Core::Image& image, Core::Ocio& ocio) noexcept;
+		void ReInitialize(const Core::Image& image, Core::Ocio& ocio, const uint32_t mediaId) noexcept;
 
 		void InitializeOpenGL(const Core::Image& image) noexcept;
 		
-		OPENVIEWER_FORCEINLINE void BindFBO() const noexcept;
+		OV_FORCEINLINE void BindFBO() const noexcept;
 		
-		OPENVIEWER_FORCEINLINE void UnbindFBO() const noexcept;
+		OV_FORCEINLINE void UnbindFBO() const noexcept;
 		
-		OPENVIEWER_FORCEINLINE void BindRBO() const noexcept;
+		OV_FORCEINLINE void BindRBO() const noexcept;
 		
-		OPENVIEWER_FORCEINLINE void UnbindRBO() const noexcept;
+		OV_FORCEINLINE void UnbindRBO() const noexcept;
 		
 		void Update(Core::Ocio& ocio, const uint32_t frameIndex) noexcept;
 		

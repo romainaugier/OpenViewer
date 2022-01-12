@@ -15,7 +15,7 @@ namespace Utils
 {
     namespace Fs
     {
-        OPENVIEWER_STATIC_FUNC OPENVIEWER_FORCEINLINE size_t FileCountInDirectory(const std::string& directoryPath)
+        OV_STATIC_FUNC OV_FORCEINLINE size_t FileCountInDirectory(const std::string& directoryPath)
         {
             return static_cast<size_t>(std::distance(std::filesystem::directory_iterator(directoryPath), std::filesystem::directory_iterator{}));
         }
@@ -23,7 +23,7 @@ namespace Utils
         using FileSequenceItem = std::pair<std::string, uint32_t>;
         using FileSequence = std::vector<FileSequenceItem>;
 
-        OPENVIEWER_STATIC_FUNC void GetFileSequenceFromFile(FileSequence& fileSequence, const std::string& filePath)
+        OV_STATIC_FUNC void GetFileSequenceFromFile(FileSequence& fileSequence, const std::string& filePath)
         {
             const std::filesystem::path parentDir = std::filesystem::path(filePath).parent_path();
             const std::string baseFileName = std::filesystem::path(filePath).filename().string();
@@ -108,7 +108,7 @@ namespace Utils
             fileSequence = std::move(fileSeq);
         }
 
-        OPENVIEWER_STATIC_FUNC bool IsImage(const std::string& path) noexcept
+        OV_STATIC_FUNC bool IsImage(const std::string& path) noexcept
         {
             constexpr char* imageExtensions[] = { "exr", "jpg", "jpeg", "bmp", "tif", "tiff", "png",
                                                   "raw", "cr2", "arw", "sr2", "nef", "orf", "psd",
@@ -125,7 +125,7 @@ namespace Utils
             return false;
         }
 
-        OPENVIEWER_STATIC_FUNC bool IsVideo(const std::string& path) noexcept
+        OV_STATIC_FUNC bool IsVideo(const std::string& path) noexcept
         {
             constexpr char* videoExtensions[] = { "mp4", "m4p", "m4v", "mov", "qt", "avi", "yuv", "mkv" };
 
@@ -137,7 +137,7 @@ namespace Utils
             return false;
         }
 
-        OPENVIEWER_STATIC_FUNC std::string ExpandCwd(const std::string& pathToExpand) noexcept
+        OV_STATIC_FUNC std::string ExpandCwd(const std::string& pathToExpand) noexcept
         {
             std::string cwd = std::filesystem::current_path().string();
             Str::CleanOSPath(cwd);

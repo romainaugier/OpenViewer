@@ -30,16 +30,17 @@ int application(int argc, char** argv);
 
 // Glfw callbacks
 
-OPENVIEWER_STATIC_FUNC void GLFWErrorCallback(int error, const char* description)
+OV_STATIC_FUNC void GLFWErrorCallback(int error, const char* description)
 {
     StaticErrorConsoleLog("[GLFW] : Code : %d : %s.", error, description);
 }
 
-OPENVIEWER_STATIC_FUNC void GLFWDropEventCallback(GLFWwindow* window, int count, const char** paths)
+OV_STATIC_FUNC void GLFWDropEventCallback(GLFWwindow* window, int count, const char** paths)
 {
     Interface::Application* app = static_cast<Interface::Application*>(glfwGetWindowUserPointer(window));
 
     app->m_Logger->Log(LogLevel_Debug, "[MAIN] : Drop event detected");
+    app->m_Playbar->GoFirstFrame();
 
     const uint32_t mediaCount = app->m_Loader->GetMediaCount();
 
@@ -59,7 +60,7 @@ OPENVIEWER_STATIC_FUNC void GLFWDropEventCallback(GLFWwindow* window, int count,
         
         Interface::Display* newDisplay = new Interface::Display(app->m_Loader->m_Profiler, app->m_Logger, app->m_Loader, 1);
 
-        newDisplay->Initialize(*app->m_OcioModule);
+        newDisplay->Initialize(*app->m_OcioModule, mediaCount);
         
         app->m_Displays[++app->m_DisplayCount] = std::make_pair(true, newDisplay);
         app->m_ActiveDisplayID = 1;
@@ -72,6 +73,10 @@ OPENVIEWER_STATIC_FUNC void GLFWDropEventCallback(GLFWwindow* window, int count,
 
         app->m_Loader->SetMediaActive(mediaCount);
 
+        Interface::Display* activeDisplay = app->GetActiveDisplay();
+
+        activeDisplay->m_MediaID = mediaCount;
+
         app->m_Loader->LoadImageToCache(0);
 
         app->Changed();
@@ -80,7 +85,7 @@ OPENVIEWER_STATIC_FUNC void GLFWDropEventCallback(GLFWwindow* window, int count,
     app->m_Playbar->SetRange(app->m_Loader->m_Medias[mediaCount].m_TimelineRange);
 }
 
-OPENVIEWER_STATIC_FUNC void GLFWKeyEventCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+OV_STATIC_FUNC void GLFWKeyEventCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     Interface::Application* app = static_cast<Interface::Application*>(glfwGetWindowUserPointer(window));
 

@@ -12,7 +12,7 @@
 #include "utils/decl.h"
 #include "utils/logger.h"
 
-OPENVIEWER_FORCEINLINE void* OvAlloc(size_t size, size_t alignement)
+OV_FORCEINLINE void* OvAlloc(size_t size, size_t alignement)
 {
     StaticDebugConsoleLog("[MEM_DEBUG] : Allocated %lld bytes.", size);
 #ifdef OPENVIEWER_GCC
@@ -32,7 +32,7 @@ OPENVIEWER_FORCEINLINE void* OvAlloc(size_t size, size_t alignement)
     }
 }
 
-OPENVIEWER_FORCEINLINE void OvFree(void* ptr)
+OV_FORCEINLINE void OvFree(void* ptr)
 {
     StaticDebugConsoleLog("[MEM_DEBUG] : Freed 0x%p ptr.", ptr);
 #ifdef OPENVIEWER_GCC

@@ -12,7 +12,7 @@
 
 namespace Interface
 {
-    OPENVIEWER_STATIC_FUNC void DarkTheme()
+    OV_STATIC_FUNC void DarkTheme()
     {
     ImVec4* colors = ImGui::GetStyle().Colors;
     colors[ImGuiCol_Text]                   = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
@@ -96,7 +96,7 @@ namespace Interface
     style.TabRounding                       = 4;
     }
 
-    OPENVIEWER_STATIC_FUNC void GetFonts() noexcept
+    OV_STATIC_FUNC void GetFonts() noexcept
     {
         ImGuiIO io = ImGui::GetIO();
 

@@ -53,6 +53,10 @@ namespace Interface
 
                                 this->m_CurrentMediaRange = this->m_Loader->m_Medias[i].m_TimelineRange;
 
+                                Interface::Display* activeDisplay = app->GetActiveDisplay();
+
+                                activeDisplay->m_MediaID = i;
+
                                 this->m_CurrentMediaChanged = true;
                             }
 
@@ -63,7 +67,7 @@ namespace Interface
                                 
                                 Interface::Display* newDisplay = new Interface::Display(app->m_Loader->m_Profiler, app->m_Logger, app->m_Loader, 1);
 
-                                newDisplay->Initialize(*app->m_OcioModule);
+                                newDisplay->Initialize(*app->m_OcioModule, i);
                                 
                                 app->m_Displays[++app->m_DisplayCount] = std::make_pair(true, newDisplay);
                                 app->m_ActiveDisplayID = 1;

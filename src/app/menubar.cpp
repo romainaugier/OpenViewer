@@ -553,17 +553,48 @@ namespace Interface
 			// Display
 			else if (this->m_BarMode == 3)
 			{
-				if (app.m_DisplayCount > 0)
+				Display* activeDisplay = app.GetActiveDisplay();
+
+				if (app.m_DisplayCount > 0 && activeDisplay != nullptr)
 				{
 					const ImVec2 availWidth = ImGui::GetContentRegionAvail();
 
 					ImGui::Text("This section is in progress");
 
 					ImGui::Dummy(ImVec2(10.0f, 10.0f));
+					
+					Core::Media* activeMedia = app.m_Loader->GetMedia(activeDisplay->m_MediaID);
+
+					if (activeMedia->m_Layers.size() > 4)
+					{
+						ImGui::Text("Layer");
+						ImGui::PushID(0);
+						const float textWidth = ImGui::CalcTextSize(activeMedia->m_CurrentLayerStr.c_str()).x + 30.0f;
+						ImGui::SetNextItemWidth(textWidth);
+						
+						ImGui::Combo("", &activeMedia->m_CurrentLayerID, 
+								[](void* vec, int idx, const char** out_text){
+									std::vector<std::string>* vector = reinterpret_cast<std::vector<std::string>*>(vec);
+									if (idx < 0 || idx >= vector ->size()) return false;
+									*out_text = vector->at(idx).c_str();
+									return true;
+								}, reinterpret_cast<void*>(&activeMedia->m_Layers), activeMedia->m_Layers.size());
+
+						ImGui::PopID();
+
+						if (ImGui::IsItemEdited())
+						{
+							activeMedia->UpdateCurrentLayer();
+
+							change = true;
+						}
+					}
+
+					ImGui::Dummy(ImVec2(10.0f, 10.0f));
 
 					ImGui::Text("Background");
 					static const char* backgroundModes[] = { "Black", "Gray", "Checker" };
-					ImGui::PushID(0);
+					ImGui::PushID(1);
 					ImGui::SetNextItemWidth(75.0f);
 					ImGui::Combo("", &app.m_Displays[1].second->m_BackGroundMode, &backgroundModes[0], IM_ARRAYSIZE(backgroundModes));
 					ImGui::PopID();

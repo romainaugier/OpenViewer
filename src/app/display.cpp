@@ -54,33 +54,35 @@ namespace Interface
 	}
 
 	// Binds the display frame buffer object
-	OPENVIEWER_FORCEINLINE void Display::BindFBO() const noexcept
+	OV_FORCEINLINE void Display::BindFBO() const noexcept
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, this->m_FBO);
 	}
 
 	// Unbinds the display frame buffer object
-	OPENVIEWER_FORCEINLINE void Display::UnbindFBO() const noexcept
+	OV_FORCEINLINE void Display::UnbindFBO() const noexcept
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	// Binds the ddisplay render buffer object
-	OPENVIEWER_FORCEINLINE void Display::BindRBO() const noexcept
+	OV_FORCEINLINE void Display::BindRBO() const noexcept
 	{
 		glBindRenderbuffer(GL_RENDERBUFFER, this->m_RBO);
 	}
 
 	// Unbinds the display render buffer object
-	OPENVIEWER_FORCEINLINE void Display::UnbindRBO() const noexcept
+	OV_FORCEINLINE void Display::UnbindRBO() const noexcept
 	{
 		glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	}
 
 	// Initializes the gl texture that will display the images
-	void Display::Initialize(Core::Ocio& ocio) noexcept
+	void Display::Initialize(Core::Ocio& ocio, const uint32_t mediaId) noexcept
 	{
 		this->m_Logger->Log(LogLevel_Diagnostic, "[DISPLAY] : Initializing display %d", this->m_DisplayID);
+
+		this->m_MediaID = mediaId;
 		
 		// When we initialize a display, we have at least one media and one image loader
 		const Core::Image* initImage = &this->m_Loader->m_Medias[0].m_Images[0];
@@ -187,10 +189,12 @@ namespace Interface
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
-	void Display::ReInitialize(const Core::Image& image, Core::Ocio& ocio) noexcept
+	void Display::ReInitialize(const Core::Image& image, Core::Ocio& ocio, const uint32_t mediaId) noexcept
 	{
 		this->m_Logger->Log(LogLevel_Diagnostic, "[DISPLAY] : Image dimensions changed, reinitializing display %d", this->m_DisplayID);
 		
+		this->m_MediaID = mediaId;
+
 		this->m_Width = image.m_Xres;
 		this->m_Height = image.m_Yres;
 
@@ -306,104 +310,94 @@ namespace Interface
 
 		if (currentImage != nullptr && currentImage->m_CacheIndex > 0)
 		{
-			if (currentImage->m_Xres != this->m_Width || currentImage->m_Yres != this->m_Height)
-			{
-				this->ReInitialize(*currentImage, ocio);
-			}
-			else
-			{
-				// Get the different image infos we need to load it
-				const auto getImgInfoStart = this->m_Profiler->Start();
-				const uint16_t currentImageXRes = currentImage->m_Xres;
-				const uint16_t currentImageYRes = currentImage->m_Yres;
-				const uint64_t currentImageSize = currentImage->m_Size;
-				const void* currentImageCacheAddress = this->m_Loader->m_Cache->m_Items[currentImage->m_CacheIndex].m_DataPtr;
-				const auto getImgInfoEnd = this->m_Profiler->End();
-				this->m_Profiler->Time("Display Image Infos Time", getImgInfoStart, getImgInfoEnd);
+			// Get the different image infos we need to load it
+			const uint16_t currentImageXRes = currentImage->m_Xres;
+			const uint16_t currentImageYRes = currentImage->m_Yres;
+			const uint64_t currentImageSize = currentImage->m_Size;
+			const void* currentImageCacheAddress = this->m_Loader->m_Cache->m_Items[currentImage->m_CacheIndex].m_DataPtr;
 
-				// Update the texture
-				const auto texUpdateStart = this->m_Profiler->Start();
-				
-				glActiveTexture(GL_TEXTURE0);
-				glBindTexture(GL_TEXTURE_2D, this->m_RawTexture);
-				glTexImage2D(GL_TEXTURE_2D, 
-							 0, 
-							 currentImage->m_GLInternalFormat, 
-							 currentImageXRes, 
-							 currentImageYRes, 
-							 0, 
-							 currentImage->m_GLFormat, 
-							 currentImage->m_GLType, 
-							 currentImageCacheAddress);
+			// Update the texture
+			const auto texUpdateStart = this->m_Profiler->Start();
+			
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, this->m_RawTexture);
+			glTexImage2D(GL_TEXTURE_2D, 
+							0, 
+							currentImage->m_GLInternalFormat, 
+							currentImageXRes, 
+							currentImageYRes, 
+							0, 
+							currentImage->m_GLFormat, 
+							currentImage->m_GLType, 
+							currentImageCacheAddress);
 
-				const auto texUpdateEnd = this->m_Profiler->End();
-				this->m_Profiler->Time("Display Texture Update Time", texUpdateStart, texUpdateEnd);
+			const auto texUpdateEnd = this->m_Profiler->End();
+			this->m_Profiler->Time("Display Texture Update Time", texUpdateStart, texUpdateEnd);
 
-				// OCIO transform
-				auto ocio_start = this->m_Profiler->Start();
+			// OCIO transform
+			auto ocio_start = this->m_Profiler->Start();
 
-				// Bind the framebuffer
-				BindFBO();
-				glViewport(0, 0, this->m_Width, this->m_Height);
-				glEnable(GL_DEPTH_TEST);
+			// Bind the framebuffer
+			BindFBO();
+			glViewport(0, 0, this->m_Width, this->m_Height);
+			glEnable(GL_DEPTH_TEST);
 
-				// Clear the framebuffer
-				glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			// Clear the framebuffer
+			glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-				// Update OCIO Processor and process the image
-				ocio.Process(this->m_Width, this->m_Height);
+			// Update OCIO Processor and process the image
+			ocio.Process(this->m_Width, this->m_Height);
 
-				// Draw the quad
-				glEnable(GL_TEXTURE_2D);
+			// Draw the quad
+			glEnable(GL_TEXTURE_2D);
 
-				glPushMatrix();
-					glBegin(GL_QUADS);
-						glTexCoord2f(1.0f, 1.0f);
-						glVertex2f(1.0f, 1.0f);
+			glPushMatrix();
+				glBegin(GL_QUADS);
+					glTexCoord2f(1.0f, 1.0f);
+					glVertex2f(1.0f, 1.0f);
 
-						glTexCoord2f(1.0f, 0.0f);
-						glVertex2f(1.0f, -1.0f);
+					glTexCoord2f(1.0f, 0.0f);
+					glVertex2f(1.0f, -1.0f);
 
-						glTexCoord2f(0.0f, 0.0f);
-						glVertex2f(-1.0f, -1.0f);
+					glTexCoord2f(0.0f, 0.0f);
+					glVertex2f(-1.0f, -1.0f);
 
-						glTexCoord2f(0.0f, 1.0f);
-						glVertex2f(-1.0f, 1.0f);
-					glEnd();
-				glPopMatrix();
+					glTexCoord2f(0.0f, 1.0f);
+					glVertex2f(-1.0f, 1.0f);
+				glEnd();
+			glPopMatrix();
 
-				glDisable(GL_TEXTURE_2D);
+			glDisable(GL_TEXTURE_2D);
 
-				// Unbind frame buffer object and clear
-				UnbindFBO();
-				glDisable(GL_DEPTH_TEST);
+			// Unbind frame buffer object and clear
+			UnbindFBO();
+			glDisable(GL_DEPTH_TEST);
 
-				auto ocio_end = this->m_Profiler->End();
-				this->m_Profiler->Time("Ocio Transform Time", ocio_start, ocio_end);
-				
-				// Unbind our texture
-				glBindTexture(GL_TEXTURE_2D, 0);
+			auto ocio_end = this->m_Profiler->End();
+			this->m_Profiler->Time("Ocio Transform Time", ocio_start, ocio_end);
+			
+			// Unbind our texture
+			glBindTexture(GL_TEXTURE_2D, 0);
 
-				// Now that we have the ocio transformed texture, make a correct alpha blending
-				// Bind the image texture at binding point 1
-				glBindImageTexture(1, this->m_DisplayTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);	
+			// Now that we have the ocio transformed texture, make a correct alpha blending
+			// Bind the image texture at binding point 1
+			glBindImageTexture(1, this->m_DisplayTexture, 0, GL_FALSE, 0, GL_READ_WRITE, GL_RGBA32F);	
 
-				this->m_AlphaBlendingShader.Use();
-				this->m_AlphaBlendingShader.SetInt("mode", this->m_BackGroundMode);
-				this->m_AlphaBlendingShader.SetInt("width", this->m_Width);
-				this->m_AlphaBlendingShader.SetInt("height", this->m_Height);
+			this->m_AlphaBlendingShader.Use();
+			this->m_AlphaBlendingShader.SetInt("mode", this->m_BackGroundMode);
+			this->m_AlphaBlendingShader.SetInt("width", this->m_Width);
+			this->m_AlphaBlendingShader.SetInt("height", this->m_Height);
 
-				// Bind the ocio transformed texture
-				glActiveTexture(GL_TEXTURE0);
-				glBindTexture(GL_TEXTURE_2D, this->m_TransformedTexture);
+			// Bind the ocio transformed texture
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, this->m_TransformedTexture);
 
-				glDrawArrays(GL_POINTS, 0, this->m_Width * this->m_Height);
+			glDrawArrays(GL_POINTS, 0, this->m_Width * this->m_Height);
 
-				glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
-				glBindTexture(GL_TEXTURE_2D, 0);
-			}
+			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 		else
 		{
@@ -423,6 +417,9 @@ namespace Interface
 		{
 			ImGui::Begin(displayName, &this->m_IsOpen, window_flags);
 			{
+				if (ImGui::IsWindowFocused()) this->m_IsActive = true;
+				// else this->m_IsActive = false;
+
 				const ImVec2 size = ImVec2(this->m_Width, 
 										this->m_Height);
 

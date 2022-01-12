@@ -72,21 +72,24 @@ namespace Core
 
 		// A few inline methods to get/set states on different attributes/objects of the loader
 		// Sets a media active
-		OPENVIEWER_FORCEINLINE void SetMediaActive(const uint32_t mediaId) noexcept { this->m_Medias[mediaId].SetActive(); }
+		OV_FORCEINLINE void SetMediaActive(const uint32_t mediaId) noexcept { this->m_Medias[mediaId].SetActive(); }
 
-		OPENVIEWER_FORCEINLINE void SetMediaInactive(const uint32_t mediaId) noexcept { this->m_Medias[mediaId].SetInactive(); }
+		OV_FORCEINLINE void SetMediaInactive(const uint32_t mediaId) noexcept { this->m_Medias[mediaId].SetInactive(); }
 		
-		OPENVIEWER_FORCEINLINE void SetAllMediasInactive() noexcept { for (auto& media : this->m_Medias) media.SetInactive(); }
+		OV_FORCEINLINE void SetAllMediasInactive() noexcept { for (auto& media : this->m_Medias) media.SetInactive(); }
 
-		OPENVIEWER_FORCEINLINE void SetRange(const ImVec2& range) noexcept { this->m_Range = range; }
+		OV_FORCEINLINE void SetRange(const ImVec2& range) noexcept { this->m_Range = range; }
 
-		OPENVIEWER_FORCEINLINE uint16_t GetMediaCount() const noexcept { return this->m_MediaCount; }
+		OV_FORCEINLINE uint16_t GetMediaCount() const noexcept { return this->m_MediaCount; }
 
 		// Loads a media into the loader
 		void Load(const std::string& mediaPath) noexcept;
 
 		// Returns a pointer to the image corresponding to the current frame
 		Image* GetImage(const uint32_t frameIndex) noexcept;
+
+		// Return a pointer to the media corresponding to the index
+		Media* GetMedia(const uint32_t mediaId) noexcept;
 		
 		// Loads an image to display it. If the cache is enabled, it will load it in the cache, otherwise loads it on the fly
 		void LoadImageToCache(const uint32_t index) noexcept;

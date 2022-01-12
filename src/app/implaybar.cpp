@@ -33,32 +33,56 @@ namespace Interface
 	void ImPlaybar::GoPreviousFrame() noexcept
 	{
 		this->Pause();
+
+		std::unique_lock<std::mutex> playLock(this->m_Mutex);
+
 		this->m_Frame = this->m_Frame - 1 <= static_cast<uint32_t>(this->m_Range.x) || this->m_Frame == 0 ? 
 						static_cast<uint32_t>(this->m_Range.y - 1) : 
 						this->m_Frame - 1;
+		
+		playLock.unlock();
+		
 		this->NeedUpdate();	
 	}
 
 	void ImPlaybar::GoNextFrame() noexcept
 	{
 		this->Pause();
+
+		std::unique_lock<std::mutex> playLock(this->m_Mutex);
+
 		this->m_Frame = this->m_Frame + 1 >= static_cast<uint32_t>(this->m_Range.y) ? 
 						static_cast<uint32_t>(this->m_Range.x) : 
 						this->m_Frame + 1; 
+
+		playLock.unlock();
+
 		this->NeedUpdate();
 	}
 
 	void ImPlaybar::GoFirstFrame() noexcept
 	{
 		this->Pause();
+	
+		std::unique_lock<std::mutex> playLock(this->m_Mutex);
+
 		this->m_Frame = this->m_Range.x;
+
+		playLock.unlock();
+
 		this->NeedUpdate();	
 	}
 
 	void ImPlaybar::GoLastFrame() noexcept
 	{
 		this->Pause();
+	
+		std::unique_lock<std::mutex> playLock(this->m_Mutex);
+	
 		this->m_Frame = this->m_Range.y - 1;
+		
+		playLock.unlock();
+		
 		this->NeedUpdate();	
 	}
 
@@ -83,7 +107,7 @@ namespace Interface
 						this->m_Loader->m_Workers.emplace_back(&Core::Loader::LoadSequenceToCache, this->m_Loader, this->m_Frame, 0);
 					}
 
-					// this->m_Update = false;
+					// this->NeedUpdate(false);
 					
 					const auto playbarUpdateEnd = profiler->End();
 					

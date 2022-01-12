@@ -43,30 +43,73 @@ namespace Core
 	}
 
 	// loads an image
-	void Image::LoadExr(half* __restrict buffer) const noexcept
+	void Image::LoadExr(half* __restrict buffer, const std::string& layerName) const noexcept
 	{
-		Imf::RgbaInputFile in(this->m_Path.c_str());
-		
-		const Imath::Box2i display = in.displayWindow();
-		const Imath::Box2i data = in.dataWindow();
-		const Imath::V2i dim(data.max.x - data.min.x + 1, data.max.y - data.max.y + 1);
-
-		const int dx = data.min.x;
-		const int dy = data.min.y;
-		
-		// in case the data window is smaller than the display window
-		// we fill empty pixels everywhere and then read the image pixels
-		// to avoid non initialized values in memory
-		// if (data.min.x > display.min.x || data.max.x < display.max.x ||
-		// 	data.min.y > display.min.y || data.max.y < display.min.y)
-		// {
-		// 	memset(&buffer[0], static_cast<half>(1.0f), this->m_Xres * this->m_Yres * (this->m_Channels > 4 ? 4 : this->m_Channels));
-		// }
-		
 		memset(&buffer[0], static_cast<half>(1.0f), this->m_Xres * this->m_Yres * (this->m_Channels > 4 ? 4 : this->m_Channels) * Size::Size16);
+		
+		// Read the RGBA layer, or more commonly the beauty
+		if (layerName == "Beauty")
+		{
+			Imf::RgbaInputFile in(this->m_Path.c_str());
+			
+			const Imath::Box2i display = in.displayWindow();
+			const Imath::Box2i data = in.dataWindow();
+			const Imath::V2i dim(data.max.x - data.min.x + 1, data.max.y - data.max.y + 1);
 
-		in.setFrameBuffer((Imf::Rgba*)buffer, 1, dim.x);
-		in.readPixels(data.min.y, data.max.y);
+			in.setFrameBuffer((Imf::Rgba*)buffer, 1, dim.x);
+			in.readPixels(data.min.y, data.max.y);
+		}
+		// Read the specified layer
+		else
+		{
+			Imf::InputFile in(this->m_Path.c_str());
+
+			const Imath::Box2i display = in.header().displayWindow();
+			const Imath::Box2i data = in.header().dataWindow();
+			const Imath::V2i dim(data.max.x - data.min.x + 1, data.max.y - data.max.y + 1);
+			
+			Imf::FrameBuffer frameBuffer;
+
+			// R channel
+			char channelName[4096];
+			Utils::Str::Format(channelName, "%s.R", layerName.c_str());
+
+			frameBuffer.insert(channelName, Imf::Slice(Imf::HALF,
+													   (char*) buffer,
+													   sizeof(buffer[0]) * 1,
+													   sizeof(buffer[0]) * this->m_Xres,
+													   1, 1, 1.0));
+			
+			// G channel
+			Utils::Str::Format(channelName, "%s.G", layerName.c_str());
+
+			frameBuffer.insert(channelName, Imf::Slice(Imf::HALF,
+													   (char*) buffer,
+													   sizeof(buffer[0]) * 1,
+													   sizeof(buffer[0]) * this->m_Xres,
+													   1, 1, 1.0));
+			
+			// B channel
+			Utils::Str::Format(channelName, "%s.B", layerName.c_str());
+
+			frameBuffer.insert(channelName, Imf::Slice(Imf::HALF,
+													   (char*) buffer,
+													   sizeof(buffer[0]) * 1,
+													   sizeof(buffer[0]) * this->m_Xres,
+													   1, 1, 1.0));
+			
+			// A channel
+			Utils::Str::Format(channelName, "%s.A", layerName.c_str());
+
+			frameBuffer.insert(channelName, Imf::Slice(Imf::HALF,
+													   (char*) buffer,
+													   sizeof(buffer[0]) * 1,
+													   sizeof(buffer[0]) * this->m_Xres,
+													   1, 1, 1.0));
+
+			in.setFrameBuffer(frameBuffer);
+			in.readPixels(data.min.y, data.max.y);
+		}
 	}
 
 	void Image::LoadPng(uint8_t* __restrict buffer) const noexcept
@@ -90,11 +133,11 @@ namespace Core
 		in->close();
 	}
 
-	void Image::Load(void* __restrict buffer, Profiler* prof) const noexcept
+	void Image::Load(void* __restrict buffer, Profiler* prof, const std::string& layerName) const noexcept
 	{
 		const auto load_timer_start = prof->Start();
 
-		if (this->m_Type & FileType_Exr) LoadExr((half*)buffer);
+		if (this->m_Type & FileType_Exr) LoadExr((half*)buffer, layerName);
 		else if (this->m_Type& FileType_Jpg) LoadJpg((uint8_t*)buffer);
 		else if (this->m_Type & FileType_Png) LoadPng((uint8_t*)buffer);
 		else if (this->m_Type & FileType_Other) LoadOther((half*)buffer);

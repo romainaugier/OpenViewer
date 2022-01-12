@@ -16,6 +16,16 @@ namespace Interface
         for (int i = 0; i < GLFW_KEY_COUNT; i++) this->m_Shortcuts.m_Pressed[i] = false;
     }
 
+    Display* Application::GetActiveDisplay() noexcept
+    {
+        for (const auto& [id, displayPair] : this->m_Displays)
+        {
+            if (displayPair.second->m_IsActive) return displayPair.second;
+        }
+
+        return nullptr;
+    }
+
     void Application::UpdateDisplays() noexcept
     {
         for (auto it = this->m_Displays.cbegin(); it != this->m_Displays.cend();)
@@ -98,6 +108,7 @@ namespace Interface
                         this->m_Playbar->GoFirstFrame();
                     }
                     else this->m_Playbar->GoPreviousFrame();
+
                     break;
                 }
                 
@@ -109,6 +120,7 @@ namespace Interface
                         this->m_Playbar->GoLastFrame();
                     }
                     else this->m_Playbar->GoNextFrame();
+
                     break;
                 }
             }

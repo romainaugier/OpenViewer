@@ -7,7 +7,7 @@
 int application(int argc, char** argv)
 {
     // Initialize the application
-    printf("OpenViewer %s %s\n", OPENVIEWER_VERSION_STR, OPENVIEWER_PLATFORM_STR);
+    printf("OpenViewer %s %s\n", OV_VERSION_STR, OV_PLATFORM_STR);
 
     // Logger
     Logger logger;
@@ -120,7 +120,7 @@ int application(int argc, char** argv)
                                 
             Interface::Display* newDisplay = new Interface::Display(application.m_Loader->m_Profiler, application.m_Logger, application.m_Loader, 1);
 
-            newDisplay->Initialize(*application.m_OcioModule);
+            newDisplay->Initialize(*application.m_OcioModule, 0);
             
             application.m_Displays[++application.m_DisplayCount] = std::make_pair(true, newDisplay);
             application.m_ActiveDisplayID = 1;
@@ -188,7 +188,26 @@ int application(int argc, char** argv)
             playbar.Update(&profiler);
         }
 
-        uint32_t frameIndex = playbar.m_Frame;
+        // Update displays
+        for(auto[id, displayPair] : application.m_Displays)
+        {
+            Interface::Display* display = displayPair.second;
+
+            if (changeHappened || playbar.m_Update || application.SomethingChanged()) 
+            {
+                const auto startDpUpdate = profiler.Start();
+                
+                playbar.NeedUpdate(false);
+                changeHappened = false;
+
+                display->Update(ocio, playbar.m_Frame);
+                
+                const auto endDpUpdate = profiler.End();
+                profiler.Time("Displays Update", startDpUpdate, endDpUpdate);
+
+                // waveform.Update(display->m_TransformedTexture, currentImage.m_Xres, currentImage.m_Yres);
+            }
+        }
 
         glfwPollEvents();
 
@@ -207,31 +226,14 @@ int application(int argc, char** argv)
         for(auto[id, displayPair] : application.m_Displays)
         {
             Interface::Display* display = displayPair.second;
-            
+
+            display->Draw(playbar.m_Frame);
+
             // One info window per display
-            const Core::Image currentImage = *application.m_Loader->GetImage(frameIndex);
-
-            if (changeHappened || playbar.m_Update || application.SomethingChanged()) 
-            {
-                const auto startDpUpdate = profiler.Start();
-                
-                playbar.NeedUpdate(false);
-                changeHappened = false;
-
-                display->Update(ocio, frameIndex);
-                
-                const auto endDpUpdate = profiler.End();
-                profiler.Time("Displays Update", startDpUpdate, endDpUpdate);
-
-                waveform.Update(display->m_TransformedTexture, currentImage.m_Xres, currentImage.m_Yres);
-            }
-
-            display->Draw(frameIndex);
-
+            const Core::Image currentImage = *application.m_Loader->GetImage(playbar.m_Frame);
+            
             imageInfosWindow.Draw(currentImage, application.showImageInfosWindow);
             pixelInfosWindow.Draw(&loader, currentImage, display, application.showPixelInfosWindow);
-
-            waveform.Draw();
         }
 
         // settings windows

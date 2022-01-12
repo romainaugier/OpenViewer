@@ -21,19 +21,27 @@ namespace Core
 
         std::vector<std::string> m_Layers; // Holds the layer names if the image has any
 
+        std::string m_CurrentLayerStr = "Beauty";
+
         ImVec2 m_Range = ImVec2(0, 0); // "Raw" range of the sequence
         ImVec2 m_TimelineRange = ImVec2(0, 0); // Range in the timeline
 
         uint32_t m_ID;
 
-        uint16_t currentLayer = 0;
+        int32_t m_CurrentLayerID = 0;
 
         bool m_IsActive = false; // The media is in the timeline, and so is/will be displayed
 
         uint32_t Size() const noexcept;
+
         bool InRange(const uint32_t index) const noexcept; 
+
         void SetActive() noexcept;
+        
         void SetInactive() noexcept;
+        
         void SetLayers() noexcept;
+
+        void UpdateCurrentLayer() noexcept { this->m_CurrentLayerStr = this->m_Layers[this->m_CurrentLayerID]; }
     };
 }

@@ -92,7 +92,7 @@ namespace Interface
 		void Draw() noexcept;
 	};
 
-	OPENVIEWER_FORCEINLINE bool Hover(ImVec2 min, ImVec2 max, ImVec2 pos) noexcept
+	OV_FORCEINLINE bool Hover(ImVec2 min, ImVec2 max, ImVec2 pos) noexcept
 	{
 		if (pos.x > min.x && pos.y > min.y && pos.x < max.x && pos.y < max.y) return true;
 		else return false;

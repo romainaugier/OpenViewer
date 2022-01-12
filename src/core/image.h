@@ -11,6 +11,8 @@
 
 #include "OpenImageIO/imageio.h"
 #include "OpenEXR/ImfRgbaFile.h"
+#include "OpenEXR/ImfInputFile.h"
+#include "OpenEXR/ImfChannelList.h"
 
 extern "C" {
 	#include <libavformat/avformat.h>
@@ -185,11 +187,17 @@ namespace Core
 		}
 
 		void Release() noexcept;
-		void Load(void* __restrict buffer, Profiler* prof) const noexcept;
-		void LoadExr(half* __restrict buffer) const noexcept;
+		
+		void Load(void* __restrict buffer, Profiler* prof, const std::string& layerName = "Beauty") const noexcept;
+		
+		void LoadExr(half* __restrict buffer, const std::string& layerName = "Beauty") const noexcept;
+		
 		void LoadPng(uint8_t* __restrict buffer) const noexcept;
+		
 		void LoadJpg(uint8_t* __restrict buffer) const noexcept;
+		
 		void LoadOther(half* __restrict buffer) const noexcept;
+
 		ImVec4 GetPixel(const uint16_t x, const uint16_t y, void* __restrict buffer) const noexcept;
 	};
 
