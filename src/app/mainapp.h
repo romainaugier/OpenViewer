@@ -74,7 +74,7 @@ OV_STATIC_FUNC void GLFWDropEventCallback(GLFWwindow* window, int count, const c
         app->m_Loader->SetMediaActive(mediaCount);
 
         Interface::Display* activeDisplay = app->GetActiveDisplay();
-
+        activeDisplay->NeedReinit();
         activeDisplay->m_MediaID = mediaCount;
 
         app->m_Loader->LoadImageToCache(0);

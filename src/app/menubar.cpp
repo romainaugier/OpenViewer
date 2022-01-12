@@ -434,8 +434,6 @@ namespace Interface
 					ocio.UpdateProcessor();
 
 					//display.Update(loader, ocio, playbar.playbar_frame);
-
-					change = true;
 				}
 
 				ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
@@ -585,6 +583,9 @@ namespace Interface
 						if (ImGui::IsItemEdited())
 						{
 							activeMedia->UpdateCurrentLayer();
+
+							// Force the frame reloading
+							app.m_Loader->LoadImageToCache(app.m_Playbar->m_Frame, true);
 
 							change = true;
 						}

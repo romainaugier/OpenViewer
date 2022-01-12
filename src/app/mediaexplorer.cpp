@@ -53,25 +53,28 @@ namespace Interface
 
                                 this->m_CurrentMediaRange = this->m_Loader->m_Medias[i].m_TimelineRange;
 
-                                Interface::Display* activeDisplay = app->GetActiveDisplay();
+                                // If no display is active, create one
+                                if (app->m_DisplayCount == 0)
+                                {
+                                    this->m_Loader->LoadImageToCache(0);
+                                    
+                                    Interface::Display* newDisplay = new Interface::Display(app->m_Loader->m_Profiler, app->m_Logger, app->m_Loader, 1);
 
-                                activeDisplay->m_MediaID = i;
-
+                                    newDisplay->Initialize(*app->m_OcioModule, i);
+                                    
+                                    app->m_Displays[++app->m_DisplayCount] = std::make_pair(true, newDisplay);
+                                    app->m_ActiveDisplayID = 1;
+                                }
+                                else
+                                {
+                                    Interface::Display* activeDisplay = app->GetActiveDisplay();
+                                    activeDisplay->NeedReinit();
+                                    activeDisplay->m_MediaID = i;
+                                }
+                                
                                 this->m_CurrentMediaChanged = true;
                             }
 
-                            // If no display is active, create one
-                            if (app->m_DisplayCount == 0)
-                            {
-                                this->m_Loader->LoadImageToCache(0);
-                                
-                                Interface::Display* newDisplay = new Interface::Display(app->m_Loader->m_Profiler, app->m_Logger, app->m_Loader, 1);
-
-                                newDisplay->Initialize(*app->m_OcioModule, i);
-                                
-                                app->m_Displays[++app->m_DisplayCount] = std::make_pair(true, newDisplay);
-                                app->m_ActiveDisplayID = 1;
-                            }
                             
                         }
                     }

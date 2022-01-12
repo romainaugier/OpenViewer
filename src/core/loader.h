@@ -92,7 +92,7 @@ namespace Core
 		Media* GetMedia(const uint32_t mediaId) noexcept;
 		
 		// Loads an image to display it. If the cache is enabled, it will load it in the cache, otherwise loads it on the fly
-		void LoadImageToCache(const uint32_t index) noexcept;
+		void LoadImageToCache(const uint32_t index, const bool force = false) noexcept;
 
 		// Loads a sequence of images in the cache to display it, starting from the given index until 
 		// it reaches startIndex + size

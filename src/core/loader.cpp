@@ -210,13 +210,13 @@ cacheInit:
 		return &this->m_Medias[mediaId];
 	}
 
-	void Loader::LoadImageToCache(const uint32_t index) noexcept
+	void Loader::LoadImageToCache(const uint32_t index, const bool force) noexcept
 	{
 		const Image* tmpImg = this->GetImage(index);
 
 		if (tmpImg == nullptr) return;
 
-		if (tmpImg->m_CacheIndex > 0) return;
+		if (tmpImg->m_CacheIndex > 0 && !force) return;
 
 		if (this->m_UseCache)
 		{

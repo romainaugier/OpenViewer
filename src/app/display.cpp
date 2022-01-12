@@ -303,13 +303,19 @@ namespace Interface
 	void Display::Update(Core::Ocio& ocio, const uint32_t frameIndex) noexcept
 	{
 		// Get the image to be displayed
-		auto getStart = this->m_Profiler->Start();
 		Core::Image* currentImage = this->m_Loader->GetImage(frameIndex);
-		auto getEnd = this->m_Profiler->End();
-		this->m_Profiler->Time("Display Image Get Time", getStart, getEnd);
 
 		if (currentImage != nullptr && currentImage->m_CacheIndex > 0)
 		{
+			if (this->m_Width != currentImage->m_Xres && this->m_Height != currentImage->m_Yres || this->m_NeedReinitialization)
+			{
+				this->ReInitialize(*currentImage, ocio, this->m_MediaID);
+
+				this->NeedReinit(false);
+
+				return;
+			}
+
 			// Get the different image infos we need to load it
 			const uint16_t currentImageXRes = currentImage->m_Xres;
 			const uint16_t currentImageYRes = currentImage->m_Yres;

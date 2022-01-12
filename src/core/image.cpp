@@ -67,6 +67,9 @@ namespace Core
 			const Imath::Box2i display = in.header().displayWindow();
 			const Imath::Box2i data = in.header().dataWindow();
 			const Imath::V2i dim(data.max.x - data.min.x + 1, data.max.y - data.max.y + 1);
+
+			const int dx = data.min.x;
+    		const int dy = data.min.y;
 			
 			Imf::FrameBuffer frameBuffer;
 
@@ -75,36 +78,36 @@ namespace Core
 			Utils::Str::Format(channelName, "%s.R", layerName.c_str());
 
 			frameBuffer.insert(channelName, Imf::Slice(Imf::HALF,
-													   (char*) buffer,
-													   sizeof(buffer[0]) * 1,
-													   sizeof(buffer[0]) * this->m_Xres,
+													   (char*) &buffer[0],
+													   sizeof(half) * 4,
+													   sizeof(half) * this->m_Xres * 4,
 													   1, 1, 1.0));
 			
 			// G channel
 			Utils::Str::Format(channelName, "%s.G", layerName.c_str());
 
 			frameBuffer.insert(channelName, Imf::Slice(Imf::HALF,
-													   (char*) buffer + 1,
-													   sizeof(buffer[0]) * 1,
-													   sizeof(buffer[0]) * this->m_Xres,
+													   (char*) &buffer[1],
+													   sizeof(half) * 4,
+													   sizeof(half) * this->m_Xres * 4,
 													   1, 1, 1.0));
 			
 			// B channel
 			Utils::Str::Format(channelName, "%s.B", layerName.c_str());
 
 			frameBuffer.insert(channelName, Imf::Slice(Imf::HALF,
-													   (char*) buffer + 2,
-													   sizeof(buffer[0]) * 1,
-													   sizeof(buffer[0]) * this->m_Xres,
+													   (char*) &buffer[2],
+													   sizeof(half) * 4,
+													   sizeof(half) * this->m_Xres * 4,
 													   1, 1, 1.0));
 			
 			// A channel
 			Utils::Str::Format(channelName, "%s.A", layerName.c_str());
 
 			frameBuffer.insert(channelName, Imf::Slice(Imf::HALF,
-													   (char*) buffer + 3,
-													   sizeof(buffer[0]) * 1,
-													   sizeof(buffer[0]) * this->m_Xres,
+													   (char*) &buffer[3],
+													   sizeof(half) * 4,
+													   sizeof(half) * this->m_Xres * 4,
 													   1, 1, 1.0));
 
 			in.setFrameBuffer(frameBuffer);

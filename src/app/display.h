@@ -52,6 +52,7 @@ namespace Interface
 
 		uint8_t m_DisplayID = 0;
 
+		bool m_NeedReinitialization = false;
 		bool m_IsOpen = true;
 		bool m_IsActive = false;
 		bool m_IsImageHovered = false;
@@ -67,6 +68,8 @@ namespace Interface
 		void Initialize(Core::Ocio& ocio, const uint32_t mediaId) noexcept;
 
 		void ReInitialize(const Core::Image& image, Core::Ocio& ocio, const uint32_t mediaId) noexcept;
+
+		OV_FORCEINLINE void NeedReinit(const bool need = true) noexcept { this->m_NeedReinitialization = need; }
 
 		void InitializeOpenGL(const Core::Image& image) noexcept;
 		
