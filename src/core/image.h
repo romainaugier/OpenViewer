@@ -91,20 +91,23 @@ namespace Core
 
 			if(Utils::Str::EndsWith(fp, ".exr"))
 			{
+				const bool hasAlpha = spec.alpha_channel > -1;
+				
 				this->m_Type = FileType_Exr;
-				this->m_Format = Format_RGBA_HALF;
-				this->m_GLInternalFormat = GL_RGBA16F;
-				this->m_GLFormat = GL_RGBA;
+				this->m_Format = hasAlpha ? Format_RGBA_HALF : Format_RGB_HALF;
+				this->m_GLInternalFormat = hasAlpha ? GL_RGBA16F : GL_RGB16F;
+				this->m_GLFormat = hasAlpha ? GL_RGBA : GL_RGB;
 				this->m_GLType = GL_HALF_FLOAT;
 				this->m_Xres = spec.full_width;
 				this->m_Yres = spec.full_height;
-				this->m_Channels = spec.nchannels < 4 ? 4 : spec.nchannels;
+				this->m_Channels = spec.nchannels;
 				this->m_Size = this->m_Xres * this->m_Yres * (this->m_Channels > 4 ? 4 : this->m_Channels);
 				this->m_Stride = m_Size * Size::Size16;
 			}
 			else if(Utils::Str::EndsWith(fp, ".png"))
 			{
 				const bool hasAlpha = spec.alpha_channel > -1;
+				
 				this->m_Type = FileType_Png;
 				this->m_Format = hasAlpha ? Format_RGBA_U8 : Format_RGB_U8;
 				this->m_GLInternalFormat = hasAlpha ? GL_RGBA8 : GL_RGB8;
@@ -188,9 +191,11 @@ namespace Core
 
 		void Release() noexcept;
 		
-		void Load(void* __restrict buffer, Profiler* prof, const std::string& layerName = "Beauty") const noexcept;
+		void Load(void* __restrict buffer, Profiler* prof, const std::string& layers = "") const noexcept;
 		
-		void LoadExr(half* __restrict buffer, const std::string& layerName = "Beauty") const noexcept;
+		void LoadExr(half* __restrict buffer, const std::string& layers = "") const noexcept;
+
+		void VerifyChannelSize(const std::string& layers = "") noexcept;
 		
 		void LoadPng(uint8_t* __restrict buffer) const noexcept;
 		

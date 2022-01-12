@@ -36,22 +36,41 @@ namespace Core
         const OIIO::ImageSpec& spec = in->spec();
         const uint16_t channelsCount = spec.channelnames.size();
 
-        const std::regex channelNamePattern("\\.R|^R$|\\.G|^G$|\\.B|^B$|\\.A|^A$");
+        const std::regex channelNamePattern("\\.R|^R$|\\.G|^G$|\\.B|^B$|\\.A|^A$|\\.X|\\.Y|\\.Z");
 
         if (channelsCount > 4)
         {
-            this->m_Layers.reserve(channelsCount / 4);
+            this->m_Layers.reserve(channelsCount);
 
-            for (uint16_t i = 0; i < channelsCount; i += 4)
+            std::string previousLayerName = "Beauty";
+
+            std::string layerNames = "";
+
+            for (uint16_t i = 0; i < channelsCount; i++)
             {
-                std::string layerName = spec.channelnames[i];
+                const std::string layerName = spec.channelnames[i];
+                std::string layerNameClean = layerName;
 
-                Utils::Str::ReReplace(layerName, channelNamePattern, "");
+                Utils::Str::ReReplace(layerNameClean, channelNamePattern, "");
 
-                if (layerName == "") layerName = "Beauty";
-                
-                this->m_Layers.emplace_back(layerName);
+                if (layerNameClean == "") layerNameClean = "Beauty";
+
+                if (!(layerNameClean == previousLayerName))
+                {
+                    this->m_Layers.emplace_back(std::make_pair(previousLayerName, layerNames));
+                 
+                    previousLayerName = layerNameClean;
+
+                    layerNames = layerName;
+                }
+                else
+                {
+                    layerNames += layerNames != "" ? (";" + layerName) : layerName;
+                    previousLayerName = layerNameClean;
+                }
             }
+
+            this->m_Layers.shrink_to_fit();
         }
     }
 }

@@ -43,75 +43,69 @@ namespace Core
 	}
 
 	// loads an image
-	void Image::LoadExr(half* __restrict buffer, const std::string& layerName) const noexcept
+	void Image::LoadExr(half* __restrict buffer, const std::string& layers) const noexcept
 	{
 		memset(&buffer[0], static_cast<half>(1.0f), this->m_Xres * this->m_Yres * (this->m_Channels > 4 ? 4 : this->m_Channels) * Size::Size16);
 		
-		// Read the RGBA layer, or more commonly the beauty
-		if (layerName == "Beauty")
-		{
-			Imf::RgbaInputFile in(this->m_Path.c_str());
-			
-			const Imath::Box2i display = in.displayWindow();
-			const Imath::Box2i data = in.dataWindow();
-			const Imath::V2i dim(data.max.x - data.min.x + 1, data.max.y - data.max.y + 1);
+		Imf::InputFile in(this->m_Path.c_str());
 
-			in.setFrameBuffer((Imf::Rgba*)buffer, 1, dim.x);
-			in.readPixels(data.min.y, data.max.y);
+		const Imath::Box2i display = in.header().displayWindow();
+		const Imath::Box2i data = in.header().dataWindow();
+		const Imath::V2i dim(data.max.x - data.min.x + 1, data.max.y - data.max.y + 1);
+
+		const int dx = data.min.x;
+		const int dy = data.min.y;
+		
+		Imf::FrameBuffer frameBuffer;
+
+		uint8_t strideMultiplier = 4;
+		uint8_t strideOffset = 0;
+
+		if (this->m_Format & Format_RGB_HALF || this->m_Format & Format_RGB_FLOAT)
+		{
+			strideMultiplier = 3;
 		}
-		// Read the specified layer
-		else
+
+		std::vector<std::string> channelNames;
+
+		Utils::Str::Split(channelNames, layers, ';');
+
+		for (const auto& channelName : channelNames)
 		{
-			Imf::InputFile in(this->m_Path.c_str());
-
-			const Imath::Box2i display = in.header().displayWindow();
-			const Imath::Box2i data = in.header().dataWindow();
-			const Imath::V2i dim(data.max.x - data.min.x + 1, data.max.y - data.max.y + 1);
-
-			const int dx = data.min.x;
-    		const int dy = data.min.y;
+			if (channelName == "") continue;
 			
-			Imf::FrameBuffer frameBuffer;
-
-			// R channel
-			char channelName[4096];
-			Utils::Str::Format(channelName, "%s.R", layerName.c_str());
-
 			frameBuffer.insert(channelName, Imf::Slice(Imf::HALF,
-													   (char*) &buffer[0],
-													   sizeof(half) * 4,
-													   sizeof(half) * this->m_Xres * 4,
-													   1, 1, 1.0));
-			
-			// G channel
-			Utils::Str::Format(channelName, "%s.G", layerName.c_str());
-
-			frameBuffer.insert(channelName, Imf::Slice(Imf::HALF,
-													   (char*) &buffer[1],
-													   sizeof(half) * 4,
-													   sizeof(half) * this->m_Xres * 4,
-													   1, 1, 1.0));
-			
-			// B channel
-			Utils::Str::Format(channelName, "%s.B", layerName.c_str());
-
-			frameBuffer.insert(channelName, Imf::Slice(Imf::HALF,
-													   (char*) &buffer[2],
-													   sizeof(half) * 4,
-													   sizeof(half) * this->m_Xres * 4,
-													   1, 1, 1.0));
-			
-			// A channel
-			Utils::Str::Format(channelName, "%s.A", layerName.c_str());
-
-			frameBuffer.insert(channelName, Imf::Slice(Imf::HALF,
-													   (char*) &buffer[3],
-													   sizeof(half) * 4,
-													   sizeof(half) * this->m_Xres * 4,
+													   (char*) &buffer[strideOffset],
+													   sizeof(half) * strideMultiplier,
+													   sizeof(half) * this->m_Xres * strideMultiplier,
 													   1, 1, 1.0));
 
-			in.setFrameBuffer(frameBuffer);
-			in.readPixels(data.min.y, data.max.y);
+			++strideOffset;
+		}
+
+		in.setFrameBuffer(frameBuffer);
+		in.readPixels(data.min.y, data.max.y);
+	}
+
+	void Image::VerifyChannelSize(const std::string& layers) noexcept
+	{
+		std::vector<std::string> channelNames;
+
+		Utils::Str::Split(channelNames, layers, ';');
+
+		if (channelNames.size() == 3 && !this->m_Format & Format_RGB_HALF)
+		{
+			this->m_Format = Format_RGB_HALF;
+			this->m_GLInternalFormat = GL_RGB16F;
+			this->m_GLFormat = GL_RGB;
+			this->m_Stride = this->m_Xres * this->m_Yres * 3 * Size::Size16;
+		}
+		else if (channelNames.size() == 4 && !this->m_Format & Format_RGBA_HALF)
+		{
+			this->m_Format = Format_RGBA_HALF;
+			this->m_GLInternalFormat = GL_RGBA16F;
+			this->m_GLFormat = GL_RGBA;
+			this->m_Stride = this->m_Xres * this->m_Yres * 4 * Size::Size16;
 		}
 	}
 
@@ -136,11 +130,11 @@ namespace Core
 		in->close();
 	}
 
-	void Image::Load(void* __restrict buffer, Profiler* prof, const std::string& layerName) const noexcept
+	void Image::Load(void* __restrict buffer, Profiler* prof, const std::string& layers) const noexcept
 	{
 		const auto load_timer_start = prof->Start();
 
-		if (this->m_Type & FileType_Exr) LoadExr((half*)buffer, layerName);
+		if (this->m_Type & FileType_Exr) LoadExr((half*)buffer, layers);
 		else if (this->m_Type& FileType_Jpg) LoadJpg((uint8_t*)buffer);
 		else if (this->m_Type & FileType_Png) LoadPng((uint8_t*)buffer);
 		else if (this->m_Type & FileType_Other) LoadOther((half*)buffer);

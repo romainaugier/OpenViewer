@@ -15,11 +15,14 @@
 
 namespace Core
 {
+    // A layer represents an exr part, with channels. The first string in the pair
+    // holds the "general" name, and the second one holds the channels names separated by a ;
+    using Layer = std::pair<std::string, std::string>;
     struct Media
     {
         std::vector<Image> m_Images; // Holds the images of the sequence 
 
-        std::vector<std::string> m_Layers; // Holds the layer names if the image has any
+        std::vector<Layer> m_Layers; // Holds the layer names if the image has any
 
         std::string m_CurrentLayerStr = "Beauty";
 
@@ -42,6 +45,8 @@ namespace Core
         
         void SetLayers() noexcept;
 
-        void UpdateCurrentLayer() noexcept { this->m_CurrentLayerStr = this->m_Layers[this->m_CurrentLayerID]; }
+        std::string GetCurrentChannels() const noexcept { return this->m_Layers[this->m_CurrentLayerID].second; }
+
+        void UpdateCurrentLayer() noexcept { this->m_CurrentLayerStr = this->m_Layers[this->m_CurrentLayerID].first; }
     };
 }

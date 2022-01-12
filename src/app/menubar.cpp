@@ -572,9 +572,9 @@ namespace Interface
 						
 						ImGui::Combo("", &activeMedia->m_CurrentLayerID, 
 								[](void* vec, int idx, const char** out_text){
-									std::vector<std::string>* vector = reinterpret_cast<std::vector<std::string>*>(vec);
+									std::vector<Core::Layer>* vector = reinterpret_cast<std::vector<Core::Layer>*>(vec);
 									if (idx < 0 || idx >= vector ->size()) return false;
-									*out_text = vector->at(idx).c_str();
+									*out_text = vector->at(idx).first.c_str();
 									return true;
 								}, reinterpret_cast<void*>(&activeMedia->m_Layers), activeMedia->m_Layers.size());
 

@@ -229,11 +229,17 @@ cacheInit:
 				if (media.InRange(index))
 				{
 					const uint32_t imageIndex = index - media.m_TimelineRange.x;
+					
+					media.m_Images[imageIndex].VerifyChannelSize(media.GetCurrentChannels());
+					
 					const uint32_t cachedIndex = this->m_Cache->Add(&media.m_Images[imageIndex]);
 
-					if (media.m_Layers.size() > 0) media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_DataPtr, 
-																				   this->m_Profiler,
-																				   media.m_CurrentLayerStr);
+					if (media.m_Layers.size() > 0)
+					{
+					  	media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_DataPtr, 
+														this->m_Profiler,
+														media.GetCurrentChannels());
+					}
 
 					else media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_DataPtr, 
 														 this->m_Profiler);
@@ -253,12 +259,17 @@ cacheInit:
 				if (media.InRange(index))
 				{
 					const uint32_t imageIndex = index - media.m_TimelineRange.x;
+					
+					media.m_Images[imageIndex].VerifyChannelSize(media.GetCurrentChannels());
+					
 					const uint32_t cachedIndex = this->m_Cache->Add(&media.m_Images[imageIndex]);
 
-					if (media.m_Layers.size() > 0) media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_DataPtr, 
-																				   this->m_Profiler,
-																				   media.m_CurrentLayerStr);
-
+					if (media.m_Layers.size() > 0)
+					{
+					  	media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_DataPtr, 
+														this->m_Profiler,
+														media.GetCurrentChannels());
+					}
 					else media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_DataPtr, 
 														 this->m_Profiler);
 

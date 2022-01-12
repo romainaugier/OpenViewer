@@ -71,11 +71,9 @@ namespace Interface
                                     activeDisplay->NeedReinit();
                                     activeDisplay->m_MediaID = i;
                                 }
-                                
+
                                 this->m_CurrentMediaChanged = true;
                             }
-
-                            
                         }
                     }
                 }
