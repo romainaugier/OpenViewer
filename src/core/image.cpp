@@ -84,7 +84,7 @@ namespace Core
 			Utils::Str::Format(channelName, "%s.G", layerName.c_str());
 
 			frameBuffer.insert(channelName, Imf::Slice(Imf::HALF,
-													   (char*) buffer,
+													   (char*) buffer + 1,
 													   sizeof(buffer[0]) * 1,
 													   sizeof(buffer[0]) * this->m_Xres,
 													   1, 1, 1.0));
@@ -93,7 +93,7 @@ namespace Core
 			Utils::Str::Format(channelName, "%s.B", layerName.c_str());
 
 			frameBuffer.insert(channelName, Imf::Slice(Imf::HALF,
-													   (char*) buffer,
+													   (char*) buffer + 2,
 													   sizeof(buffer[0]) * 1,
 													   sizeof(buffer[0]) * this->m_Xres,
 													   1, 1, 1.0));
@@ -102,7 +102,7 @@ namespace Core
 			Utils::Str::Format(channelName, "%s.A", layerName.c_str());
 
 			frameBuffer.insert(channelName, Imf::Slice(Imf::HALF,
-													   (char*) buffer,
+													   (char*) buffer + 3,
 													   sizeof(buffer[0]) * 1,
 													   sizeof(buffer[0]) * this->m_Xres,
 													   1, 1, 1.0));
