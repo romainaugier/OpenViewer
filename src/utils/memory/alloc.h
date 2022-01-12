@@ -15,9 +15,9 @@
 OV_FORCEINLINE void* OvAlloc(size_t size, size_t alignement)
 {
     StaticDebugConsoleLog("[MEM_DEBUG] : Allocated %lld bytes.", size);
-#ifdef OPENVIEWER_GCC
+#ifdef OV_GCC
     void* tmp = aligned_alloc(alignement, size);
-#else OPENVIEWER_MSVC
+#else if OV_MSVC
     void* tmp = _aligned_malloc(size, alignement);
 #endif
     if (tmp != nullptr)
@@ -35,9 +35,9 @@ OV_FORCEINLINE void* OvAlloc(size_t size, size_t alignement)
 OV_FORCEINLINE void OvFree(void* ptr)
 {
     StaticDebugConsoleLog("[MEM_DEBUG] : Freed 0x%p ptr.", ptr);
-#ifdef OPENVIEWER_GCC
+#ifdef OV_GCC
     free(ptr);
-#else OPENVIEWER_MSVC
+#else if OV_MSVC
     _aligned_free(ptr);
 #endif
 }

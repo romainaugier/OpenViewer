@@ -6,7 +6,7 @@
 
 #include "decl.h"
 
-#ifdef OPENVIEWER_WIN
+#ifdef OV_WIN
 
 #include <windows.h>
 
@@ -18,7 +18,7 @@ uint64_t getTotalSystemMemory()
     return status.ullTotalPhys;
 }
 
-#else if OPENVIEWER_LINUX
+#else if OV_LINUX
 
 #include <unistd.h>
 
