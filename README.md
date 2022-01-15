@@ -126,6 +126,7 @@ This software is based in part on the works of :
 - [Robin Map](https://github.com/Tessil/robin-map), Copyright (c) 2017 Thibaut Goetghebuer-Planchon <tessil@gmx.com>
 - [PyString](https://github.com/imageworks/pystring), Copyright (c) 2008-2010, Sony Pictures Imageworks Inc All rights reserved.
 - [Glew](https://github.com/nigels-com/glew), Copyright (C) 2002-2007, Milan Ikits <milan ikits[]ieee org>, Copyright (C) 2002-2007, Marcelo E. Magallon <mmagallo[]debian org>, Copyright (C) 2002, Lev Povalahev All rights reserved.
+- [NLohmann JSON](https://github.com/nlohmann/json) Copyright (c) 2013-2022 Niels Lohmann
 
 ## Special thanks
 
