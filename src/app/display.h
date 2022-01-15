@@ -56,6 +56,11 @@ namespace Interface
 		bool m_IsOpen = true;
 		bool m_IsActive = false;
 		bool m_IsImageHovered = false;
+		bool m_FrameView = false;
+		bool m_HomeView = false;
+		bool m_HorizontalMirrorView = false;
+		bool m_VerticalMirrorView = false;
+		bool m_PremultiplyAlpha = false;
 
 		Display(Profiler* profiler, Logger* logger, Core::Loader* loader, const uint8_t id)
 		{
@@ -70,21 +75,31 @@ namespace Interface
 		void ReInitialize(const Core::Image& image, Core::Ocio& ocio, const uint32_t mediaId) noexcept;
 
 		OV_FORCEINLINE void NeedReinit(const bool need = true) noexcept { this->m_NeedReinitialization = need; }
-
+		
+		// Few OpenGL utilities
 		void InitializeOpenGL(const Core::Image& image) noexcept;
+		OV_FORCEINLINE void BindFBO() const noexcept { glBindFramebuffer(GL_FRAMEBUFFER, this->m_FBO); }
+		OV_FORCEINLINE void UnbindFBO() const noexcept { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
+		OV_FORCEINLINE void BindRBO() const noexcept { glBindRenderbuffer(GL_RENDERBUFFER, this->m_RBO); }
+		OV_FORCEINLINE void UnbindRBO() const noexcept { glBindRenderbuffer(GL_RENDERBUFFER, 0); }
+		void InitAlphaBlendingTexture() noexcept;
+		void InitRawTexture(const Core::Image* initImage) noexcept;
+		void OcioTransform(Core::Ocio& ocio, const bool updateProcessor = true) noexcept;
+		void AlphaBlending() noexcept;
 		
-		OV_FORCEINLINE void BindFBO() const noexcept;
-		
-		OV_FORCEINLINE void UnbindFBO() const noexcept;
-		
-		OV_FORCEINLINE void BindRBO() const noexcept;
-		
-		OV_FORCEINLINE void UnbindRBO() const noexcept;
-		
+		// Updates the displayed image
 		void Update(Core::Ocio& ocio, const uint32_t frameIndex) noexcept;
+
+		// Few functions to play with the displayed image
+		OV_FORCEINLINE void NeedFrame() noexcept { this->m_FrameView = true; }
+		OV_FORCEINLINE void NeedHome() noexcept { this->m_HomeView = true; }
+		OV_FORCEINLINE void MirrorHorizontal() noexcept { this->m_HorizontalMirrorView = !this->m_HorizontalMirrorView; }
+		OV_FORCEINLINE void MirrorVertical() noexcept { this->m_VerticalMirrorView = !this->m_VerticalMirrorView; }
 		
+		// Display window draw function
 		void Draw(uint32_t frameIndex) noexcept;
 		
+		// Retrieves a pixel from the current transformed texture
 		ImVec4 GetPixel(const uint16_t x, const uint16_t y) const noexcept;
 		
 		void Release() noexcept;

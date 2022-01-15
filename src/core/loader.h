@@ -19,6 +19,7 @@
 #include "cache.h"
 #include "media.h"
 #include "utils/filesystem_utils.h"
+#include "utils/memory/utils.h"
 
 // WinUser.h has a LoadImage definition
 #ifdef _WIN32
@@ -53,12 +54,13 @@ namespace Core
 
 		uint32_t m_CacheSizeMB = 0;
 
+		int m_CacheMode = 0; // 0 : minimal, 1 : manual, 2 : smart
+
 		uint16_t m_MediaCount = 0;
 
 		uint8_t m_BgLoadChunkSize = 4; // Number of images to load in the cache at the same time in the background
 
 		bool m_AutoDetectFileSequence = true;
-		bool m_UseCache = false;
 		bool m_HasBeenInitialized = false;
 		bool m_IsWorking = false; // State for the worker thread doing the load job
 		bool m_NeedBgLoad = false; // Notify the background loader we need it to work
@@ -68,7 +70,7 @@ namespace Core
 		Loader(Logger* logger, Profiler* profiler);
 
 		// Initializes the loader
-		void Initialize(const bool useCache, const size_t cacheSize = 0) noexcept;
+		void Initialize(const uint8_t cacheMode, const size_t cacheSize = 0, const bool autodetect = true) noexcept;
 
 		// A few inline methods to get/set states on different attributes/objects of the loader
 		// Sets a media active
@@ -81,6 +83,8 @@ namespace Core
 		OV_FORCEINLINE void SetRange(const ImVec2& range) noexcept { this->m_Range = range; }
 
 		OV_FORCEINLINE uint16_t GetMediaCount() const noexcept { return this->m_MediaCount; }
+
+		OV_FORCEINLINE void* GetImageCachePtrFromIndex(const uint32_t cacheIndex) const noexcept { return this->m_Cache->m_Items[cacheIndex].m_DataPtr; }
 
 		// Loads a media into the loader
 		void Load(const std::string& mediaPath) noexcept;

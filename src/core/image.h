@@ -13,6 +13,7 @@
 #include "OpenEXR/ImfRgbaFile.h"
 #include "OpenEXR/ImfInputFile.h"
 #include "OpenEXR/ImfChannelList.h"
+#include "OpenEXR/ImfMultiPartInputFile.h"
 
 extern "C" {
 	#include <libavformat/avformat.h>
@@ -49,7 +50,9 @@ enum Format_
 	Format_RGBA_U32   = 0x10,
 	Format_RGB_U32    = 0x20,
 	Format_RGBA_HALF  = 0x40,
-	Format_RGB_HALF   = 0x80
+	Format_RGB_HALF   = 0x80,
+	Format_RGBA_U16   = 0x100,
+	Format_RGB_U16    = 0x200,
 };
 
 namespace Core
@@ -65,7 +68,12 @@ namespace Core
 		uint32_t m_Yres = 0;
 		uint32_t m_Channels = 0;
 		uint32_t m_CacheIndex = 0; // zero means it is not cached
-		uint32_t m_Frame = 0; // used for reading video streams
+
+		uint32_t m_Frame; // used for reading video streams
+		
+		OIIO::TypeDesc m_OIIOTypeDesc;
+
+		uint8_t m_Depth = 0; // bit depth information
 		
 		FileType_ m_Type;
 		Format_ m_Format;
@@ -94,33 +102,77 @@ namespace Core
 				const bool hasAlpha = spec.alpha_channel > -1;
 				
 				this->m_Type = FileType_Exr;
-				this->m_Format = hasAlpha ? Format_RGBA_HALF : Format_RGB_HALF;
-				this->m_GLInternalFormat = hasAlpha ? GL_RGBA16F : GL_RGB16F;
-				this->m_GLFormat = hasAlpha ? GL_RGBA : GL_RGB;
-				this->m_GLType = GL_HALF_FLOAT;
 				this->m_Xres = spec.full_width;
 				this->m_Yres = spec.full_height;
 				this->m_Channels = spec.nchannels;
 				this->m_Size = this->m_Xres * this->m_Yres * (this->m_Channels > 4 ? 4 : this->m_Channels);
-				this->m_Stride = m_Size * Size::Size16;
+
+				if (spec.format == OIIO::TypeDesc::HALF)
+				{
+					this->m_OIIOTypeDesc = OIIO::TypeDesc::HALF;
+					this->m_Depth = 2;
+					this->m_Format = hasAlpha ? Format_RGBA_HALF : Format_RGB_HALF;
+					this->m_GLInternalFormat = hasAlpha ? GL_RGBA16F : GL_RGB16F;
+					this->m_GLFormat = hasAlpha ? GL_RGBA : GL_RGB;
+					this->m_GLType = GL_HALF_FLOAT;
+					this->m_Stride = m_Size * Size::Size16;
+				}
+				else if (spec.format == OIIO::TypeDesc::FLOAT)
+				{
+					this->m_OIIOTypeDesc = OIIO::TypeDesc::FLOAT;
+					this->m_Depth = 4;
+					this->m_Format = hasAlpha ? Format_RGBA_FLOAT : Format_RGB_FLOAT;
+					this->m_GLInternalFormat = hasAlpha ? GL_RGBA32F : GL_RGB32F;
+					this->m_GLFormat = hasAlpha ? GL_RGBA : GL_RGB;
+					this->m_GLType = GL_FLOAT;
+					this->m_Stride = m_Size * Size::Size32;
+				}
+				else
+				{
+					StaticErrorConsoleLog("Unknown data type in exr file : %s", this->m_Path);
+					std::exit(EXIT_FAILURE);
+				}
+
 			}
 			else if(Utils::Str::EndsWith(fp, ".png"))
 			{
 				const bool hasAlpha = spec.alpha_channel > -1;
 				
 				this->m_Type = FileType_Png;
-				this->m_Format = hasAlpha ? Format_RGBA_U8 : Format_RGB_U8;
-				this->m_GLInternalFormat = hasAlpha ? GL_RGBA8 : GL_RGB8;
-				this->m_GLFormat = hasAlpha ? GL_RGBA : GL_RGB;
-				this->m_GLType = GL_UNSIGNED_BYTE;
 				this->m_Xres = spec.width;
 				this->m_Yres = spec.height;
 				this->m_Channels = spec.nchannels;
 				this->m_Size = m_Xres * m_Yres * this->m_Channels;
-				this->m_Stride = m_Size * Size::Size8;
+				
+				if (spec.format == OIIO::TypeDesc::UINT8)
+				{
+					this->m_OIIOTypeDesc = OIIO::TypeDesc::UINT8;
+					this->m_Depth = 1;
+					this->m_Format = hasAlpha ? Format_RGBA_U8 : Format_RGB_U8;
+					this->m_GLInternalFormat = hasAlpha ? GL_RGBA8 : GL_RGB8;
+					this->m_GLFormat = hasAlpha ? GL_RGBA : GL_RGB;
+					this->m_GLType = GL_UNSIGNED_BYTE;
+					this->m_Stride = m_Size * Size::Size8;
+				}
+				else if (spec.format == OIIO::TypeDesc::UINT16)
+				{
+					this->m_OIIOTypeDesc = OIIO::TypeDesc::UINT16;
+					this->m_Depth = 2;
+					this->m_Format = hasAlpha ? Format_RGBA_U16 : Format_RGB_U16;
+					this->m_GLInternalFormat = hasAlpha ? GL_RGBA16 : GL_RGB16;
+					this->m_GLFormat = hasAlpha ? GL_RGBA : GL_RGB;
+					this->m_GLType = GL_UNSIGNED_SHORT;
+					this->m_Stride = m_Size * Size::Size16;
+				}
+				else
+				{
+					StaticErrorConsoleLog("Unknown data type in png file : %s", this->m_Path);
+					std::exit(EXIT_FAILURE);
+				}
 			}
 			else if(Utils::Str::EndsWith(fp, ".jpg") || Utils::Str::EndsWith(fp, ".jpeg"))
 			{
+				this->m_OIIOTypeDesc = OIIO::TypeDesc::UINT8;
 				this->m_Type = FileType_Jpg;
 				this->m_Format = Format_RGB_U8;
 				this->m_GLInternalFormat = GL_RGB8;
@@ -131,6 +183,7 @@ namespace Core
 				this->m_Channels = spec.nchannels;
 				this->m_Size = m_Xres * m_Yres * m_Channels;
 				this->m_Stride = m_Size * Size::Size8;
+				this->m_Depth = 1;
 			}
 			else if(Utils::Str::EndsWith(fp, ".mp4"))
 			{
@@ -148,6 +201,7 @@ namespace Core
 			}
 			else if(Utils::Str::EndsWith(fp, ".hdr"))
 			{
+				this->m_OIIOTypeDesc = OIIO::TypeDesc::FLOAT;
 				this->m_Type = FileType_Hdr;
 				this->m_Format = Format_RGB_FLOAT;
 				this->m_GLInternalFormat = GL_RGB32F;
@@ -158,19 +212,49 @@ namespace Core
 				this->m_Channels = spec.nchannels;
 				this->m_Size = m_Xres * m_Yres * m_Channels;
 				this->m_Stride = m_Size * Size::Size32;
+				this->m_Depth = 4;
 			}
-			else if(Utils::Str::EndsWith(fp, ".tiff"))
+			else if(Utils::Str::EndsWith(fp, ".tiff") || Utils::Str::EndsWith(fp, ".tif"))
 			{
 				this->m_Type = FileType_Tiff;
-				this->m_Format = Format_RGB_HALF;
-				this->m_GLInternalFormat = GL_RGBA16F;
-				this->m_GLFormat = GL_RGBA;
-				this->m_GLType = GL_HALF_FLOAT;
 				this->m_Xres = spec.width;
 				this->m_Yres = spec.height;
 				this->m_Channels = spec.nchannels;
 				this->m_Size = m_Xres * m_Yres * m_Channels;
-				this->m_Stride = this->m_Size * Size::Size16;
+
+				if (spec.format == OIIO::TypeDesc::UINT8)
+				{
+					this->m_Depth = 1;
+					this->m_Format = Format_RGB_U8;
+					this->m_GLInternalFormat = GL_RGB8;
+					this->m_GLFormat = GL_RGB;
+					this->m_GLType = GL_UNSIGNED_BYTE;
+					this->m_Stride = m_Size * Size::Size8;
+				}
+				else if (spec.format == OIIO::TypeDesc::UINT16)
+				{
+					this->m_Depth = 2;
+					this->m_Format = Format_RGB_U16;
+					this->m_GLInternalFormat = GL_RGB16;
+					this->m_GLFormat = GL_RGB;
+					this->m_GLType = GL_UNSIGNED_SHORT;
+					this->m_Stride = m_Size * Size::Size16;
+				}
+				else if (spec.format == OIIO::TypeDesc::FLOAT)
+				{
+					this->m_Depth = 4;
+					this->m_Format = Format_RGB_FLOAT;
+					this->m_GLInternalFormat = GL_RGB32F;
+					this->m_GLFormat = GL_RGB;
+					this->m_GLType = GL_FLOAT;
+					this->m_Stride = m_Size * Size::Size32;
+				}
+
+				else
+				{
+					StaticErrorConsoleLog("Unknown data type in tiff file : %s", this->m_Path);
+					std::exit(EXIT_FAILURE);
+				}
 			}
 			else
 			{
@@ -184,6 +268,7 @@ namespace Core
 				this->m_Channels = spec.nchannels;
 				this->m_Size = m_Xres * m_Yres * m_Channels;
 				this->m_Stride = this->m_Size * Size::Size16;
+				this->m_Depth = 2;
 			}
 
 			in->close();
@@ -193,15 +278,21 @@ namespace Core
 		
 		void Load(void* __restrict buffer, Profiler* prof, const std::string& layers = "") const noexcept;
 		
-		void LoadExr(half* __restrict buffer, const std::string& layers = "") const noexcept;
+		void LoadExr(void* __restrict buffer, const std::string& layers = "") const noexcept;
 
+		// When reading multichannels exr, the channels format and type can vary (half, float, rgb, rbga) so we make sure to 
+		// set the good format in order to read it correctly 
 		void VerifyChannelSize(const std::string& layers = "") noexcept;
 		
-		void LoadPng(uint8_t* __restrict buffer) const noexcept;
+		void LoadPng(void* __restrict buffer) const noexcept;
 		
-		void LoadJpg(uint8_t* __restrict buffer) const noexcept;
+		void LoadJpg(void* __restrict buffer) const noexcept;
+
+		void LoadHdr(void* __restrict buffer) const noexcept;
+
+		void LoadTiff(void* __restrict buffer) const noexcept;
 		
-		void LoadOther(half* __restrict buffer) const noexcept;
+		void LoadOther(void* __restrict buffer) const noexcept;
 
 		ImVec4 GetPixel(const uint16_t x, const uint16_t y, void* __restrict buffer) const noexcept;
 	};

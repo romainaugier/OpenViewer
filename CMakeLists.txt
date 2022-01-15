@@ -74,6 +74,9 @@ find_package(GLEW CONFIG REQUIRED)
 # GLFW
 find_package(glfw3 CONFIG REQUIRED)
 
+# Json
+find_package(nlohmann_json CONFIG REQUIRED)
+
 # OpenColorIO
 # There is an issue with OCIO V2 and vcpkg, so we will keep on using the shipped library instead
 #find_package(OpenColorIO REQUIRED)

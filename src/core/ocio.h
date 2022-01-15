@@ -85,6 +85,8 @@ namespace Core
 
         void ChangeConfig(const char* configPath);
 
+        void UpdateChannelHot() noexcept;
+
         void UpdateProcessor();
 
         void Process(const uint16_t width, const uint16_t height);

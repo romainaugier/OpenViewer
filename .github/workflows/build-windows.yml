@@ -36,6 +36,9 @@ jobs:
     - name: Install GLFW
       run: ${{env.VCPKG_ROOT}}/vcpkg.exe install glfw3:x64-windows
 
+    - name: Install Json
+      run: ${{env.VCPKG_ROOT}}/vcpkg.exe install nlohmann-json:x64-windows
+
     - name: Configure CMake
       run: cmake -B ${{github.workspace}}/build -DCMAKE_TOOLCHAIN_FILE=${{env.VCPKG_ROOT}}/scripts/buildsystems/vcpkg.cmake
 

@@ -2,54 +2,205 @@
 // Copyright (c) 2021 Romain Augier
 // All rights reserved.
 
-
 #include "settings.h"
+
+void Settings::LoadUserSettings() noexcept
+{
+	const std::string ovDirPath = Utils::Fs::GetDocumentFolder() + "/OpenViewer";
+
+	if (!std::filesystem::exists(ovDirPath)) std::filesystem::create_directory(ovDirPath);
+
+	const std::string ovSettingsPath = ovDirPath + "/settings.json";
+
+	if (!std::filesystem::exists(ovSettingsPath))
+	{
+		this->m_UserSettings = 
+		{
+			// Cache
+			{"cache_mode", 0}, // 0 : Minimal, 1 : Manual, 2 : Smart
+			{"cache_max_size", 0}, // Size is in MB
+			{"cache_max_ram_usage", 50}, // Max percentage of ram to use in smart mode
+			// I/O
+			{"autodetect_file_sequences", true},
+			// Performance
+			{"openexr_threads", 4}
+		};
+
+		return;
+	}
+
+	std::ifstream i(ovSettingsPath);
+	i >> this->m_UserSettings;
+}
+
+void Settings::WriteUserSettings() noexcept
+{
+	const std::string ovDirPath = Utils::Fs::GetDocumentFolder() + "/OpenViewer";
+
+	if (!std::filesystem::exists(ovDirPath)) std::filesystem::create_directory(ovDirPath);
+
+	const std::string ovSettingsPath = ovDirPath + "/settings.json";
+
+	std::ofstream o(ovSettingsPath);
+	o << std::setw(4) << this->m_UserSettings << std::endl;
+}
+
+void Settings::InitializeRuntimeSettings() noexcept
+{
+	this->m_RuntimeSettings = 
+	{
+		// Playback settings
+		{"playback_speed", 24},
+		// Logging
+		{"log_level", 1}, // Warning by default
+		// OCIO
+		{"current_ocio_config_idx", 0}
+	};
+}
+
+void Settings::Initialize() noexcept
+{
+	this->InitializeRuntimeSettings();
+	this->LoadUserSettings();
+}
+
+void Settings::Close() noexcept
+{
+	this->WriteUserSettings();
+}
 
 namespace Interface
 {
 	// Little method to get the current ocio config path
 	void Settings_Windows::GetOcioConfig(Core::Ocio& ocio) noexcept
 	{
-		const std::string tmp = ocio.m_ConfigPath;
-		char* path = new char [tmp.size() + 1];
-		memcpy(path, tmp.c_str(), tmp.size() + 1);
-		settings.current_config = path;
-		settings.configs.push_back(path);
+		this->m_Settings.m_OcioConfigs.push_back(ocio.m_ConfigPath);
 	}
 
-	void Settings_Windows::Draw(ImPlaybar& playbar, Profiler* prof, Core::Ocio& ocio, Application& app) noexcept
+	void Settings_Windows::Draw(Profiler* prof, Logger* logger, Core::Ocio& ocio) noexcept
 	{	
-		if (showPlaybackWindow)
+		if (showSettingsWindow)
 		{
-			ImGui::Begin("Playback Settings", &showPlaybackWindow);
+			ImGui::Begin("Settings", &showSettingsWindow);
 			{
-				ImGui::InputInt("FPS", (int*)&playbar.m_FrameRate);
-			}
-			ImGui::End();
-		}
-
-		if (showOcioWindow)
-		{
-			ImGui::Begin("OCIO Settings", &showOcioWindow);
-			{
-				ImGui::Text("Current configuration : %s", settings.current_config);
-				ImGui::Text("");
-				ImGui::Text("Configurations : ");
-				ImGui::SameLine();
-				ImGui::PushID(0);
-				ImGui::Combo("", &settings.current_config_idx, &settings.configs[0], settings.configs.size());
-				ImGui::PopID();
+				// Cache
+				if (ImGui::CollapsingHeader("Cache"))
 				{
+					// Cache mode
+					const char* cacheModes[3] = { "Minimal", "Manual", "Smart" };
+					int cacheMode = this->m_Settings.m_UserSettings["cache_mode"].get<int>();
+
+					ImGui::Text("Cache Mode");
+
+					ImGui::SameLineWidget(100.0f);
+
+					IM_ID(0, ImGui::Combo("###", &cacheMode, cacheModes, 3));
+
 					if (ImGui::IsItemEdited())
 					{
-						settings.current_config = settings.configs[settings.current_config_idx];
-						ocio.ChangeConfig(settings.configs[settings.current_config_idx]);
+						this->m_Settings.m_UserSettings["cache_mode"] = cacheMode;
+						this->m_Settings.m_CacheSettingsChanged = true;
+					}
+
+					// Cache size
+					if (cacheMode == 1)
+					{
+						int cacheSizeMB = this->m_Settings.m_UserSettings["cache_max_size"].get<int>();
+						
+						ImGui::Text("Cache Size");
+
+						ImGui::SameLineWidget(100.0f);
+						
+						IM_ID(1, ImGui::InputInt("###", &cacheSizeMB, 0));
+
+						if (ImGui::IsItemDeactivatedAfterEdit())
+						{
+							this->m_Settings.m_UserSettings["cache_max_size"] = cacheSizeMB;
+							this->m_Settings.m_CacheSettingsChanged = true;
+						}
+					}
+					else if (cacheMode == 2)
+					{
+						int percentageOfRamToUse = this->m_Settings.m_UserSettings["cache_max_ram_usage"].get<int>();
+
+						ImGui::Text("%% Of Total Ram To Use");
+
+						ImGui::SameLineWidget(100.0f);
+
+						IM_ID(1, ImGui::InputInt("###", &percentageOfRamToUse, 0));
+
+						if (ImGui::IsItemDeactivatedAfterEdit())
+						{
+							this->m_Settings.m_UserSettings["cache_max_ram_usage"] = percentageOfRamToUse;
+							this->m_Settings.m_CacheSettingsChanged = true;
+						}
 					}
 				}
-				ImGui::SameLine();
-				if (ImGui::SmallButton("Add"))
+
+				// I/O
+				if (ImGui::CollapsingHeader("I/O"))
 				{
-					ifd::FileDialog::Instance().Open("ConfigFileDialog", "Select an OCIO Config", "Ocio file (*.ocio){.ocio},.*");
+					// Autodetect file sequence
+					bool autodetect = this->m_Settings.m_UserSettings["autodetect_file_sequences"].get<bool>();
+
+					ImGui::Text("Autodetect Sequences");
+
+					ImGui::SameLineWidget(20.0f);
+
+					IM_ID(2, ImGui::Checkbox("###", &autodetect));
+
+					if (ImGui::IsItemEdited())
+					{
+						this->m_Settings.m_UserSettings["autodetect_file_sequences"] = autodetect;
+					}
+				}
+
+				// Performance
+				if (ImGui::CollapsingHeader("Performance"))
+				{
+					// OpenExr threads
+					int numThreads = this->m_Settings.m_UserSettings["openexr_threads"].get<int>();
+
+					ImGui::Text("OpenEXR Thread Count");
+
+					ImGui::SameLineWidget(50.0f);
+
+					IM_ID(3, ImGui::InputInt("###", &numThreads, 0));
+
+					if (ImGui::IsItemEdited())
+					{
+						this->m_Settings.m_UserSettings["openexr_threads"] = numThreads;
+					}
+				}
+
+				// OCIO
+				if (ImGui::CollapsingHeader("OCIO"))
+				{
+					int currentOcioConfigIdx = this->m_Settings.m_RuntimeSettings["current_ocio_config_idx"].get<int>();
+
+					ImGui::Text("Current Configuration : %s", this->m_Settings.m_OcioConfigs[currentOcioConfigIdx].c_str());
+
+					IM_ID(4, ImGui::Combo("###", &currentOcioConfigIdx, 
+								 [](void* vec, int idx, const char** out_text){
+								 	std::vector<std::string>* vector = reinterpret_cast<std::vector<std::string>*>(vec);
+								 	if (idx < 0 || idx >= vector ->size()) return false;
+								 	*out_text = vector->at(idx).c_str();
+								 	return true;
+								 }, reinterpret_cast<void*>(&this->m_Settings.m_OcioConfigs), this->m_Settings.m_OcioConfigs.size()));
+
+					if (ImGui::IsItemEdited())
+					{
+						this->m_Settings.m_RuntimeSettings["current_ocio_config_idx"] = currentOcioConfigIdx;
+
+						ocio.ChangeConfig(this->m_Settings.m_OcioConfigs[currentOcioConfigIdx].c_str());
+					}
+
+					ImGui::SameLine();
+
+					if (ImGui::SmallButton("Add"))
+					{
+						ifd::FileDialog::Instance().Open("ConfigFileDialog", "Select an OCIO Config", "Ocio file (*.ocio){.ocio},.*");
+					}
 				}
 			}
 
@@ -60,31 +211,12 @@ namespace Interface
 					const auto& res = ifd::FileDialog::Instance().GetResults();
 					const std::string fp = res[0].u8string();
 
-					char* tmp = new char[fp.size() + 1];
-					memcpy(tmp, fp.c_str(), fp.size() + 1);
-
-					settings.configs.push_back(tmp);
+					this->m_Settings.m_OcioConfigs.push_back(fp);
 				}
 
 				ifd::FileDialog::Instance().Close();
 			}
 
-			ImGui::End();
-		}
-
-		if (showInterfaceWindow)
-		{
-			ImGui::Begin("Interface Settings", &showInterfaceWindow);
-			{
-				ImGui::InputFloat("Background Alpha", &settings.interface_windows_bg_alpha);
-				if (ImGui::IsItemEdited())
-				{
-					ImVec4* colors = ImGui::GetStyle().Colors;
-    				ImVec4 tmpColor = colors[ImGuiCol_WindowBg];
-					tmpColor.w = settings.interface_windows_bg_alpha;
-					colors[ImGuiCol_WindowBg] = tmpColor;
-				}
-			}
 			ImGui::End();
 		}
 
@@ -95,28 +227,24 @@ namespace Interface
 				// Log Level
 				const char* logLevels[6] = { "Error", "Warning", "Message", "Verbose", "Diagnostic", "Debug" };
 				
-				static int logLevelIndex = 1;
+				int logLevelIndex = this->m_Settings.m_RuntimeSettings["log_level"].get<int>();
 
 				ImGui::Text("Log Level");
 
-				ImGui::SameLine();
+				ImGui::SameLineWidget(100.0f);
 
-				const ImVec2 leftSpace = ImGui::GetContentRegionAvail();
-
-				ImGui::Dummy(ImVec2(leftSpace.x - 100.0f, 1.0f));
-				ImGui::SameLine();
-
-				ImGui::SetNextItemWidth(100.0f);
-				ImGui::Combo("###", &logLevelIndex, logLevels, 6);
+				IM_ID(5, ImGui::Combo("###", &logLevelIndex, logLevels, 6));
 
 				if (ImGui::IsItemEdited())
 				{
-					if (logLevelIndex == 0) app.m_Logger->SetLevel(LogLevel_Error);
-					if (logLevelIndex == 1) app.m_Logger->SetLevel(LogLevel_Warning);
-					if (logLevelIndex == 2) app.m_Logger->SetLevel(LogLevel_Message);
-					if (logLevelIndex == 3) app.m_Logger->SetLevel(LogLevel_Verbose);
-					if (logLevelIndex == 4) app.m_Logger->SetLevel(LogLevel_Diagnostic);
-					if (logLevelIndex == 5) app.m_Logger->SetLevel(LogLevel_Debug);
+					this->m_Settings.m_RuntimeSettings["log_level"] = logLevelIndex;
+
+					if (logLevelIndex == 0) logger->SetLevel(LogLevel_Error); 
+					if (logLevelIndex == 1) logger->SetLevel(LogLevel_Warning);
+					if (logLevelIndex == 2) logger->SetLevel(LogLevel_Message);
+					if (logLevelIndex == 3) logger->SetLevel(LogLevel_Verbose);
+					if (logLevelIndex == 4) logger->SetLevel(LogLevel_Diagnostic);
+					if (logLevelIndex == 5) logger->SetLevel(LogLevel_Debug);
 				}
 
 				ImGuiIO& io = ImGui::GetIO();
@@ -138,10 +266,6 @@ namespace Interface
 
 	void Settings_Windows::Release() noexcept
 	{
-		for (auto& conf : settings.configs)
-		{
-			delete[] conf;
-			conf = nullptr;
-		}
+		this->m_Settings.m_OcioConfigs.clear();
 	}
 } // End namespace Interface

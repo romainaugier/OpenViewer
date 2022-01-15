@@ -14,18 +14,24 @@ namespace Core
 		this->m_Cache = new ImageCache;
 	}
 
-	void Loader::Initialize(const bool useCache, const size_t cacheSize) noexcept
+	void Loader::Initialize(const uint8_t cacheMode, const size_t cacheSize, const bool autodetect) noexcept
 	{
 		this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : Initializing loader");
 		this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loader OIIO version : %s", Utils::Str::GetOIIOVersionStr().c_str());
 
 		this->m_HasBeenInitialized = true;
+		this->m_CacheMode = cacheMode;
 
-		if (useCache)
+		if (cacheMode == 1)
 		{
-			this->m_UseCache = true;
 			this->m_CacheSizeMB = cacheSize;
 		}
+		else if (cacheMode == 2)
+		{
+			this->m_CacheSizeMB = ((Utils::GetTotalSystemMemory() * cacheSize) / 100) / 1000000;
+		}
+
+		this->m_AutoDetectFileSequence = autodetect;
 	}
 
 	void Loader::Load(const std::string& mediaPath) noexcept
@@ -44,6 +50,7 @@ namespace Core
 			uint32_t itemCount = Utils::Fs::FileCountInDirectory(cleanMediaPath);
 
 			uint64_t biggestImageByteSize = 0;
+			uint64_t totalByteSize = 0;
 
 			newTmpMedia.m_Images.reserve(itemCount);
 
@@ -65,6 +72,8 @@ namespace Core
 																  newTmpMedia.m_Images[newTmpMedia.m_Range.y].m_Stride : 
 																  biggestImageByteSize;
 
+					totalByteSize += newTmpMedia.m_Images[newTmpMedia.m_Range.y].m_Stride;
+
 					++newTmpMedia.m_Range.y;
 				}
 				else
@@ -76,7 +85,7 @@ namespace Core
 			// Initialize the cache if it has not been, else resize the cache if needed (by cache I mean the minimal cache needed to display 
 			// at least one image). We resize the minimal cache to the size of the biggest image in all the medias. It avoids allocations/deallocations
 			// during reading
-			if (!this->m_UseCache)
+			if (this->m_CacheMode == 0)
 			{
 				if (this->m_Cache->m_HasBeenInitialized)
 				{
@@ -87,14 +96,27 @@ namespace Core
 					this->m_Cache->Initialize(biggestImageByteSize, this->m_Logger);
 				}
 			}
-			else
+			else if(this->m_CacheMode == 1)
 			{
 				if (!this->m_Cache->m_HasBeenInitialized)
 				{
 					this->m_Cache->Initialize(this->m_CacheSizeMB, this->m_Logger, true);
 				}
 			}
+			else if(this->m_CacheMode == 2)
+			{
+				if (!this->m_Cache->m_HasBeenInitialized)
+				{
+					if ((totalByteSize / 1000000) < this->m_CacheSizeMB) this->m_Cache->Initialize(totalByteSize, this->m_Logger);
+					else this->m_Cache->Initialize(this->m_CacheSizeMB, this->m_Logger, true);
+				}
+				else
+				{
+					if ((totalByteSize / 1000000) < this->m_CacheSizeMB) this->m_Cache->Resize(totalByteSize, 0);
+				}
+			}
 
+			newTmpMedia.m_TotalByteSize = totalByteSize;
 			newTmpMedia.m_Images.shrink_to_fit();
 			newTmpMedia.m_ID = this->m_MediaCount;
 			newTmpMedia.SetLayers();
@@ -109,6 +131,7 @@ namespace Core
 		else if (std::filesystem::is_regular_file(cleanMediaPath))
 		{
 			uint64_t biggestImageByteSize = 0;
+			uint64_t totalByteSize = 0;
 			
 			if (this->m_AutoDetectFileSequence)
 			{
@@ -131,9 +154,12 @@ namespace Core
 																  newTmpMedia.m_Images[newTmpMedia.m_Range.y].m_Stride : 
 																  biggestImageByteSize;
 
+						totalByteSize += newTmpMedia.m_Images[newTmpMedia.m_Range.y].m_Stride;
+
 						++newTmpMedia.m_Range.y;
 					}
 
+					newTmpMedia.m_TotalByteSize = totalByteSize;
 					newTmpMedia.m_ID = this->m_MediaCount;
 					newTmpMedia.SetLayers();
 
@@ -153,9 +179,11 @@ namespace Core
 				newTmpMedia.m_Images.emplace_back(cleanMediaPath);
 
 				biggestImageByteSize = newTmpMedia.m_Images[0].m_Stride;
+				totalByteSize = biggestImageByteSize;
 
 				this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loaded : %s", cleanMediaPath.c_str());
 				
+				newTmpMedia.m_TotalByteSize = totalByteSize;
 				newTmpMedia.m_Range = ImVec2(0, 1);
 				newTmpMedia.m_ID = this->m_MediaCount;
 				newTmpMedia.SetLayers();
@@ -167,7 +195,7 @@ namespace Core
 
 cacheInit:
 			// Same as in the sequence loading
-			if (!this->m_UseCache)
+			if (this->m_CacheMode == 0)
 			{
 				if (this->m_Cache->m_HasBeenInitialized)
 				{
@@ -178,6 +206,25 @@ cacheInit:
 					this->m_Cache->Initialize(biggestImageByteSize, this->m_Logger, false);
 				}
 			}
+			else if(this->m_CacheMode == 1)
+			{
+				if (!this->m_Cache->m_HasBeenInitialized)
+				{
+					this->m_Cache->Initialize(this->m_CacheSizeMB, this->m_Logger, true);
+				}
+			}
+			else if(this->m_CacheMode == 2)
+			{
+				if (!this->m_Cache->m_HasBeenInitialized)
+				{
+					if ((totalByteSize / 1000000) < this->m_CacheSizeMB) this->m_Cache->Initialize(totalByteSize, this->m_Logger);
+					else this->m_Cache->Initialize(this->m_CacheSizeMB, this->m_Logger, true);
+				}
+				else
+				{
+					if ((totalByteSize / 1000000) < this->m_CacheSizeMB) this->m_Cache->Resize(totalByteSize, 0);
+				}
+			}	
 		}
 		else
 		{
@@ -218,7 +265,7 @@ cacheInit:
 
 		if (tmpImg->m_CacheIndex > 0 && !force) return;
 
-		if (this->m_UseCache)
+		if (this->m_CacheMode > 0)
 		{
 			for (auto& media : this->m_Medias)
 			{
@@ -230,11 +277,12 @@ cacheInit:
 				{
 					const uint32_t imageIndex = index - media.m_TimelineRange.x;
 					
+					media.m_Images[imageIndex].VerifyChannelSize(media.GetCurrentChannels());
+					
 					const uint32_t cachedIndex = this->m_Cache->Add(&media.m_Images[imageIndex]);
 
 					if (media.m_Layers.size() > 0)
 					{
-						media.m_Images[imageIndex].VerifyChannelSize(media.GetCurrentChannels());
 					  	media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_DataPtr, 
 														this->m_Profiler,
 														media.GetCurrentChannels());
@@ -259,11 +307,12 @@ cacheInit:
 				{
 					const uint32_t imageIndex = index - media.m_TimelineRange.x;
 					
+					media.m_Images[imageIndex].VerifyChannelSize(media.GetCurrentChannels());
+					
 					const uint32_t cachedIndex = this->m_Cache->Add(&media.m_Images[imageIndex]);
 
 					if (media.m_Layers.size() > 0)
 					{
-						media.m_Images[imageIndex].VerifyChannelSize(media.GetCurrentChannels());
 					  	media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_DataPtr, 
 														this->m_Profiler,
 														media.GetCurrentChannels());
@@ -305,7 +354,6 @@ cacheInit:
 		}
 
 		// if (startIndex != this->m_Range.x) --endIndex;
-
 		for (uint32_t i = startIndex; i < endIndex; i++)
 		{
 			const uint32_t idx = i % static_cast<uint32_t>(this->m_Range.y);

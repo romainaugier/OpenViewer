@@ -102,7 +102,7 @@ namespace Interface
 					this->m_Loader->LoadImageToCache(this->m_Frame);
 
 					// Load all the frames from the frame we clicked on
-					if (this->m_Loader->m_UseCache && !this->m_IsDragging)
+					if (this->m_Loader->m_CacheMode > 0 && !this->m_IsDragging)
 					{
 						this->m_Loader->m_Workers.emplace_back(&Core::Loader::LoadSequenceToCache, this->m_Loader, this->m_Frame, 0);
 					}
@@ -426,7 +426,7 @@ namespace Interface
 				this->m_Update = true;
 
 				// Notify the background cache loader that we need to store some frames in the cache
-				if (this->m_Loader->m_UseCache)
+				if (this->m_Loader->m_CacheMode > 0)
 				{
 					// Urgent load in case of fast scrolling while cache is activated
 					if (!this->m_CachedIndices[this->m_Frame]) this->m_Loader->LoadImageToCache(this->m_Frame);

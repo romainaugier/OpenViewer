@@ -32,6 +32,11 @@ namespace Core
         const uint64_t imgSize = image->m_Xres * image->m_Yres * (image->m_Channels > 4 ? 4 : image->m_Channels);
         const uint64_t imgByteSize = image->m_Stride;
 
+        if (imgByteSize > this->m_BytesCapacity)
+        {
+            this->Resize(imgByteSize, false);
+        }
+
         // The image we want to store in cache fits, lets give it a new address
         if ((this->m_BytesSize + imgByteSize) <= this->m_BytesCapacity)
         {

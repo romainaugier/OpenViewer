@@ -23,7 +23,6 @@ int application(int argc, char** argv)
 
     // Loader/Cache
     Core::Loader loader(&logger, &profiler);
-    loader.Initialize(false);
     
     // av_register_all();
 
@@ -128,8 +127,7 @@ int application(int argc, char** argv)
     }
 
     // Initialize the ui elements
-    Interface::Settings_Windows settings;
-    settings.GetOcioConfig(ocio);
+    application.m_SettingsInterface.GetOcioConfig(ocio);
 
     Interface::ImageInfo imageInfosWindow;
     Interface::PixelInfo pixelInfosWindow;
@@ -169,6 +167,8 @@ int application(int argc, char** argv)
     // Main window loop
     while (!glfwWindowShouldClose(window))
     {
+        glfwPollEvents();
+
         // update memory profiler
         profiler.MemUsage("Application Total", ToMB(GetCurrentRss()));
         profiler.MemUsage("Application", ToMB(GetCurrentRss()) - ToMB(loader.m_Cache->m_BytesSize));
@@ -178,6 +178,10 @@ int application(int argc, char** argv)
         if (mediaExplorerWindow.m_CurrentMediaChanged)
         {
             loader.m_Cache->Flush();
+
+            const uint64_t mediaByteSize = loader.m_Medias[mediaExplorerWindow.m_ActiveMediaID].m_TotalByteSize;
+
+            if ((mediaByteSize / 1000000) < loader.m_CacheSizeMB) loader.m_Cache->Resize(mediaByteSize, 0);
             playbar.SetRange(mediaExplorerWindow.m_CurrentMediaRange);
             mediaExplorerWindow.m_CurrentMediaChanged = false;
         }
@@ -209,7 +213,6 @@ int application(int argc, char** argv)
             }
         }
 
-        glfwPollEvents();
 
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
@@ -232,15 +235,15 @@ int application(int argc, char** argv)
             // One info window per display
             const Core::Image currentImage = *application.m_Loader->GetImage(playbar.m_Frame);
             
-            imageInfosWindow.Draw(currentImage, application.showImageInfosWindow);
+            imageInfosWindow.Draw(currentImage, &loader.m_Medias[display->m_MediaID], application.showImageInfosWindow);
             pixelInfosWindow.Draw(&loader, currentImage, display, application.showPixelInfosWindow);
         }
 
         // settings windows
-        settings.Draw(playbar, &profiler, ocio, application);
+        application.m_SettingsInterface.Draw(&profiler, &logger, ocio);
 
         // menubar
-        menubar.Draw(settings, application, playbar, ocio, profiler, changeHappened);
+        menubar.Draw(application, playbar, ocio, profiler, changeHappened);
 
         // Media Explorer
         mediaExplorerWindow.Draw(&application, application.showMediaExplorerWindow);
@@ -250,7 +253,7 @@ int application(int argc, char** argv)
 
         // Clear changes if any happened
         application.ClearChange();
-
+        application.CacheSettingsChanged();
         application.UpdateDisplays();
 
         // Rendering

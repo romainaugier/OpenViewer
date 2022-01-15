@@ -19,6 +19,8 @@ namespace Interface
 
         ImVec2 m_CurrentMediaRange = ImVec2(0, 0);
 
+        uint32_t m_ActiveMediaID = 0;
+
         bool m_CurrentMediaChanged = false;
 
         MediaExplorer(Core::Loader* loader, Logger* logger);

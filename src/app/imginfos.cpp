@@ -6,20 +6,45 @@
 
 namespace Interface
 {
-    void ImageInfo::Draw(const Core::Image& currentImage, bool& showWindow) const noexcept
+    void ImageInfo::Draw(const Core::Image& currentImage, const Core::Media* currentMedia, bool& showWindow) const noexcept
     {
         if (showWindow)
         {
             ImGui::Begin("Image Infos", &showWindow);
             {
                 ImGui::Text("Resolution : %dx%d", currentImage.m_Xres, currentImage.m_Yres);
-                ImGui::Text("Channels : %d", currentImage.m_Channels);
+                ImGui::Text("Channel Count : %d", currentImage.m_Channels);
+
+                if (currentImage.m_Type & FileType_Exr)
+                {
+                    ImGui::Text("Current EXR layer : %s", currentMedia->m_CurrentLayerStr.c_str());
+                }
+                
+                ImGui::Text("Channels : ");
+                ImGui::SameLine();
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "R");
+                ImGui::SameLine();
+                ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "G");
+                ImGui::SameLine();
+                ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), "B");
+                
+                if ((currentImage.m_Format & Format_RGBA_FLOAT) || 
+                    (currentImage.m_Format & Format_RGBA_HALF)  ||
+                    (currentImage.m_Format & Format_RGBA_U32)  ||
+                    (currentImage.m_Format & Format_RGBA_U16)  ||
+                    (currentImage.m_Format & Format_RGBA_U8))
+                {
+                    ImGui::SameLine();
+                    ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "A");
+                }
+
+                ImGui::Text("Depth : %d bits per channel", currentImage.m_Depth * 8);
             }   
             ImGui::End();
         }
     }
 
-    void PixelInfo::Draw(Core::Loader* loader, const Core::Image& currentImage, Display* currentDisplay, bool& showWindow) const noexcept
+    void PixelInfo::Draw(const Core::Loader* loader, const Core::Image& currentImage, const Display* currentDisplay, bool& showWindow) const noexcept
     {
         if (showWindow)
         {
@@ -37,7 +62,7 @@ namespace Interface
                 ImGui::Text("Corrected Color");
                 const ImVec4 currentColorCorrected = ImClamp(currentDisplay->GetPixel(X, Y), 
                                                              ImVec4(0.0f, 0.0f, 0.0f, 0.0f), 
-                                                             ImVec4(100.0f, 100.0f, 100.0f, 100.0f));
+                                                             ImVec4(100000.0f, 100000.0f, 100000.0f, 100000.0f));
 
                 ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "R : %f", currentColorCorrected.x);
                 ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "G : %f", currentColorCorrected.y);
@@ -60,7 +85,7 @@ namespace Interface
                 {
                     currentColorRaw = ImClamp(currentImage.GetPixel(X, Y, currentImageBuffer), 
                                                         ImVec4(0.0f, 0.0f, 0.0f, 0.0f), 
-                                                        ImVec4(100.0f, 100.0f, 100.0f, 100.0f));
+                                                        ImVec4(100000.0f, 100000.0f, 100000.0f, 100000.0f));
                 }
 
                 ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "R : %f", currentColorRaw.x);

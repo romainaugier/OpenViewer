@@ -19,7 +19,6 @@
 
 #include <thread>
 
-#include "menubar.h"
 #include "imginfos.h"
 #include "mediaexplorer.h"
 #include "core/loader.h"
@@ -63,6 +62,7 @@ OV_STATIC_FUNC void GLFWDropEventCallback(GLFWwindow* window, int count, const c
         Interface::Display* newDisplay = new Interface::Display(app->m_Loader->m_Profiler, app->m_Logger, app->m_Loader, 1);
 
         newDisplay->Initialize(*app->m_OcioModule, mediaCount);
+        newDisplay->NeedFrame();
         
         app->m_Displays[++app->m_DisplayCount] = std::make_pair(true, newDisplay);
         app->m_ActiveDisplayID = 1;
@@ -77,6 +77,7 @@ OV_STATIC_FUNC void GLFWDropEventCallback(GLFWwindow* window, int count, const c
 
         Interface::Display* activeDisplay = app->GetActiveDisplay();
         activeDisplay->NeedReinit();
+        activeDisplay->NeedFrame();
         activeDisplay->m_MediaID = mediaCount;
 
         app->m_Loader->LoadImageToCache(0);

@@ -2,60 +2,61 @@
 // Copyright (c) 2021 Romain Augier
 // All rights reserved.
 
-
 #pragma once
 
 #include <string>
+
+#include "nlohmann/json.hpp"
 
 #include "imgui.h"
 #include "implaybar.h"
 #include "ImFileDialog.h"
 #include "utils/profiler.h"
+#include "utils/filesystem_utils.h"
+#include "utils/imgui_utils.h"
 #include "core/ocio.h"
 #include "display.h"
-#include "app.h"
+
+using Json = nlohmann::json;
 
 // struct to hold the settings
 struct Settings
 {
-	// cache settings
-	bool m_UseCache = false;
-	int m_CacheSize = 500;
+	Json m_UserSettings;
+	Json m_RuntimeSettings;
 
-	// interface settings
-	float interface_windows_bg_alpha = 1.0f;
+	std::vector<std::string> m_OcioConfigs;
 
-	// ocio
-	const char* current_config = "";
-	int current_config_idx = 0;
-	std::vector<const char*> configs;
+	bool m_CacheSettingsChanged = false;
 
-	// plot
-	bool parade = false;
+	void Initialize() noexcept;
+
+	void LoadUserSettings() noexcept;
+
+	void WriteUserSettings() noexcept;
+
+	void InitializeRuntimeSettings() noexcept;
+
+	void Close() noexcept;
 };
 
 // struct to hold the different windows for settings
 
 namespace Interface
 {
-	struct Application;
 	struct Settings_Windows
 	{
-		Settings settings;
+		Settings m_Settings;
 
-		bool showInterfaceWindow = false;
-		bool showOcioWindow = false;
-		bool showPlaybackWindow = false;
+		bool showSettingsWindow = false;
 		bool showDebugWindow = false;
 
-		void Draw(ImPlaybar& playbar, Profiler* prof, Core::Ocio& ocio, Application& app) noexcept;
+		void Draw(Profiler* prof, Logger* logger, Core::Ocio& ocio) noexcept;
 
 		void GetOcioConfig(Core::Ocio& ocio) noexcept;
 		
 		// Few openers for windows
-		void ShowInterfaceWindows() noexcept { this->showInterfaceWindow = !this->showInterfaceWindow; }
-		void ShowOcioWindow() noexcept { this->showOcioWindow = !this->showOcioWindow; }
-		void ShowPlaybackWindow() noexcept { this->showPlaybackWindow = !this->showPlaybackWindow; }
+		void ShowSettingsWindow() noexcept { this->showSettingsWindow = !this->showSettingsWindow; }
 		void ShowDebugWindow() noexcept { this->showDebugWindow = !this->showDebugWindow; }
 
 		void Release() noexcept;

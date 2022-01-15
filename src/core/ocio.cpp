@@ -22,7 +22,8 @@ namespace Core
             {
                 this->m_Config = OCIO::Config::CreateFromEnv();
 
-                this->m_Logger->Log(LogLevel_Message, "[OCIO] : Configuration loaded from file %s", this->m_ConfigPath);
+                this->m_Logger->Log(LogLevel_Message, "[OCIO] : Configuration loaded from file %s", envPath);
+                this->m_ConfigPath = envPath;
             }
             catch(const std::exception& e)
             {
@@ -37,6 +38,7 @@ namespace Core
             try
             {
                 this->m_Logger->Log(LogLevel_Warning, "[OCIO] : Environment variable can't be found. Using default shipped configuration");
+                
                 this->m_Config = OCIO::Config::CreateFromFile(defaultConfigPath.c_str());
                 this->m_ConfigPath = defaultConfigPath;
             }
@@ -176,6 +178,52 @@ namespace Core
         catch (const std::exception& e)
         {
             this->m_Logger->Log(LogLevel_Warning, "[OCIO] : %s. Keeping the current configuration", e.what());
+        }
+    }
+
+    void Ocio::UpdateChannelHot() noexcept
+    {
+        if (this->m_CurrentChannelIdx == 0) // RGB
+        {
+            this->m_ChannelsHot[0] = 1;
+            this->m_ChannelsHot[1] = 1;
+            this->m_ChannelsHot[2] = 1;
+            this->m_ChannelsHot[3] = 1;
+        }
+        else if (this->m_CurrentChannelIdx == 1) // R
+        {
+            this->m_ChannelsHot[0] = 1;
+            this->m_ChannelsHot[2] = 0;
+            this->m_ChannelsHot[3] = 0;
+            this->m_ChannelsHot[1] = 0;
+        }
+        else if (this->m_CurrentChannelIdx == 2) // G
+        {
+            this->m_ChannelsHot[0] = 0;
+            this->m_ChannelsHot[1] = 1;
+            this->m_ChannelsHot[2] = 0;
+            this->m_ChannelsHot[3] = 0;
+        }						  
+        else if (this->m_CurrentChannelIdx == 3) // B
+        {
+            this->m_ChannelsHot[0] = 0;
+            this->m_ChannelsHot[1] = 0;
+            this->m_ChannelsHot[2] = 1;
+            this->m_ChannelsHot[3] = 0;
+        }
+        else if (this->m_CurrentChannelIdx == 4) // A
+        {
+            this->m_ChannelsHot[0] = 0;
+            this->m_ChannelsHot[1] = 0;
+            this->m_ChannelsHot[2] = 0;
+            this->m_ChannelsHot[3] = 1;
+        }
+        else if (this->m_CurrentChannelIdx == 5) // Luminance
+        {
+            this->m_ChannelsHot[0] = 1;
+            this->m_ChannelsHot[1] = 1;
+            this->m_ChannelsHot[2] = 1;
+            this->m_ChannelsHot[3] = 0;
         }
     }
 

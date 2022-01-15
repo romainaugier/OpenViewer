@@ -31,6 +31,7 @@ OpenViewer uses many excellent open source libraries that are managed with [Vcpk
 - Misc : 
     - [Robin Map](https://github.com/Tessil/robin-map)
     - [PyString](https://github.com/imageworks/pystring)
+    - [NLohmann JSON](https://github.com/nlohmann/json)
 
 ## Installation
 
@@ -57,6 +58,7 @@ cd vcpkg
 ./vcpkg install opencolorio:x64-linux
 ./vcpkg install glew:x64-linux
 ./vcpkg install glfw3:x64-linux
+./vcpkg install nlohmann-json:x64-linux
 ```
 
 ### Windows
@@ -70,6 +72,7 @@ vcpkg install openimageio[ffmpeg,libraw]:x64-windows --recurse
 vcpkg install opencolorio:x64-windows
 vcpkg install glew:x64-windows
 vcpkg install glfw3:x64-windows
+vcpkg install nlohmann-json:x64-windows
 ```
 
 [Robin Map](https://github.com/Tessil/robin-map) and [PyString](https://github.com/imageworks/pystring) are installed with [OpenImageIO](https://github.com/OpenImageIO/oiio) and [OpenColorIO](https://github.com/AcademySoftwareFoundation/OpenColorIO) so they don't need to be installed via command-line.

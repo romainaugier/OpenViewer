@@ -11,6 +11,15 @@
 #include "decl.h" 
 #include "string_utils.h"
 
+#ifdef OV_WIN
+#include "windows.h"
+#include "ShlObj_core.h"
+#else if OV_LINUX
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
+#endif
+
 namespace Utils
 {
     namespace Fs
@@ -142,6 +151,37 @@ namespace Utils
             std::string cwd = std::filesystem::current_path().string();
             Str::CleanOSPath(cwd);
             return cwd + pathToExpand;
+        }
+
+        OV_STATIC_FUNC std::string GetDocumentFolder() noexcept
+        {
+#ifdef OV_WIN
+            PWSTR ppszPath;
+
+            HRESULT hr = SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &ppszPath);
+
+            std::wstring myPath;
+
+            if (SUCCEEDED(hr)) 
+            {
+                myPath = ppszPath;
+                
+                CoTaskMemFree(ppszPath); 
+                return std::string(myPath.begin(), myPath.end());
+            }
+#else if OV_LINUX
+// https://stackoverflow.com/questions/2910377/get-home-directory-in-linux
+            const char* homedir;
+
+            if ((homedir = getenv("HOME")) == NULL) {
+                homedir = getpwuid(getuid())->pw_dir;
+            }
+
+            std::string docDir = homedir;
+            docDir += "Documents";
+
+            return docDir;
+#endif
         }
     } // End namespace Fs
 } // End namespace Utils

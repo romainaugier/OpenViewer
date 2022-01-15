@@ -10,8 +10,15 @@
 #include "display.h"
 #include "shortcuts.h"
 #include "implaybar.h"
-#include "menubar.h"
 #include "scopes.h"
+#include "settings.h"
+#include "core/loader.h"
+#include "ImFileDialog.h"
+#include "imginfos.h"
+#include "core/ocio.h"
+
+#include "stdio.h"
+#include <algorithm>
 
 namespace Interface
 {
@@ -24,6 +31,8 @@ namespace Interface
         Displays m_Displays;
 
         Shortcuts m_Shortcuts;
+
+        Settings_Windows m_SettingsInterface;
 
         Core::Loader* m_Loader = nullptr;
         Core::Ocio* m_OcioModule = nullptr;
@@ -66,6 +75,28 @@ namespace Interface
         // Function that updates displays states
         void UpdateDisplays() noexcept;
 
+        // Function to handle cache settings parameters changes
+        void CacheSettingsChanged() noexcept;
+
         void Release() noexcept;   
     };
+
+    struct Menubar
+	{
+		int m_BarMode = 0;
+
+		uint8_t m_ModeCount = 4;
+
+		bool m_HasOpenedIFD = false;
+
+		void Draw(Application& app,
+				  ImPlaybar& playbar, 
+				  Core::Ocio& ocio, 
+				  Profiler& prof, 
+				  bool& change) noexcept;
+
+		void SetMode(const uint8_t mode) noexcept { this->m_BarMode = mode; }
+		uint8_t GetMode() const noexcept { return static_cast<uint8_t>(this->m_BarMode); }
+		uint8_t GetModeCount() const noexcept { return this->m_ModeCount; }
+	};
 }

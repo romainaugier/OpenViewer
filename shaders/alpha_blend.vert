@@ -3,6 +3,7 @@
 uniform int width;
 uniform int height;
 uniform int mode;
+uniform int premultiply;
 
 uniform sampler2D tex;
 
@@ -28,8 +29,11 @@ void main()
     if (mode == 1) colorToBlend = vec3(0.25, 0.25, 0.25);
     else if (mode == 2) colorToBlend = checker(uv, vec2(width * 0.05, height * 0.05));
 
-    vec3 color = texColor.xyz + colorToBlend * (1.0 - texColor.w);
-    
+    vec3 color = vec3(0.0, 0.0, 0.0);
+
+    if (premultiply == 0) color = texColor.xyz + colorToBlend * (1.0 - texColor.w);
+    else if (premultiply == 1) color = (texColor.xyz * texColor.w) + colorToBlend * (1.0 - texColor.w);
+
     vec4 outColor = vec4(color.x, color.y, color.z, 1.0);
 
     imageStore(img, i, outColor);

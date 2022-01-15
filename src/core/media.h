@@ -18,6 +18,7 @@ namespace Core
     // A layer represents an exr part, with channels. The first string in the pair
     // holds the "general" name, and the second one holds the channels names separated by a ;
     using Layer = std::pair<std::string, std::string>;
+
     struct Media
     {
         std::vector<Image> m_Images; // Holds the images of the sequence 
@@ -28,6 +29,8 @@ namespace Core
 
         ImVec2 m_Range = ImVec2(0, 0); // "Raw" range of the sequence
         ImVec2 m_TimelineRange = ImVec2(0, 0); // Range in the timeline
+
+        uint64_t m_TotalByteSize = 0;
 
         uint32_t m_ID;
 

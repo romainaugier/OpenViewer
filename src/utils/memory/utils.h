@@ -4,29 +4,26 @@
 
 #pragma once
 
-#include "decl.h"
+#include "utils/decl.h"
 
+namespace Utils
+{
 #ifdef OV_WIN
-
 #include <windows.h>
-
-uint64_t getTotalSystemMemory()
-{
-    MEMORYSTATUSEX status;
-    status.dwLength = sizeof(status);
-    GlobalMemoryStatusEx(&status);
-    return status.ullTotalPhys;
-}
-
+    OV_STATIC_FUNC uint64_t GetTotalSystemMemory()
+    {
+        MEMORYSTATUSEX status;
+        status.dwLength = sizeof(status);
+        GlobalMemoryStatusEx(&status);
+        return status.ullTotalPhys;
+    }
 #else if OV_LINUX
-
 #include <unistd.h>
-
-uint64_t getTotalSystemMemory()
-{
-    int64_t pages = sysconf(_SC_PHYS_PAGES);
-    int64_t page_size = sysconf(_SC_PAGE_SIZE);
-    return pages * page_size;
-}
-
+    OV_STATIC_FUNC uint64_t GetTotalSystemMemory()
+    {
+        int64_t pages = sysconf(_SC_PHYS_PAGES);
+        int64_t page_size = sysconf(_SC_PAGE_SIZE);
+        return pages * page_size;
+    }
 #endif
+} // End namespace Utils
