@@ -276,9 +276,9 @@ namespace Core
 
 		void Release() noexcept;
 		
-		void Load(void* __restrict buffer, Profiler* prof, const std::string& layers = "") const noexcept;
+		void Load(void* __restrict buffer, Profiler* prof, const std::string& layers = "", const uint8_t exrThreads = 8) const noexcept;
 		
-		void LoadExr(void* __restrict buffer, const std::string& layers = "") const noexcept;
+		void LoadExr(void* __restrict buffer, const std::string& layers = "", const uint8_t exrThreads = 8) const noexcept;
 
 		// When reading multichannels exr, the channels format and type can vary (half, float, rgb, rbga) so we make sure to 
 		// set the good format in order to read it correctly 

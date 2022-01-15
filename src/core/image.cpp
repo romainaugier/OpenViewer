@@ -83,9 +83,9 @@ namespace Core
 	}
 
 	// loads an image
-	void Image::LoadExr(void* __restrict buffer, const std::string& layers) const noexcept
+	void Image::LoadExr(void* __restrict buffer, const std::string& layers, const uint8_t exrThreads) const noexcept
 	{
-		Imf::InputFile in(this->m_Path.c_str(), 4);
+		Imf::InputFile in(this->m_Path.c_str(), exrThreads);
 
 		const Imath::Box2i display = in.header().displayWindow();
 		const Imath::Box2i data = in.header().dataWindow();
@@ -119,8 +119,12 @@ namespace Core
 
 		Utils::Str::Split(channelNames, layers, ';');
 		
-		memset(buffer, 0.0f, this->m_Xres * this->m_Yres * (channelNames.size() < 3 ? 3 : channelNames.size()) * dataSize);
-
+		if (data.max.x < display.max.x || data.max.y < display.max.y ||
+			data.min.x > display.min.x || data.min.y > display.min.y)
+		{
+			memset(buffer, 0.0f, this->m_Xres * this->m_Yres * (channelNames.size() < 3 ? 3 : channelNames.size()) * dataSize);
+		}
+		
 		for (const auto& channelName : channelNames)
 		{
 			if (channelName == "") continue;
@@ -272,11 +276,11 @@ namespace Core
 		in->close();
 	}
 
-	void Image::Load(void* __restrict buffer, Profiler* prof, const std::string& layers) const noexcept
+	void Image::Load(void* __restrict buffer, Profiler* prof, const std::string& layers, const uint8_t exrThreads) const noexcept
 	{
 		const auto load_timer_start = prof->Start();
 
-		if (this->m_Type & FileType_Exr) LoadExr(buffer, layers);
+		if (this->m_Type & FileType_Exr) LoadExr(buffer, layers, exrThreads);
 		else if (this->m_Type& FileType_Jpg) LoadJpg(buffer);
 		else if (this->m_Type & FileType_Png) LoadPng(buffer);
 		else if (this->m_Type & FileType_Hdr) LoadHdr(buffer);

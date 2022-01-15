@@ -23,7 +23,7 @@ void Settings::LoadUserSettings() noexcept
 			// I/O
 			{"autodetect_file_sequences", true},
 			// Performance
-			{"openexr_threads", 4}
+			{"openexr_threads", 8}
 		};
 
 		return;

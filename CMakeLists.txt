@@ -68,6 +68,15 @@ endif()
 # OpenGL
 include_directories(dependencies/glfw/include)
 
+# Boost stacktrace
+set(_Boost_STACKTRACE_BASIC_HEADERS     "boost/stacktrace.hpp")
+set(_Boost_STACKTRACE_BACKTRACE_HEADERS "boost/stacktrace.hpp")
+set(_Boost_STACKTRACE_ADDR2LINE_HEADERS "boost/stacktrace.hpp")
+set(_Boost_STACKTRACE_NOOP_HEADERS      "boost/stacktrace.hpp")
+
+find_package(Boost COMPONENTS stacktrace_basic stacktrace_backtrace stacktrace_addr2line stacktrace_noop)
+
+
 # Glew
 find_package(GLEW CONFIG REQUIRED)
 

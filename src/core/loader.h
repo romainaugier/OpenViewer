@@ -58,6 +58,8 @@ namespace Core
 
 		uint16_t m_MediaCount = 0;
 
+		uint8_t m_OpenEXRThreads = 8;
+
 		uint8_t m_BgLoadChunkSize = 4; // Number of images to load in the cache at the same time in the background
 
 		bool m_AutoDetectFileSequence = true;
@@ -85,6 +87,8 @@ namespace Core
 		OV_FORCEINLINE uint16_t GetMediaCount() const noexcept { return this->m_MediaCount; }
 
 		OV_FORCEINLINE void* GetImageCachePtrFromIndex(const uint32_t cacheIndex) const noexcept { return this->m_Cache->m_Items[cacheIndex].m_DataPtr; }
+
+		OV_FORCEINLINE void SetOpenExrThreadCount(const uint8_t threadCount) noexcept { this->m_OpenEXRThreads = threadCount; }
 
 		// Loads a media into the loader
 		void Load(const std::string& mediaPath) noexcept;

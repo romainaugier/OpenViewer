@@ -23,6 +23,8 @@ namespace Interface
                                    this->m_SettingsInterface.m_Settings.m_UserSettings[settingsName].get<uint64_t>(),
                                    this->m_SettingsInterface.m_Settings.m_UserSettings["autodetect_file_sequences"].get<bool>());
 
+		this->m_Loader->SetOpenExrThreadCount(this->m_SettingsInterface.m_Settings.m_UserSettings["openexr_threads"].get<uint8_t>());
+
         // Make sure all keys are set to 0
         for (int i = 0; i < GLFW_KEY_COUNT; i++) this->m_Shortcuts.m_Pressed[i] = false;
     }
@@ -777,17 +779,13 @@ namespace Interface
 					}
 
 					ImGui::Text("Premultiply");
-					ImGui::PushID(2);
-					ImGui::Checkbox("###", &app.GetActiveDisplay()->m_PremultiplyAlpha);
-					ImGui::PopID();
+					IM_ID(2, ImGui::Checkbox("###", &app.GetActiveDisplay()->m_PremultiplyAlpha));
 					ImGui::Dummy(ImVec2(10.0f, 10.0f));
 
 					ImGui::Text("Background");
 					static const char* backgroundModes[] = { "Black", "Gray", "Checker" };
-					ImGui::PushID(2);
 					ImGui::SetNextItemWidth(75.0f);
-					ImGui::Combo("###", &app.GetActiveDisplay()->m_BackGroundMode, &backgroundModes[0], IM_ARRAYSIZE(backgroundModes));
-					ImGui::PopID();
+					IM_ID(3, ImGui::Combo("###", &app.GetActiveDisplay()->m_BackGroundMode, &backgroundModes[0], IM_ARRAYSIZE(backgroundModes)));
 				}
 				else
 				{

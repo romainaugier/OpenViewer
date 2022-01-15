@@ -32,6 +32,7 @@ OpenViewer uses many excellent open source libraries that are managed with [Vcpk
     - [Robin Map](https://github.com/Tessil/robin-map)
     - [PyString](https://github.com/imageworks/pystring)
     - [NLohmann JSON](https://github.com/nlohmann/json)
+    - [Boost Stacktrace](https://www.boost.org/doc/libs/1_65_1/doc/html/stacktrace.html)
 
 ## Installation
 
@@ -75,7 +76,7 @@ vcpkg install glfw3:x64-windows
 vcpkg install nlohmann-json:x64-windows
 ```
 
-[Robin Map](https://github.com/Tessil/robin-map) and [PyString](https://github.com/imageworks/pystring) are installed with [OpenImageIO](https://github.com/OpenImageIO/oiio) and [OpenColorIO](https://github.com/AcademySoftwareFoundation/OpenColorIO) so they don't need to be installed via command-line.
+[Robin Map](https://github.com/Tessil/robin-map), [Boost Stacktrace](https://www.boost.org/doc/libs/1_65_1/doc/html/stacktrace.html) and [PyString](https://github.com/imageworks/pystring) are installed with [OpenImageIO](https://github.com/OpenImageIO/oiio) and [OpenColorIO](https://github.com/AcademySoftwareFoundation/OpenColorIO) so they don't need to be installed via command-line.
 
 Once all the dependencies are built, you can run the build script. If you run into a *permission denied* on Linux, use the ```chmod +x``` command with the script name.
 If you already have vcpkg installed somewhere, you can pass the toolchain file to CMake with -DCMAKE_TOOLCHAIN_FILE="D:/path/to/vcpkg.cmake".
@@ -107,7 +108,7 @@ cmake --build . --config Release -j %NUMBER_OF_PROCESSORS%
 
 Portions of this software are copyright :
 
-Copyright (c) 2022, Romain Augier
+Copyright © 2022, Romain Augier
 
 All rights reserved.
 
@@ -123,10 +124,11 @@ This software is based in part on the works of :
 - [OpenImageIO](https://github.com/OpenImageIO/oiio), Copyright © 2008-2021 by Contributors to the OpenImageIO project. All Rights Reserved.
 - [Wuffs](https://github.com/google/wuffs), Copyright © 2021 Andrew Dassonville, Chris Palmer, Jimmy Casey, Leo Neat, Mike Kaufman, Muhammad Aldo Firmansyah, Nigel Tao
 - [Vcpkg](https://github.com/microsoft/vcpkg), Copyright © Microsoft Corporation
-- [Robin Map](https://github.com/Tessil/robin-map), Copyright (c) 2017 Thibaut Goetghebuer-Planchon <tessil@gmx.com>
-- [PyString](https://github.com/imageworks/pystring), Copyright (c) 2008-2010, Sony Pictures Imageworks Inc All rights reserved.
-- [Glew](https://github.com/nigels-com/glew), Copyright (C) 2002-2007, Milan Ikits <milan ikits[]ieee org>, Copyright (C) 2002-2007, Marcelo E. Magallon <mmagallo[]debian org>, Copyright (C) 2002, Lev Povalahev All rights reserved.
-- [NLohmann JSON](https://github.com/nlohmann/json) Copyright (c) 2013-2022 Niels Lohmann
+- [Robin Map](https://github.com/Tessil/robin-map), Copyright © 2017 Thibaut Goetghebuer-Planchon <tessil@gmx.com>
+- [PyString](https://github.com/imageworks/pystring), Copyright © 2008-2010, Sony Pictures Imageworks Inc All rights reserved.
+- [Glew](https://github.com/nigels-com/glew), Copyright © 2002-2007, Milan Ikits <milan ikits[]ieee org>, Copyright © 2002-2007, Marcelo E. Magallon <mmagallo[]debian org>, Copyright © 2002, Lev Povalahev All rights reserved.
+- [NLohmann JSON](https://github.com/nlohmann/json) Copyright © 2013-2022 Niels Lohmann
+- [Boost](https://www.boost.org/) Copyright © Beman Dawes, David Abrahams, 1998-2005, Copyright © Rene Rivera 2004-2007
 
 ## Special thanks
 

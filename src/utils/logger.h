@@ -21,8 +21,17 @@
 #include <execinfo.h>
 #endif
 
-#ifdef IMGUI_CONSOLE
+#ifdef LOGGER_IMGUI_CONSOLE
 #include "imgui.h"
+#endif
+
+#define LOGGER_EXCEPTION_HANDLE 1
+
+#ifdef LOGGER_EXCEPTION_HANDLE
+#ifdef _WIN32
+#define BOOST_STACKTRACE_USE_WINDBG
+#endif
+#include "boost/stacktrace.hpp"
 #endif
 
 // enum utils
@@ -68,10 +77,10 @@ private:
 #ifdef _WIN32
     HANDLE winConsole;
 #endif
-    FILE* logFile;
+    FILE* logFile = nullptr;
     char level;
     int mode : 4;
-    int logFileHasBeenSet : 1;
+    bool logFileHasBeenSet = false;
 
     void GetTimeAsTxt(char* buffer) const noexcept
     {
@@ -122,12 +131,11 @@ public:
 #endif
         level = LogLevel_Warning;
         mode = LogMode_ToNativeConsole;
-        logFileHasBeenSet = 0;
     }
 
     ~Logger()
     {
-        if (logFileHasBeenSet > 0)
+        if (logFileHasBeenSet)
         {
             fclose(logFile);
         }
@@ -136,7 +144,11 @@ public:
     inline void SetLevel(int newLevel) noexcept
     {
         level = newLevel;
-        logFileHasBeenSet = 1;
+    }
+
+    inline void SetLogFile(const char* logFilePath) noexcept
+    {
+        this->logFile = fopen(logFilePath, "a");
     }
 
     inline void Log(char lvl, const char* fmt, ...) const noexcept
@@ -175,6 +187,7 @@ inline static void Assert(int expression) noexcept
     assert(expression);
 }
 
+// Static debugging function
 inline static void StaticDebugConsoleLog(const char* fmt, ...) noexcept
 {
 #ifdef _DEBUG
@@ -193,6 +206,7 @@ inline static void StaticDebugConsoleLog(const char* fmt, ...) noexcept
 #endif
 }
 
+// Static error function
 inline static void StaticErrorConsoleLog(const char* fmt, ...) noexcept
 {
 #ifdef _WIN32
@@ -215,3 +229,24 @@ inline static void StaticErrorConsoleLog(const char* fmt, ...) noexcept
     SetConsoleTextAttribute(winConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
 #endif
 ;}
+
+// Exception handling functions
+// Require boost::stacktrace
+#ifdef LOGGER_EXCEPTION_HANDLE
+
+#define BOOST_STACKTRACE_USE_ADDR2LINE
+
+#ifdef _WIN32
+inline static LONG WINAPI ExceptionHandler(PEXCEPTION_POINTERS pExceptionInfo)
+{
+    StaticErrorConsoleLog("Unhandled Exception (Code %X) : \n%s\nProgram will exit.", 
+                          pExceptionInfo->ExceptionRecord->ExceptionCode,
+                          boost::stacktrace::to_string(boost::stacktrace::stacktrace()).c_str());
+
+    system("pause");
+
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+#endif
+
+#endif

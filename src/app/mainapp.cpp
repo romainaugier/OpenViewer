@@ -6,6 +6,11 @@
 
 int application(int argc, char** argv)
 {
+    // Setup exception handler
+#ifdef OV_WIN
+    SetUnhandledExceptionFilter(ExceptionHandler);    
+#endif
+
     // Initialize the application
     printf("OpenViewer %s %s\n", OV_VERSION_STR, OV_PLATFORM_STR);
 
@@ -23,8 +28,6 @@ int application(int argc, char** argv)
 
     // Loader/Cache
     Core::Loader loader(&logger, &profiler);
-    
-    // av_register_all();
 
     Interface::Application application(&logger, &loader, &ocio);
 
