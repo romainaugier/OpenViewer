@@ -107,7 +107,7 @@ cmake --build . --config Release -j %NUMBER_OF_PROCESSORS%
 
 Portions of this software are copyright :
 
-Copyright (c) 2021, Romain Augier
+Copyright (c) 2022, Romain Augier
 
 All rights reserved.
 
