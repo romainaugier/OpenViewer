@@ -54,7 +54,6 @@ namespace Core
 		uint16_t m_MediaCount = 0;
 
 		uint8_t m_CacheMaxRamToUse = 50;
-
 		uint8_t m_OpenEXRThreads = 8;
 
 		uint8_t m_BgLoadChunkSize = 4; // Number of images to load in the cache at the same time in the background
