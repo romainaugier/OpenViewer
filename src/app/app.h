@@ -37,10 +37,8 @@ namespace Interface
         Core::Loader* m_Loader = nullptr;
         Core::Ocio* m_OcioModule = nullptr;
         Logger* m_Logger = nullptr;
-        ImPlaybar* m_Playbar = nullptr;
         Menubar* m_Menubar = nullptr;
 
-        uint8_t m_ActiveDisplayID = 0;
         uint8_t m_DisplayCount = 0;
 
         bool m_ChangeEvent = false;
@@ -54,7 +52,6 @@ namespace Interface
         Application(Logger* logger, Core::Loader* loader, Core::Ocio* ocio);    
         
         // Few setters and getters
-        void SetPlaybar(ImPlaybar* playbar) noexcept { this->m_Playbar = playbar; } 
         void SetMenubar(Menubar* menubar) noexcept { this->m_Menubar = menubar; }
 
         void Changed() noexcept { this->m_ChangeEvent = true; }
@@ -75,6 +72,9 @@ namespace Interface
         // Function that updates displays states
         void UpdateDisplays() noexcept;
 
+        // Function that takes care of updating the cache as we can have multiple displays
+        void UpdateCache() noexcept;
+
         // Function to handle cache settings parameters changes
         void CacheSettingsChanged() noexcept;
 
@@ -90,7 +90,6 @@ namespace Interface
 		bool m_HasOpenedIFD = false;
 
 		void Draw(Application& app,
-				  ImPlaybar& playbar, 
 				  Core::Ocio& ocio, 
 				  Profiler& prof, 
 				  bool& change) noexcept;

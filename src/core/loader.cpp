@@ -34,7 +34,7 @@ namespace Core
 		this->m_AutoDetectFileSequence = autodetect;
 	}
 
-	void Loader::Load(const std::string& mediaPath) noexcept
+	int32_t Loader::Load(const std::string& mediaPath) noexcept
 	{
 		const std::string cleanMediaPath = Utils::Str::CleanOSPath(mediaPath);
 
@@ -43,87 +43,87 @@ namespace Core
 		// Load every image there is in a directory
 		if (std::filesystem::is_directory(cleanMediaPath))
 		{
-			this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : Directory detected");
+			// this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : Directory detected");
 
-			Media newTmpMedia;
+			// Media newTmpMedia;
 
-			uint32_t itemCount = Utils::Fs::FileCountInDirectory(cleanMediaPath);
+			// uint32_t itemCount = Utils::Fs::FileCountInDirectory(cleanMediaPath);
 
-			uint64_t biggestImageByteSize = 0;
-			uint64_t totalByteSize = 0;
+			// uint64_t biggestImageByteSize = 0;
+			// uint64_t totalByteSize = 0;
 
-			newTmpMedia.m_Images.reserve(itemCount);
+			// newTmpMedia.m_Images.reserve(itemCount);
 
-			for (const auto& item : std::filesystem::directory_iterator(cleanMediaPath))
-			{
-				if (item.is_regular_file())
-				{
-					std::string itemPath = item.path().u8string();
+			// for (const auto& item : std::filesystem::directory_iterator(cleanMediaPath))
+			// {
+			// 	if (item.is_regular_file())
+			// 	{
+			// 		std::string itemPath = item.path().u8string();
 
-					Utils::Str::CleanOSPath(itemPath);
+			// 		Utils::Str::CleanOSPath(itemPath);
 
-					newTmpMedia.m_Images.emplace_back(itemPath);
+			// 		newTmpMedia.m_Images.emplace_back(itemPath);
 
-					this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loaded : %s", itemPath.c_str());
+			// 		this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loaded : %s", itemPath.c_str());
 
-					// If images in the sequence are of different sizes, get the biggest image of the sequence to 
-					// update the cache
-					biggestImageByteSize = biggestImageByteSize < newTmpMedia.m_Images[newTmpMedia.m_Range.y].m_Stride ? 
-																  newTmpMedia.m_Images[newTmpMedia.m_Range.y].m_Stride : 
-																  biggestImageByteSize;
+			// 		// If images in the sequence are of different sizes, get the biggest image of the sequence to 
+			// 		// update the cache
+			// 		biggestImageByteSize = biggestImageByteSize < newTmpMedia.m_Images[imageIndex].m_Stride ? 
+			// 													  newTmpMedia.m_Images[imageIndex].m_Stride : 
+			// 													  biggestImageByteSize;
 
-					totalByteSize += newTmpMedia.m_Images[newTmpMedia.m_Range.y].m_Stride;
+			// 		totalByteSize += newTmpMedia.m_Images[imageIndex].m_Stride;
 
-					++newTmpMedia.m_Range.y;
-				}
-				else
-				{
-					this->m_Logger->Log(LogLevel_Warning, "[LOADER] : File : %s is invalid, discarded", item.path().c_str());
-				}
-			}
+			// 		++imageIndex;
+			// 	}
+			// 	else
+			// 	{
+			// 		this->m_Logger->Log(LogLevel_Warning, "[LOADER] : File : %s is invalid, discarded", item.path().c_str());
+			// 	}
+			// }
 
-			// Initialize the cache if it has not been, else resize the cache if needed (by cache I mean the minimal cache needed to display 
-			// at least one image). We resize the minimal cache to the size of the biggest image in all the medias. It avoids allocations/deallocations
-			// during reading
-			if (this->m_CacheMode == 0)
-			{
-				if (this->m_Cache->m_HasBeenInitialized)
-				{
-					if (biggestImageByteSize > this->m_Cache->m_BytesCapacity) this->m_Cache->Resize(biggestImageByteSize, false);
-				}
-				else
-				{
-					this->m_Cache->Initialize(biggestImageByteSize, this->m_Logger);
-				}
-			}
-			else if(this->m_CacheMode == 1)
-			{
-				if (!this->m_Cache->m_HasBeenInitialized)
-				{
-					this->m_Cache->Initialize(this->m_CacheSizeMB, this->m_Logger, true);
-				}
-			}
-			else if(this->m_CacheMode == 2)
-			{
-				if (!this->m_Cache->m_HasBeenInitialized)
-				{
-					if ((totalByteSize / 1000000) < this->m_CacheSizeMB) this->m_Cache->Initialize(totalByteSize, this->m_Logger);
-					else this->m_Cache->Initialize(this->m_CacheSizeMB, this->m_Logger, true);
-				}
-				else
-				{
-					if ((totalByteSize / 1000000) < this->m_CacheSizeMB) this->m_Cache->Resize(totalByteSize, 0);
-				}
-			}
+			// // Initialize the cache if it has not been, else resize the cache if needed (by cache I mean the minimal cache needed to display 
+			// // at least one image). We resize the minimal cache to the size of the biggest image in all the medias. It avoids allocations/deallocations
+			// // during reading
+			// if (this->m_CacheMode == 0)
+			// {
+			// 	if (this->m_Cache->m_HasBeenInitialized)
+			// 	{
+			// 		if (biggestImageByteSize > this->m_Cache->m_BytesCapacity) this->m_Cache->Resize(biggestImageByteSize, false);
+			// 	}
+			// 	else
+			// 	{
+			// 		this->m_Cache->Initialize(biggestImageByteSize, this->m_Logger);
+			// 	}
+			// }
+			// else if(this->m_CacheMode == 1)
+			// {
+			// 	if (!this->m_Cache->m_HasBeenInitialized)
+			// 	{
+			// 		this->m_Cache->Initialize(this->m_CacheSizeMB, this->m_Logger, true);
+			// 	}
+			// }
+			// else if(this->m_CacheMode == 2)
+			// {
+			// 	if (!this->m_Cache->m_HasBeenInitialized)
+			// 	{
+			// 		if ((totalByteSize / 1000000) < this->m_CacheSizeMB) this->m_Cache->Initialize(totalByteSize, this->m_Logger);
+			// 		else this->m_Cache->Initialize(this->m_CacheSizeMB, this->m_Logger, true);
+			// 	}
+			// 	else
+			// 	{
+			// 		if ((totalByteSize / 1000000) < this->m_CacheSizeMB) this->m_Cache->Resize(totalByteSize, 0);
+			// 	}
+			// }
 
-			newTmpMedia.m_TotalByteSize = totalByteSize;
-			newTmpMedia.m_Images.shrink_to_fit();
-			newTmpMedia.m_ID = this->m_MediaCount;
-			newTmpMedia.SetLayers();
+			// newTmpMedia.m_TotalByteSize = totalByteSize;
+			// newTmpMedia.m_Images.shrink_to_fit();
+			// newTmpMedia.m_ID = this->m_MediaCount;
+			// newTmpMedia.SetLayers();
 
-			// Move the newly created media into the media vector of the loader
-			this->m_Medias.push_back(std::move(newTmpMedia));
-			++this->m_MediaCount;
+			// // Move the newly created media into the media vector of the loader
+			// this->m_Medias.push_back(std::move(newTmpMedia));
+			// ++this->m_MediaCount;
 		}
 		// Load a given file
 		// If the auto detect file sequence is on, it will load the file sequence
@@ -132,204 +132,164 @@ namespace Core
 		{
 			uint64_t biggestImageByteSize = 0;
 			uint64_t totalByteSize = 0;
-			
-			if (this->m_AutoDetectFileSequence)
+
+			// Loads a video media
+			if (Utils::Fs::IsVideo(cleanMediaPath))
 			{
-				Utils::Fs::FileSequence fileSeq;
-				Utils::Fs::GetFileSequenceFromFile(fileSeq, cleanMediaPath);
 
-				if (fileSeq.size() > 1)
+			}
+			else if(Utils::Fs::IsImage(cleanMediaPath))
+			{	
+				if (this->m_AutoDetectFileSequence)
 				{
-					this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : File sequence detected");
+					Utils::Fs::FileSequence fileSeq;
+					Utils::Fs::GetFileSequenceFromFile(fileSeq, cleanMediaPath);
 
-					Media newTmpMedia;
-
-					for (const auto& fileSeqItem : fileSeq)
+					if (fileSeq.size() > 1)
 					{
-						newTmpMedia.m_Images.emplace_back(fileSeqItem.first);
+						this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : File sequence detected");
 
-						this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loaded %s", fileSeqItem.first.c_str());
+						std::vector<Image> images;
+						images.reserve(fileSeq.size());
 
-						biggestImageByteSize = biggestImageByteSize < newTmpMedia.m_Images[newTmpMedia.m_Range.y].m_Stride ? 
-																  newTmpMedia.m_Images[newTmpMedia.m_Range.y].m_Stride : 
-																  biggestImageByteSize;
+						uint32_t imageIndex = 0;
 
-						totalByteSize += newTmpMedia.m_Images[newTmpMedia.m_Range.y].m_Stride;
+						for (const auto& fileSeqItem : fileSeq)
+						{
+							images.emplace_back(fileSeqItem.first);
 
-						++newTmpMedia.m_Range.y;
+							this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loaded %s", fileSeqItem.first.c_str());
+
+							biggestImageByteSize = biggestImageByteSize < images[imageIndex].m_Stride ? 
+																		  images[imageIndex].m_Stride : 
+																		  biggestImageByteSize;
+
+							totalByteSize += images[imageIndex].m_Stride;
+
+							++imageIndex;
+						}
+
+						if (Utils::Fs::IsOpenEXR(cleanMediaPath))
+						{
+							EXRSequence* newMedia = new EXRSequence(cleanMediaPath, this->m_MediaCount);
+							newMedia->SetImages(images);
+							newMedia->SetLayers();
+							newMedia->SetRange(ImVec2(0, imageIndex));
+							newMedia->SetTotalByteSize(totalByteSize);
+							newMedia->SetBiggestImageSize(biggestImageByteSize);
+
+							this->m_Medias[this->m_MediaCount] = newMedia;
+						}
+						else
+						{
+							ImageSequence* newMedia = new ImageSequence(cleanMediaPath, this->m_MediaCount);
+							newMedia->SetImages(images);
+							newMedia->SetRange(ImVec2(0, imageIndex));
+							newMedia->SetTotalByteSize(totalByteSize);
+							newMedia->SetBiggestImageSize(biggestImageByteSize);
+
+							this->m_Medias[this->m_MediaCount] = newMedia;
+						}
 					}
-
-					newTmpMedia.m_TotalByteSize = totalByteSize;
-					newTmpMedia.m_ID = this->m_MediaCount;
-					newTmpMedia.SetLayers();
-
-					// Move the media into the media vector of the loader
-					this->m_Medias.push_back(std::move(newTmpMedia));
-					++this->m_MediaCount;
-
-					goto cacheInit;
-				}
-			}
-			
-			{
-				this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : Single image detected");
-
-				Media newTmpMedia;
-
-				newTmpMedia.m_Images.emplace_back(cleanMediaPath);
-
-				biggestImageByteSize = newTmpMedia.m_Images[0].m_Stride;
-				totalByteSize = biggestImageByteSize;
-
-				this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loaded : %s", cleanMediaPath.c_str());
-				
-				newTmpMedia.m_TotalByteSize = totalByteSize;
-				newTmpMedia.m_Range = ImVec2(0, 1);
-				newTmpMedia.m_ID = this->m_MediaCount;
-				newTmpMedia.SetLayers();
-
-				// Move the media into the media vector of the loader
-				this->m_Medias.push_back(std::move(newTmpMedia));
-				++this->m_MediaCount;
-			}
-
-cacheInit:
-			// Same as in the sequence loading
-			if (this->m_CacheMode == 0)
-			{
-				if (this->m_Cache->m_HasBeenInitialized)
-				{
-					if (biggestImageByteSize > this->m_Cache->m_BytesCapacity) this->m_Cache->Resize(biggestImageByteSize, false);
+					else
+					{
+						goto singleimage;
+					}
 				}
 				else
 				{
-					this->m_Cache->Initialize(biggestImageByteSize, this->m_Logger, false);
+					singleimage:
+					
+					this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : Single image detected");
+
+					std::vector<Image> image;
+
+					image.emplace_back(cleanMediaPath);
+
+					biggestImageByteSize = image[0].m_Stride;
+					totalByteSize = biggestImageByteSize;
+
+					this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loaded : %s", cleanMediaPath.c_str());
+					
+					if (Utils::Fs::IsOpenEXR(cleanMediaPath))
+					{
+						EXRSequence* newMedia = new EXRSequence(cleanMediaPath, this->m_MediaCount);
+						newMedia->SetImages(image);
+						newMedia->SetLayers();
+						newMedia->SetRange(ImVec2(0, 1));
+						newMedia->SetTotalByteSize(totalByteSize);
+						newMedia->SetBiggestImageSize(biggestImageByteSize);
+
+						this->m_Medias[this->m_MediaCount] = newMedia;
+					}
+					else
+					{
+						ImageSequence* newMedia = new ImageSequence(cleanMediaPath, this->m_MediaCount);
+						newMedia->SetImages(image);
+						newMedia->SetRange(ImVec2(0, 1));
+						newMedia->SetTotalByteSize(totalByteSize);
+						newMedia->SetBiggestImageSize(biggestImageByteSize);
+
+						this->m_Medias[this->m_MediaCount] = newMedia;
+					}
 				}
 			}
-			else if(this->m_CacheMode == 1)
+			else
 			{
-				if (!this->m_Cache->m_HasBeenInitialized)
-				{
-					this->m_Cache->Initialize(this->m_CacheSizeMB, this->m_Logger, true);
-				}
+				this->m_Logger->Log(LogLevel_Error, "[LOADER] : Invalid file (%s) will not be loaded", mediaPath.c_str());
+				return -1;
 			}
-			else if(this->m_CacheMode == 2)
-			{
-				if (!this->m_Cache->m_HasBeenInitialized)
-				{
-					if ((totalByteSize / 1000000) < this->m_CacheSizeMB) this->m_Cache->Initialize(totalByteSize, this->m_Logger);
-					else this->m_Cache->Initialize(this->m_CacheSizeMB, this->m_Logger, true);
-				}
-				else
-				{
-					if ((totalByteSize / 1000000) < this->m_CacheSizeMB) this->m_Cache->Resize(totalByteSize, 0);
-				}
-			}	
+
+			++this->m_MediaCount;
+
+			return (this->m_MediaCount - 1);
 		}
 		else
 		{
-			this->m_Logger->Log(LogLevel_Error, "[LOADER] : Path : %s is invalid", cleanMediaPath.c_str());
+			this->m_Logger->Log(LogLevel_Error, "[LOADER] : Path : %s is not a valid file or a valid directory", cleanMediaPath.c_str());
+			return -1;
 		}
 	}
 
-	Image* Loader::GetImage(const uint32_t frameIndex) noexcept
+	Image* Loader::GetImage(const uint32_t mediaId, const uint32_t frameIndex) noexcept
 	{
-		for (auto& media : this->m_Medias)
-		{
-			// Skip medias that are not in the timeline
-			if (!media.m_IsActive) continue;
-
-			// The image we are looking for is in this media, so load it
-			if (media.InRange(frameIndex))
-			{
-				const uint32_t imageIndex = frameIndex - media.m_TimelineRange.x;
-				return &media.m_Images[imageIndex];
-			}
-		}
-
-		return nullptr;
+		return this->m_Medias[mediaId]->GetImage(frameIndex);
 	}
 
 	Media* Loader::GetMedia(const uint32_t mediaId) noexcept
 	{
-		// OVASSERT(mediaId < this->m_MediaCount);
+		assert(mediaId < this->m_MediaCount);
 		
-		return &this->m_Medias[mediaId];
+		return this->m_Medias[mediaId];
 	}
 
-	void Loader::LoadImageToCache(const uint32_t index, const bool force) noexcept
+	void Loader::LoadImageToCache(const uint32_t mediaId, const uint32_t frameIndex, const bool force) noexcept
 	{
-		const Image* tmpImg = this->GetImage(index);
+		const auto imgLoadStart = this->m_Profiler->Start();
 
-		if (tmpImg == nullptr) return;
+		Image* tmpImg = this->GetImage(mediaId, frameIndex);
 
-		if (tmpImg->m_CacheIndex > 0 && !force) return;
+		if (tmpImg == nullptr || (tmpImg->m_CacheIndex > 0 && !force)) return;
 
-		if (this->m_CacheMode > 0)
-		{
-			for (auto& media : this->m_Medias)
-			{
-				// Skip medias that are not in the timeline
-				if (!media.m_IsActive) continue;
+		// If the media is an exr sequence, verify that the current image matches the caracteristics of the selected image layer
+		EXRSequence* tmpExrMedia;
+		
+		if (tmpExrMedia = dynamic_cast<EXRSequence*>(this->GetMedia(mediaId))) tmpImg->VerifyChannelSize(tmpExrMedia->GetCurrentChannels());
+		
+		const uint32_t cachedIndex = this->m_Cache->Add(tmpImg, mediaId);
 
-				// The image we are looking for is in this media, so load it
-				if (media.InRange(index))
-				{
-					const uint32_t imageIndex = index - media.m_TimelineRange.x;
-					
-					media.m_Images[imageIndex].VerifyChannelSize(media.GetCurrentChannels());
-					
-					const uint32_t cachedIndex = this->m_Cache->Add(&media.m_Images[imageIndex]);
+		this->GetMedia(mediaId)->LoadImage(frameIndex, this->m_Cache->m_Items[cachedIndex].m_DataPtr);
 
-					if (media.m_Layers.size() > 0)
-					{
-					  	media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_DataPtr, 
-														this->m_Profiler,
-														media.GetCurrentChannels());
-					}
+		const auto imgLoadEnd = this->m_Profiler->End();
 
-					else media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_DataPtr, 
-														 this->m_Profiler);
-
-					break;
-				}
-			}
-		}
-		else
-		{
-			for (auto& media : this->m_Medias)
-			{
-				// Skip medias that are not in the timeline
-				if (!media.m_IsActive) continue;
-
-				// The image we are looking for is in this media, so load it
-				if (media.InRange(index))
-				{
-					const uint32_t imageIndex = index - media.m_TimelineRange.x;
-					
-					media.m_Images[imageIndex].VerifyChannelSize(media.GetCurrentChannels());
-					
-					const uint32_t cachedIndex = this->m_Cache->Add(&media.m_Images[imageIndex]);
-
-					if (media.m_Layers.size() > 0)
-					{
-					  	media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_DataPtr, 
-														this->m_Profiler,
-														media.GetCurrentChannels());
-					}
-					else media.m_Images[imageIndex].Load(this->m_Cache->m_Items[cachedIndex].m_DataPtr, 
-														 this->m_Profiler);
-
-					break;
-				}
-			}
-		}
+		this->m_Profiler->Time("Image Loading Time", imgLoadStart, imgLoadEnd);
 	}
 
-	void Loader::LoadSequenceToCache(const uint32_t startIndex, const uint32_t size) noexcept
+	void Loader::LoadSequenceToCache(const uint32_t mediaId, const uint32_t startIndex, const uint32_t size) noexcept
 	{
 		uint32_t endIndex = startIndex + size;
 		
+		// Find how many images could fit in the cache
 		if (size == 0)
 		{
 			uint32_t index = 0;
@@ -338,7 +298,7 @@ cacheInit:
 
 			while (true)
 			{
-				const Image* tmpImage = this->GetImage(index);
+				const Image* tmpImage = this->GetImage(mediaId, index);
 
 				if (tmpImage == nullptr) break;
 
@@ -347,7 +307,7 @@ cacheInit:
 				if (accumulatedByteSize > this->m_Cache->m_BytesCapacity) break;
 
 				++endIndex;
-				index = (index + 1) % static_cast<uint32_t>(this->m_Range.y);
+				index = (index + 1) % static_cast<uint32_t>(this->m_Medias[mediaId]->GetRange().y);
 			}
 
 			endIndex += startIndex;
@@ -356,10 +316,26 @@ cacheInit:
 		// if (startIndex != this->m_Range.x) --endIndex;
 		for (uint32_t i = startIndex; i < endIndex; i++)
 		{
-			const uint32_t idx = i % static_cast<uint32_t>(this->m_Range.y);
+			const uint32_t idx = i % static_cast<uint32_t>(this->m_Medias[mediaId]->GetRange().y);
 
-			this->LoadImageToCache(idx);
+			this->LoadImageToCache(mediaId, idx);
 		}
+	}
+
+	void Loader::ResizeCache(const uint64_t size, const bool sizeInMB) noexcept
+	{
+		uint64_t newSize = size;
+		
+		if (this->m_CacheMode == 2)
+		{
+			uint64_t maxSize = Utils::GetTotalSystemMemory() * this->m_CacheMaxRamToUse / 100;
+
+			if (sizeInMB) maxSize /= 1000000;
+
+			newSize = newSize > maxSize ? maxSize : newSize;
+		}
+
+		this->m_Cache->Resize(newSize, sizeInMB);
 	}
 
 	void Loader::BackgroundLoad() noexcept
@@ -379,7 +355,7 @@ cacheInit:
 			}
 			else if (this->m_NeedBgLoad)
 			{
-				this->LoadSequenceToCache(this->m_BgLoadFrameIndex, this->m_BgLoadChunkSize);
+				this->LoadSequenceToCache(0, this->m_BgLoadFrameIndex, this->m_BgLoadChunkSize);
 
 				this->m_NeedBgLoad = false;
 			}
@@ -439,15 +415,14 @@ cacheInit:
 		delete this->m_Cache;
 
 		// Clear the medias
-		for(auto& media : this->m_Medias) 
+		for(auto& [id, media] : this->m_Medias) 
 		{
-			media.m_Images.clear();
+			delete media;
 		}
 
-		// Clear all the vectors
 		this->m_Medias.clear();
-		this->m_Medias.resize(0);
 
+		// Clear workers
 		this->m_Workers.clear();
 		this->m_Workers.resize(0);
 

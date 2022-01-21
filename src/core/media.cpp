@@ -6,9 +6,10 @@
 
 namespace Core
 {
-    uint32_t Media::Size() const noexcept
+    Media::Media(const std::string& path, const uint32_t id)
     {
-        return this->m_Range.y;
+        this->m_Path = path;
+        this->m_ID = id;
     }
 
     bool Media::InRange(const uint32_t index) const noexcept
@@ -16,19 +17,49 @@ namespace Core
         return index >= this->m_TimelineRange.x && index < this->m_TimelineRange.y;
     }
 
-    void Media::SetActive() noexcept
+    ImageSequence::ImageSequence(const std::string& path, const uint32_t id)
     {
-        this->m_IsActive = true;
-        this->m_TimelineRange = this->m_Range;
-    }
-    
-    void Media::SetInactive() noexcept
-    {
-        this->m_IsActive = false;
-        this->m_TimelineRange = ImVec2(0, 0);
+        this->m_Path = path;
+        this->m_ID = id;
     }
 
-    void Media::SetLayers() noexcept
+    void ImageSequence::LoadImage(const uint32_t frameIndex, void* buffer) noexcept 
+    {
+        assert(this->InRange(frameIndex));
+
+        this->m_Images[frameIndex].Load(buffer);
+    }
+
+    Image* ImageSequence::GetImage(const uint32_t frameIndex) noexcept 
+    {
+        assert(this->InRange(frameIndex));
+
+        return &this->m_Images[frameIndex];
+    }
+
+    EXRSequence::EXRSequence(const std::string& path, const uint32_t id)
+    {
+        this->m_Path = path;
+        this->m_ID = id;
+    }
+
+    void EXRSequence::LoadImage(const uint32_t frameIndex, void* buffer) noexcept 
+    {
+        assert(this->InRange(frameIndex));
+
+        this->m_Images[frameIndex].LoadExr(buffer, 
+                                           this->m_Layers[this->m_CurrentLayerID].second,
+                                           this->m_NumThreads);
+    }
+
+    Image* EXRSequence::GetImage(const uint32_t frameIndex) noexcept 
+    {
+        assert(this->InRange(frameIndex));
+
+        return &this->m_Images[frameIndex];
+    }
+
+    void EXRSequence::SetLayers() noexcept
     {
         const Image firstImage = this->m_Images[0];
 
@@ -72,5 +103,22 @@ namespace Core
         }
 
         this->m_Layers.shrink_to_fit();
+    }
+
+    Video::Video(const std::string& path, const uint32_t id)
+    {
+        this->m_Path = path;
+        this->m_ID = id;
+    }
+
+    void Video::LoadImage(const uint32_t frameIndex, void* buffer) noexcept 
+    {
+
+    }
+
+    Image* Video::GetImage(const uint32_t frameIndex) noexcept 
+    {
+        printf("video\n");
+        return nullptr;
     }
 }

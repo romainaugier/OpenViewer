@@ -34,13 +34,16 @@ namespace Core
         uint64_t m_Stride;
         uint64_t m_Size; 
 
+        uint32_t m_MediaId;
+
         ImageCacheItem() {}
 
-        ImageCacheItem(Image* image, void* ptr, const uint64_t stride, const uint64_t size) : 
+        ImageCacheItem(Image* image, void* ptr, const uint64_t stride, const uint64_t size, const uint32_t mediaId) : 
             m_Image(image),
             m_DataPtr(ptr),
             m_Stride(stride),
-            m_Size(size) {}
+            m_Size(size),
+            m_MediaId(mediaId) {}
     };
 
     using ImageCacheMap = tsl::robin_map<uint32_t, ImageCacheItem>;
@@ -68,10 +71,10 @@ namespace Core
         bool m_HasBeenInitialized = false;
 
         // Initializes the cache, the size needs to be expressed in MB
-        void Initialize(const size_t size, Logger* logger, const bool isImgCache = false) noexcept;
+        void Initialize(const size_t size, Logger* logger, const bool sizeInMB = false) noexcept;
 
         // Adds an image to the cache, and it will remove one at the beginning (or more) is the cache is full
-        uint32_t Add(Image* item) noexcept;
+        uint32_t Add(Image* item, const uint32_t mediaId) noexcept;
 
         // Remove an image from the cache
         void Remove(const uint32_t index) noexcept;

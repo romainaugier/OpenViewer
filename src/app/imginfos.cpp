@@ -15,9 +15,11 @@ namespace Interface
                 ImGui::Text("Resolution : %dx%d", currentImage.m_Xres, currentImage.m_Yres);
                 ImGui::Text("Channel Count : %d", currentImage.m_Channels);
 
-                if (currentImage.m_Type & FileType_Exr)
+                const Core::EXRSequence* tmpExrSeq;
+
+                if (tmpExrSeq = dynamic_cast<const Core::EXRSequence*>(currentMedia))
                 {
-                    ImGui::Text("Current EXR layer : %s", currentMedia->m_CurrentLayerStr.c_str());
+                    ImGui::Text("Current EXR layer : %s", tmpExrSeq->GetCurrentLayerName().c_str());
                 }
                 
                 ImGui::Text("Channels : ");

@@ -6,6 +6,20 @@
 
 namespace Interface
 {
+	void ImPlaybar::Initialize(Core::Loader* loader, ImVec2 range, uint8_t id) noexcept
+	{
+		this->m_Loader = loader;
+
+		this->m_PlaybarID = id;
+
+		this->m_Range = range;
+
+		this->m_CachedIndices.resize(range.y);
+		for (uint32_t i = 0; i < range.y; i++) this->m_CachedIndices[i] = false;
+
+		this->m_PlayerThread = std::thread(&ImPlaybar::BackgroundTimeUpdate, this);
+	}
+
 	void ImPlaybar::Play() noexcept 
 	{ 
 		std::unique_lock<std::mutex> playLock(this->m_Mutex);
@@ -86,7 +100,7 @@ namespace Interface
 		this->NeedUpdate();	
 	}
 
-	void ImPlaybar::Update(Profiler* profiler) noexcept
+	void ImPlaybar::Update() noexcept
 	{
 		if (this->m_Loader->m_HasBeenInitialized)
 		{
@@ -97,37 +111,25 @@ namespace Interface
 			{
 				if (this->m_Update)
 				{
-					const auto playbarUpdateStart = profiler->Start();
-					
-					this->m_Loader->LoadImageToCache(this->m_Frame);
+					this->m_Loader->LoadImageToCache(this->m_MediaId, this->m_Frame);
 
 					// Load all the frames from the frame we clicked on
 					if (this->m_Loader->m_CacheMode > 0 && !this->m_IsDragging)
 					{
-						this->m_Loader->m_Workers.emplace_back(&Core::Loader::LoadSequenceToCache, this->m_Loader, this->m_Frame, 0);
+						this->m_Loader->m_Workers.emplace_back(&Core::Loader::LoadSequenceToCache, this->m_Loader, this->m_MediaId, this->m_Frame, 0);
 					}
 
 					// this->NeedUpdate(false);
-					
-					const auto playbarUpdateEnd = profiler->End();
-					
-					profiler->Time("Playbar Update Time", playbarUpdateStart, playbarUpdateEnd);
 				}
 			}
-			
-			const auto cacheUpdateStart = profiler->Start();
 
 			// Update cache indices
 			for (uint32_t i = this->m_Range.x; i < this->m_Range.y; i++)
 			{
-				const Core::Image* tmpImage = this->m_Loader->GetImage(i);
+				const Core::Image* tmpImage = this->m_Loader->GetImage(this->m_MediaId, i);
 
 				this->m_CachedIndices[i] = tmpImage->m_CacheIndex > 0 ? 1 : 0;
 			}
-
-			const auto cacheUpdateEnd = profiler->End();
-
-			profiler->Time("Playbar Cache Indices Update Time", cacheUpdateStart, cacheUpdateEnd);
 		}
 	}
 
@@ -154,7 +156,10 @@ namespace Interface
 
 		constexpr float playbarHeight = 80.0f;
 
-		ImGui::Begin("Playbar", &p_open, window_flags);
+		char playbarName[32];
+		Utils::Str::Format(playbarName, "Playbar %d", this->m_PlaybarID);
+
+		ImGui::Begin(playbarName, &p_open, window_flags);
 		{	
 			ImDrawList* drawList = ImGui::GetWindowDrawList();
 
@@ -429,7 +434,7 @@ namespace Interface
 				if (this->m_Loader->m_CacheMode > 0)
 				{
 					// Urgent load in case of fast scrolling while cache is activated
-					if (!this->m_CachedIndices[this->m_Frame]) this->m_Loader->LoadImageToCache(this->m_Frame);
+					if (!this->m_CachedIndices[this->m_Frame]) this->m_Loader->LoadImageToCache(this->m_MediaId, this->m_Frame);
 
 					const uint32_t offset = this->m_Loader->m_Cache->m_Size - this->m_Loader->m_BgLoadChunkSize * 2;
 					const uint32_t frameIdx = static_cast<uint32_t>(fmodf((this->m_Frame + offset), (this->m_Range.y - 1)));
@@ -448,7 +453,7 @@ namespace Interface
 				}
 				else
 				{
-					this->m_Loader->LoadImageToCache(this->m_Frame);
+					this->m_Loader->LoadImageToCache(this->m_MediaId, this->m_Frame);
 				}
 
 				const auto updateEnd = Profiler::StaticEnd();

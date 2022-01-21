@@ -46,6 +46,9 @@ namespace Interface
 		float m_RealFramerate = 24.0f;
 
 		uint32_t m_Frame = 0;
+		uint32_t m_MediaId = 0;
+
+		uint8_t m_PlaybarID = 0;
 		
 		uint8_t m_FrameRate = 24;
 		
@@ -54,6 +57,8 @@ namespace Interface
 		bool m_Update = true;
 		bool m_Release = false;
 		bool m_IsDragging = false;
+
+		ImPlaybar() {}
 
 		ImPlaybar(Core::Loader* loader, ImVec2 range) : 
 			m_Loader(loader),
@@ -64,6 +69,8 @@ namespace Interface
 
 			this->m_PlayerThread = std::thread(&ImPlaybar::BackgroundTimeUpdate, this);
 		}
+
+		void Initialize(Core::Loader* loader, ImVec2 range, uint8_t id) noexcept;
 
 		void Play() noexcept;
 
@@ -79,7 +86,7 @@ namespace Interface
 
 		bool IsPlaying() const noexcept { return this->m_Play; }
 
-		void Update(Profiler* profiler) noexcept;
+		void Update() noexcept;
 
 		void SetRange(const ImVec2& newRange) noexcept;
 

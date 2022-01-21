@@ -18,6 +18,7 @@
 #include <immintrin.h>
 
 #include "scopes.h"
+#include "implaybar.h"
 #include "core/loader.h"
 #include "core/ocio.h"
 #include "utils/profiler.h"
@@ -27,6 +28,8 @@ namespace Interface
 {
 	struct Display
 	{
+		ImPlaybar m_Playbar;
+
 		Profiler* m_Profiler;
 
 		Logger* m_Logger;
@@ -37,6 +40,8 @@ namespace Interface
 		ImVec2 m_DisplayPos = ImVec2(0.0f, 0.0f);
 		ImVec2 m_OldMousePos = ImVec2(0.0f, 0.0f);
 
+		double m_LastTimeActive = 0;
+
 		Utils::GL::Shader m_AlphaBlendingShader;
 
 		GLuint m_RawTexture;
@@ -46,6 +51,8 @@ namespace Interface
 
 		int32_t m_MediaID = -1;
 		int32_t m_BackGroundMode = 0;
+
+		float m_Zoom = 1.0f;
 		
 		uint16_t m_Width;
 		uint16_t m_Height;
@@ -88,16 +95,25 @@ namespace Interface
 		void AlphaBlending() noexcept;
 		
 		// Updates the displayed image
-		void Update(Core::Ocio& ocio, const uint32_t frameIndex) noexcept;
+		void Update(Core::Ocio& ocio) noexcept;
 
 		// Few functions to play with the displayed image
 		OV_FORCEINLINE void NeedFrame() noexcept { this->m_FrameView = true; }
 		OV_FORCEINLINE void NeedHome() noexcept { this->m_HomeView = true; }
 		OV_FORCEINLINE void MirrorHorizontal() noexcept { this->m_HorizontalMirrorView = !this->m_HorizontalMirrorView; }
 		OV_FORCEINLINE void MirrorVertical() noexcept { this->m_VerticalMirrorView = !this->m_VerticalMirrorView; }
+
+		// Few getters/setters
+		OV_FORCEINLINE double GetLastTimeActive() const noexcept { return this->m_LastTimeActive; }
+		OV_FORCEINLINE void SetMedia(const uint32_t mediaId) noexcept { this->m_MediaID = mediaId; }
+		OV_FORCEINLINE int32_t GetMediaId() const noexcept { return this->m_MediaID; }
+		OV_FORCEINLINE ImPlaybar* AssociatedPlaybar() noexcept { return &this->m_Playbar; }
+
+		// Associated playbar utilities
+		OV_FORCEINLINE void UpdateAssociatedPlaybar() noexcept { this->m_Playbar.Update(); }
 		
 		// Display window draw function
-		void Draw(uint32_t frameIndex) noexcept;
+		void Draw() noexcept;
 		
 		// Retrieves a pixel from the current transformed texture
 		ImVec4 GetPixel(const uint16_t x, const uint16_t y) const noexcept;

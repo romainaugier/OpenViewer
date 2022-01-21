@@ -276,18 +276,13 @@ namespace Core
 		in->close();
 	}
 
-	void Image::Load(void* __restrict buffer, Profiler* prof, const std::string& layers, const uint8_t exrThreads) const noexcept
+	void Image::Load(void* __restrict buffer) const noexcept
 	{
-		const auto load_timer_start = prof->Start();
-
-		if (this->m_Type & FileType_Exr) LoadExr(buffer, layers, exrThreads);
-		else if (this->m_Type& FileType_Jpg) LoadJpg(buffer);
+		// if (this->m_Type & FileType_Exr) LoadExr(buffer);
+		if (this->m_Type & FileType_Jpg) LoadJpg(buffer);
 		else if (this->m_Type & FileType_Png) LoadPng(buffer);
 		else if (this->m_Type & FileType_Hdr) LoadHdr(buffer);
 		else if (this->m_Type & FileType_Tiff) LoadTiff(buffer);
 		else if (this->m_Type & FileType_Other) LoadOther(buffer);
-
-		const auto load_timer_end = prof->End();
-		prof->Time("Image Loading Time", load_timer_start, load_timer_end);
 	}
 } // End namespace Core

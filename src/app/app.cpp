@@ -31,9 +31,18 @@ namespace Interface
 
     Display* Application::GetActiveDisplay() noexcept
     {
+		// The active display is considered to be the one we last clicked on
+
+		double maxLastActiveTime = 0.0;
+
         for (const auto& [id, displayPair] : this->m_Displays)
         {
-            if (displayPair.second->m_IsActive) return displayPair.second;
+            maxLastActiveTime = displayPair.second->GetLastTimeActive() > maxLastActiveTime ? displayPair.second->GetLastTimeActive() : maxLastActiveTime;
+        }
+        
+		for (const auto& [id, displayPair] : this->m_Displays)
+        {
+            if (maxLastActiveTime == displayPair.second->GetLastTimeActive()) return displayPair.second;
         }
 
         return nullptr;
@@ -46,8 +55,6 @@ namespace Interface
             if (!it.value().second->m_IsOpen)
             {
                 this->m_Logger->Log(LogLevel_Debug, "[DISPLAY] : Releasing display %d", it.value().second->m_DisplayID);
-
-                this->m_Loader->SetMediaInactive(it.value().second->m_MediaID);
 
                 it.value().second->Release();
                 this->m_Displays.erase(it++);
@@ -153,8 +160,8 @@ namespace Interface
                 case GLFW_KEY_SPACE:
                 {
                     // Play/Pause
-                    if (this->m_Playbar->IsPlaying()) this->m_Playbar->Pause();
-                    else this->m_Playbar->Play();
+                    if (this->GetActiveDisplay()->AssociatedPlaybar()->IsPlaying()) this->GetActiveDisplay()->AssociatedPlaybar()->Pause();
+                    else this->GetActiveDisplay()->AssociatedPlaybar()->Play();
                     break;
                 }
 
@@ -188,9 +195,9 @@ namespace Interface
                     if (this->m_Shortcuts.m_Pressed[GLFW_KEY_LEFT_CONTROL] ||
                         this->m_Shortcuts.m_Pressed[GLFW_KEY_RIGHT_CONTROL])
                     {
-                        this->m_Playbar->GoFirstFrame();
+                        this->GetActiveDisplay()->AssociatedPlaybar()->GoFirstFrame();
                     }
-                    else this->m_Playbar->GoPreviousFrame();
+                    else this->GetActiveDisplay()->AssociatedPlaybar()->GoPreviousFrame();
 
                     break;
                 }
@@ -201,9 +208,9 @@ namespace Interface
                     if (this->m_Shortcuts.m_Pressed[GLFW_KEY_LEFT_CONTROL] ||
                         this->m_Shortcuts.m_Pressed[GLFW_KEY_RIGHT_CONTROL])
                     {
-                        this->m_Playbar->GoLastFrame();
+                        this->GetActiveDisplay()->AssociatedPlaybar()->GoLastFrame();
                     }
-                    else this->m_Playbar->GoNextFrame();
+                    else this->GetActiveDisplay()->AssociatedPlaybar()->GoNextFrame();
 
                     break;
                 }
@@ -225,8 +232,9 @@ namespace Interface
                                                this->m_SettingsInterface.m_Settings.m_UserSettings["cache_max_size"].get<uint64_t>());
                 }
 
-                this->m_Loader->Load(fp);
-                this->m_Loader->LoadImageToCache(this->m_Playbar->m_Frame);
+                const int32_t newMediaID = this->m_Loader->Load(fp);
+				this->GetActiveDisplay()->SetMedia(newMediaID);
+                this->m_Loader->LoadImageToCache(newMediaID, 0);
             }
 
             ifd::FileDialog::Instance().Close();
@@ -245,20 +253,83 @@ namespace Interface
                                                this->m_SettingsInterface.m_Settings.m_UserSettings["cache_max_size"].get<uint64_t>());
                 }
 
-                this->m_Loader->Load(fp);
-                this->m_Loader->LoadImageToCache(this->m_Playbar->m_Frame);
+                const int32_t newMediaID = this->m_Loader->Load(fp);
+				this->GetActiveDisplay()->SetMedia(newMediaID);
+                this->m_Loader->LoadImageToCache(newMediaID, 0);
             }
 
             ifd::FileDialog::Instance().Close();
         }
     }
 
+	void Application::UpdateCache() noexcept
+	{
+		// Update the cache
+        // As we can have multiple displays at the same time : 
+        // - If the cache is set to minimal mode, allocate enough memory to hold the biggest images
+        // of each displayed media
+        // - If the cache is set to manual mode, verify enough memory is allocated to hold at least 
+        // the biggest images and if not, reallocate some
+        // - If the cache is set to smart, allocate memory to hold everything until the limit it reached
+		
+		uint64_t totalBiggestImagesByteSize = 0;
+        uint64_t totalByteSize = 0;
+
+        for (const auto& [id, displayPair] : this->m_Displays)
+        {
+            const int32_t mediaId = displayPair.second->GetMediaId();
+            totalBiggestImagesByteSize += this->m_Loader->m_Medias[mediaId]->GetBiggestImageSize();
+            totalByteSize += this->m_Loader->m_Medias[mediaId]->GetTotalByteSize();
+        }
+
+        if (this->m_Loader->m_CacheMode == 0)
+        {
+            if (!this->m_Loader->m_Cache->m_HasBeenInitialized)
+			{
+				this->m_Loader->m_Cache->Initialize(totalBiggestImagesByteSize, this->m_Logger);
+			}
+			else
+			{
+				this->m_Loader->ResizeCache(totalBiggestImagesByteSize);
+			}
+        }
+        else if (this->m_Loader->m_CacheMode == 1)
+        {
+            if (!this->m_Loader->m_Cache->m_HasBeenInitialized)
+			{
+				this->m_Loader->m_Cache->Initialize(this->m_Loader->m_CacheSizeMB, this->m_Logger, true);
+			}
+
+			if (totalBiggestImagesByteSize > this->m_Loader->m_Cache->m_BytesCapacity)
+            {
+                this->m_Logger->Log(LogLevel_Warning, "[CACHE] : Manual image cache is not big enough to hold all medias being displayed, resizing it");
+                this->m_Loader->ResizeCache(totalBiggestImagesByteSize);
+            }
+        }
+        else if (this->m_Loader->m_CacheMode == 2)
+        {
+            if (!this->m_Loader->m_Cache->m_HasBeenInitialized)
+			{
+				this->m_Loader->m_Cache->Initialize(totalByteSize, this->m_Logger);
+			}
+			else
+			{
+            	this->m_Loader->ResizeCache(totalByteSize);
+			}
+        }
+	}
+
     void Application::CacheSettingsChanged() noexcept
     {
         if (this->m_SettingsInterface.m_Settings.m_CacheSettingsChanged)
         {
-            this->m_Playbar->Pause();
-            this->m_Playbar->m_Frame = 0;
+			uint64_t minimumByteSize = 0;
+
+            for (auto& [id, display] : this->m_Displays)
+			{
+				display.second->AssociatedPlaybar()->Pause();
+				display.second->AssociatedPlaybar()->m_Frame = 0;
+			}
             
             // Find the biggest image we have in cache to make sure enough space will be allocated in the cache 
             // Especially when size is set manually
@@ -266,10 +337,8 @@ namespace Interface
 
             for (const auto& media : this->m_Loader->m_Medias)
             {
-                for (const auto& image : media.m_Images)
-                {
-                    biggestImageSize = image.m_Stride > biggestImageSize ? image.m_Stride : biggestImageSize;
-                }
+				const uint64_t mediaAvgImageSize = media.second->GetTotalByteSize() / media.second->Size() + 1000000;
+                biggestImageSize = mediaAvgImageSize > biggestImageSize ? mediaAvgImageSize : biggestImageSize;
             }
 
             const int cacheMode = this->m_SettingsInterface.m_Settings.m_UserSettings["cache_mode"].get<int>();
@@ -306,10 +375,10 @@ namespace Interface
                 }
 
                 // Load the first image
-                this->m_Loader->LoadImageToCache(0);
+                this->m_Loader->LoadImageToCache(this->GetActiveDisplay()->m_MediaID, 0);
 
                 // Launch the sequence worker
-                this->m_Loader->m_Workers.emplace_back(&Core::Loader::LoadSequenceToCache, this->m_Loader, 0, 0);
+                this->m_Loader->m_Workers.emplace_back(&Core::Loader::LoadSequenceToCache, this->m_Loader, this->GetActiveDisplay()->m_MediaID, 0, 0);
 
                 // Launch the bg loader
                 this->m_Loader->LaunchCacheLoader();
@@ -323,7 +392,7 @@ namespace Interface
 
                 this->m_Loader->m_Cache->Initialize(biggestImageSize, this->m_Logger, false);
 
-                this->m_Loader->LoadImageToCache(0);
+                this->m_Loader->LoadImageToCache(this->GetActiveDisplay()->m_MediaID, 0);
             }
         }
 
@@ -343,7 +412,6 @@ namespace Interface
     }
 
     void Menubar::Draw(Application& app,
-				       ImPlaybar& playbar, 
 				       Core::Ocio& ocio, 
 				       Profiler& prof, 
 				       bool& change) noexcept
@@ -388,8 +456,9 @@ namespace Interface
                                                      app.m_SettingsInterface.m_Settings.m_UserSettings["cache_max_size"].get<uint64_t>());
 						}
 
-						app.m_Loader->Load(fp);
-						app.m_Loader->LoadImageToCache(app.m_Playbar->m_Frame);
+						const int32_t newMediaID = app.m_Loader->Load(fp);
+						app.GetActiveDisplay()->SetMedia(newMediaID);
+						app.m_Loader->LoadImageToCache(newMediaID, 0);
 					}
 
 					ifd::FileDialog::Instance().Close();
@@ -408,8 +477,9 @@ namespace Interface
                                                      app.m_SettingsInterface.m_Settings.m_UserSettings["cache_max_size"].get<uint64_t>());
 						}
 
-						app.m_Loader->Load(fp);
-						app.m_Loader->LoadImageToCache(app.m_Playbar->m_Frame);
+						const int32_t newMediaID = app.m_Loader->Load(fp);
+						app.GetActiveDisplay()->SetMedia(newMediaID);
+						app.m_Loader->LoadImageToCache(newMediaID, 0);
 					}
 
 					ifd::FileDialog::Instance().Close();
@@ -417,7 +487,7 @@ namespace Interface
 
 				this->m_HasOpenedIFD = false;
 				
-				// if (ImGui::BeginMenu("Plot"))
+				// if (ImGui::BeginMenu("Scopes"))
 				// {
 				// 	if (ImGui::MenuItem("Histogram")) {}
 				// 	if (ImGui::MenuItem("Waveform")) {}
@@ -616,7 +686,7 @@ namespace Interface
 					ocio.GetOcioDisplayViews();
 					ocio.UpdateProcessor();
 
-					//display.Update(loader, ocio, playbar.playbar_frame);
+					change = true;
 				}
 
 				ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
@@ -643,8 +713,6 @@ namespace Interface
 				{
 					ocio.m_CurrentView = ocio.m_Views[ocio.m_CurrentViewIdx];
 					ocio.UpdateProcessor();
-
-					//display.Update(loader, ocio, playbar.playbar_frame);
 
 					change = true;
 				}
@@ -674,8 +742,6 @@ namespace Interface
 					ocio.m_CurrentLook = ocio.m_Looks[ocio.m_CurrentLookIdx];
 					ocio.UpdateProcessor();
 
-					//display.Update(loader, ocio, playbar.playbar_frame);
-
 					change = true;
 				}
 
@@ -691,8 +757,6 @@ namespace Interface
 				if (ImGui::IsItemEdited())
 				{
 					ocio.UpdateProcessor();
-
-					//display.Update(loader, ocio, playbar.playbar_frame);
 
 					change = true;
 				}
@@ -710,8 +774,6 @@ namespace Interface
 				{
 					ocio.UpdateProcessor();
 
-					// display.Update(loader, ocio, playbar.playbar_frame);
-
 					change = true;
 				}
 
@@ -724,8 +786,6 @@ namespace Interface
 					ocio.m_Gamma = 1.0f;
 
 					ocio.UpdateProcessor();
-
-					// display.Update(loader, ocio, playbar.playbar_frame);
 
 					change = true;
 				}
@@ -746,31 +806,31 @@ namespace Interface
 					
 					Core::Media* activeMedia = app.m_Loader->GetMedia(activeDisplay->m_MediaID);
 
-					if (activeMedia->m_Layers.size() > 4)
+					Core::EXRSequence* tmpExrMedia;
+
+					if (tmpExrMedia = dynamic_cast<Core::EXRSequence*>(activeMedia))
 					{
 						ImGui::Text("Layer");
-						ImGui::PushID(0);
-						const float textWidth = ImGui::CalcTextSize(activeMedia->m_CurrentLayerStr.c_str()).x + 30.0f;
+
+						const float textWidth = ImGui::CalcTextSize(tmpExrMedia->GetCurrentLayerName().c_str()).x + 30.0f;
 						ImGui::SetNextItemWidth(textWidth);
 						
-						ImGui::Combo("", &activeMedia->m_CurrentLayerID, 
+						IM_ID(0, ImGui::Combo("###", &tmpExrMedia->m_CurrentLayerID, 
 								[](void* vec, int idx, const char** out_text){
 									std::vector<Core::Layer>* vector = reinterpret_cast<std::vector<Core::Layer>*>(vec);
 									if (idx < 0 || idx >= vector ->size()) return false;
 									*out_text = vector->at(idx).first.c_str();
 									return true;
-								}, reinterpret_cast<void*>(&activeMedia->m_Layers), activeMedia->m_Layers.size());
-
-						ImGui::PopID();
+								}, reinterpret_cast<void*>(&tmpExrMedia->GetLayers()), tmpExrMedia->GetLayers().size()));
 
 						if (ImGui::IsItemEdited())
 						{
-							activeMedia->UpdateCurrentLayer();
+							tmpExrMedia->UpdateCurrentLayer();
 
 							app.m_Loader->m_Cache->Flush();
 
 							// Force the frame reloading
-							app.m_Loader->LoadImageToCache(app.m_Playbar->m_Frame, true);
+							app.m_Loader->LoadImageToCache(app.GetActiveDisplay()->m_MediaID, app.GetActiveDisplay()->AssociatedPlaybar()->m_Frame, true);
 
 							change = true;
 						}

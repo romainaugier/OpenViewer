@@ -146,6 +146,11 @@ namespace Utils
             return false;
         }
 
+        OV_STATIC_FUNC bool IsOpenEXR(const std::string& path) noexcept
+        {
+            return Str::EndsWith(path, "exr");
+        }
+
         OV_STATIC_FUNC std::string ExpandCwd(const std::string& pathToExpand) noexcept
         {
             std::string cwd = std::filesystem::current_path().string();
@@ -178,7 +183,7 @@ namespace Utils
             }
 
             std::string docDir = homedir;
-            docDir += "Documents";
+            docDir += "/Documents";
 
             return docDir;
 #endif

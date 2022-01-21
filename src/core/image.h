@@ -15,7 +15,8 @@
 #include "OpenEXR/ImfChannelList.h"
 #include "OpenEXR/ImfMultiPartInputFile.h"
 
-extern "C" {
+extern "C" 
+{
 	#include <libavformat/avformat.h>
 	#include <libavcodec/avcodec.h>
 	#include <libavutil/avutil.h>
@@ -276,7 +277,7 @@ namespace Core
 
 		void Release() noexcept;
 		
-		void Load(void* __restrict buffer, Profiler* prof, const std::string& layers = "", const uint8_t exrThreads = 8) const noexcept;
+		void Load(void* __restrict buffer) const noexcept;
 		
 		void LoadExr(void* __restrict buffer, const std::string& layers = "", const uint8_t exrThreads = 8) const noexcept;
 

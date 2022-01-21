@@ -84,7 +84,7 @@ namespace Interface
 					 0, 
 					 initImage->m_GLFormat, 
 					 initImage->m_GLType, 
-					 this->m_Loader->m_Cache->m_Items[1].m_DataPtr); // The first item starts at 1, index 0 is to signal it is not cached
+					 this->m_Loader->m_Cache->m_Items[initImage->m_CacheIndex].m_DataPtr); // The first item starts at 1, index 0 is to signal it is not cached
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
@@ -172,9 +172,12 @@ namespace Interface
 		this->m_Logger->Log(LogLevel_Diagnostic, "[DISPLAY] : Initializing display %d", this->m_DisplayID);
 
 		this->m_MediaID = mediaId;
+
+		// Initialize the attached playbar
+		this->m_Playbar.Initialize(this->m_Loader, this->m_Loader->GetMedia(mediaId)->GetRange(), this->m_DisplayID);
 		
 		// When we initialize a display, we have at least one media and one image loader
-		const Core::Image* initImage = &this->m_Loader->m_Medias[0].m_Images[0];
+		const Core::Image* initImage = this->m_Loader->GetImage(mediaId, 0);
 		this->m_Width = initImage->m_Xres;
 		this->m_Height = initImage->m_Yres;
 
@@ -199,6 +202,8 @@ namespace Interface
 		
 		this->m_MediaID = mediaId;
 
+		this->m_Playbar.SetRange(this->m_Loader->GetMedia(mediaId)->GetRange());
+
 		this->m_Width = image.m_Xres;
 		this->m_Height = image.m_Yres;
 
@@ -220,10 +225,14 @@ namespace Interface
 	}
 
 	// Updates the gl texture that displays the images
-	void Display::Update(Core::Ocio& ocio, const uint32_t frameIndex) noexcept
+	void Display::Update(Core::Ocio& ocio) noexcept
 	{
+		const auto dpUpdateStart = this->m_Profiler->Start();
+
+		const uint32_t frameIndex = this->m_Playbar.m_Frame;
+
 		// Get the image to be displayed
-		Core::Image* currentImage = this->m_Loader->GetImage(frameIndex);
+		Core::Image* currentImage = this->m_Loader->GetImage(this->m_MediaID, frameIndex);
 
 		if (currentImage != nullptr && currentImage->m_CacheIndex > 0)
 		{
@@ -264,12 +273,21 @@ namespace Interface
 		{
 			this->m_Logger->Log(LogLevel_Debug, "[DISPLAY] : Skipping to next frame.");
 		}
+
+		const auto dpUpdateEnd = this->m_Profiler->End();
+
+		char displayNameStr[256]; Utils::Str::Format(displayNameStr, "Display %d Update Time", this->m_DisplayID);
+
+		this->m_Profiler->Time(displayNameStr, dpUpdateStart, dpUpdateEnd);
 	}
 
 	// Main function that contains the window drawing 
-	void Display::Draw(uint32_t frameIndex) noexcept
+	void Display::Draw() noexcept
 	{
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+		const uint32_t frameIndex = this->m_Playbar.m_Frame;
+
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse |
+										ImGuiWindowFlags_MenuBar;
 
 		char displayName[64];
 		Utils::Str::Format(displayName, "Display %d", this->m_DisplayID);
@@ -278,8 +296,11 @@ namespace Interface
 		{
 			ImGui::Begin(displayName, &this->m_IsOpen, window_flags);
 			{
-				if (ImGui::IsWindowFocused()) this->m_IsActive = true;
-				// else this->m_IsActive = false;
+				if (ImGui::IsWindowFocused())
+				{
+					this->m_IsActive = true;
+					this->m_LastTimeActive = ImGui::GetTime();
+				}
 
 				const ImVec2 size = ImVec2(this->m_Width, 
 										   this->m_Height);
@@ -298,8 +319,6 @@ namespace Interface
 					uv1.y = 0.0f;
 				}
 
-				static ImVec2 scrolling;
-				static float zoom = 1.0f;
 				const ImVec4 tint(1.0f, 1.0f, 1.0f, 1.0f);
 				const ImVec4 borderColor(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -311,9 +330,6 @@ namespace Interface
 
 				if ((isActive || isHovered) && ImGui::IsMouseDragging(ImGuiMouseButton_Right))
 				{
-					scrolling.x += io.MouseDelta.x;
-					scrolling.y += io.MouseDelta.y;
-
 					this->m_DisplayPos += io.MouseDelta;
 				}
 
@@ -322,14 +338,14 @@ namespace Interface
 
 				if ((isActive || isHovered) && mouseWheel != 0.0f)
 				{
-					ImVec2 mouseLocal = (ImGui::GetMousePos() - this->m_DisplayPos) / zoom;
+					ImVec2 mouseLocal = (ImGui::GetMousePos() - this->m_DisplayPos) / this->m_Zoom;
 					
-					if (mouseWheel > 0.0f) zoom *= 1.1f;
-					else zoom /= 1.1f;
+					if (mouseWheel > 0.0f) this->m_Zoom *= 1.1f;
+					else this->m_Zoom /= 1.1f;
 
-					zoom = zoom < 0.01f ? 0.01f : zoom;
+					this->m_Zoom = this->m_Zoom < 0.01f ? 0.01f : this->m_Zoom;
 					
-					mouseLocal = this->m_DisplayPos + mouseLocal * zoom;
+					mouseLocal = this->m_DisplayPos + mouseLocal * this->m_Zoom;
 					
 					this->m_DisplayPos += ImGui::GetMousePos() - mouseLocal;
 				}
@@ -338,21 +354,21 @@ namespace Interface
 				{
 					const ImVec2 windowCenter = (ImGui::GetWindowPos() + ImGui::GetWindowSize()) / 2.0f;
 					this->m_DisplayPos = windowCenter - (size / 2.0f);
-					zoom = 1.0f;
+					this->m_Zoom = 1.0f;
 				}
 				else if (this->m_FrameView)
 				{
 					const ImVec2 windowCenter = (ImGui::GetWindowPos() + ImGui::GetWindowSize()) / 2.0f;
 					const float xRatio = ImGui::GetWindowSize().x / size.x; 
 					const float yRatio = ImGui::GetWindowSize().y / size.y;
-					zoom = xRatio < yRatio ? xRatio : yRatio; 
+					this->m_Zoom = xRatio < yRatio ? xRatio : yRatio; 
 					
-					this->m_DisplayPos = windowCenter - ((size * zoom) / 2.0f);
+					this->m_DisplayPos = windowCenter - ((size * this->m_Zoom) / 2.0f);
 				}
 
-				const ImVec2 zoomedSize = size * zoom;
+				const ImVec2 zoomedSize = size * this->m_Zoom;
 
-				ImGui::SetCursorScreenPos(this->m_DisplayPos);
+				ImGui::SetCursorScreenPos(ImGui::GetWindowPos() + this->m_DisplayPos);
 
 				const ImVec2 cursorScreenPos = ImGui::GetCursorScreenPos();
 
@@ -365,7 +381,7 @@ namespace Interface
 					this->m_IsImageHovered = true;
 					this->m_HoverCoordinates = ImClamp(ImGui::Fit(ImGui::GetMousePos() - cursorScreenPos, 
 																ImVec2(0, 0),
-																size * zoom,
+																size * this->m_Zoom,
 																ImVec2(0, 0),
 																size), ImVec2(0, 0), size);
 				}                 
@@ -409,6 +425,9 @@ namespace Interface
 		glDeleteTextures(1, &this->m_RawTexture);
 		glDeleteTextures(1, &this->m_TransformedTexture);
 		glDeleteTextures(1, &this->m_DisplayTexture);
+
+		// release playbar
+		this->m_Playbar.Release();
 
 		this->m_Logger->Log(LogLevel_Diagnostic, "[DISPLAY] : Released display %d", this->m_DisplayID);
 	}

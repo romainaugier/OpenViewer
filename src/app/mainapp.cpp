@@ -117,15 +117,13 @@ int application(int argc, char** argv)
         // If there is only one path in the cli, initialize a display to play it
         if (parsedPaths.size() == 1)
         {
-            loader.SetMediaActive(0);
-            loader.LoadImageToCache(0);
+            loader.LoadImageToCache(0, 0);
                                 
             Interface::Display* newDisplay = new Interface::Display(application.m_Loader->m_Profiler, application.m_Logger, application.m_Loader, 1);
 
             newDisplay->Initialize(*application.m_OcioModule, 0);
             
             application.m_Displays[++application.m_DisplayCount] = std::make_pair(true, newDisplay);
-            application.m_ActiveDisplayID = 1;
         }
     }
 
@@ -135,13 +133,11 @@ int application(int argc, char** argv)
     Interface::ImageInfo imageInfosWindow;
     Interface::PixelInfo pixelInfosWindow;
     Interface::MediaExplorer mediaExplorerWindow(&loader, &logger);
-    Interface::ImPlaybar playbar(&loader, ImVec2(0.0f, 1.0f));
     Interface::Menubar menubar;
     Interface::Scopes::Waveform waveform;
     waveform.Initialize();
 
     application.SetMenubar(&menubar);
-    application.SetPlaybar(&playbar);
 
     // initialize ImFileDialog
     ifd::FileDialog::Instance().CreateTexture = [](uint8_t* data, int w, int h, char fmt) -> void* {
@@ -177,22 +173,12 @@ int application(int argc, char** argv)
         profiler.MemUsage("Application", ToMB(GetCurrentRss()) - ToMB(loader.m_Cache->m_BytesSize));
         profiler.MemUsage("Cache", ToMB(loader.m_Cache->m_BytesSize));
 
-        // The current media changed, reset the playbar and flush the cache
-        if (mediaExplorerWindow.m_CurrentMediaChanged)
+        // Update playbars
+        for(auto[id, displayPair] : application.m_Displays)
         {
-            loader.m_Cache->Flush();
+            Interface::Display* display = displayPair.second;
 
-            const uint64_t mediaByteSize = loader.m_Medias[mediaExplorerWindow.m_ActiveMediaID].m_TotalByteSize;
-
-            if ((mediaByteSize / 1000000) < loader.m_CacheSizeMB) loader.m_Cache->Resize(mediaByteSize, 0);
-            playbar.SetRange(mediaExplorerWindow.m_CurrentMediaRange);
-            mediaExplorerWindow.m_CurrentMediaChanged = false;
-        }
-
-        // Update the playbar
-        if (application.m_DisplayCount > 0)
-        {
-            playbar.Update(&profiler);
+            display->UpdateAssociatedPlaybar();
         }
 
         // Update displays
@@ -200,17 +186,12 @@ int application(int argc, char** argv)
         {
             Interface::Display* display = displayPair.second;
 
-            if (changeHappened || playbar.m_Update || application.SomethingChanged()) 
+            if (changeHappened || display->AssociatedPlaybar()->m_Update || application.SomethingChanged()) 
             {
-                const auto startDpUpdate = profiler.Start();
-                
-                playbar.NeedUpdate(false);
-                changeHappened = false;
+                display->Update(ocio);
 
-                display->Update(ocio, playbar.m_Frame);
-                
-                const auto endDpUpdate = profiler.End();
-                profiler.Time("Displays Update", startDpUpdate, endDpUpdate);
+                display->AssociatedPlaybar()->NeedUpdate(false);   
+                changeHappened = false;
 
                 // waveform.Update(display->m_TransformedTexture, currentImage.m_Xres, currentImage.m_Yres);
             }
@@ -233,26 +214,25 @@ int application(int argc, char** argv)
         {
             Interface::Display* display = displayPair.second;
 
-            display->Draw(playbar.m_Frame);
+            display->Draw();
+
+            display->AssociatedPlaybar()->Draw();
 
             // One info window per display
-            const Core::Image currentImage = *application.m_Loader->GetImage(playbar.m_Frame);
+            // const Core::Image currentImage = *application.m_Loader->GetImage(display->m_MediaID, playbar.m_Frame);
             
-            imageInfosWindow.Draw(currentImage, &loader.m_Medias[display->m_MediaID], application.showImageInfosWindow);
-            pixelInfosWindow.Draw(&loader, currentImage, display, application.showPixelInfosWindow);
+            // imageInfosWindow.Draw(currentImage, loader.GetMedia(display->m_MediaID), application.showImageInfosWindow);
+            // pixelInfosWindow.Draw(&loader, currentImage, display, application.showPixelInfosWindow);
         }
 
         // settings windows
         application.m_SettingsInterface.Draw(&profiler, &logger, ocio);
 
         // menubar
-        menubar.Draw(application, playbar, ocio, profiler, changeHappened);
+        menubar.Draw(application, ocio, profiler, changeHappened);
 
         // Media Explorer
         mediaExplorerWindow.Draw(&application, application.showMediaExplorerWindow);
-    
-        // playbar 
-        playbar.Draw();
 
         // Clear changes if any happened
         application.ClearChange();
@@ -282,7 +262,6 @@ int application(int argc, char** argv)
     }
 
     // Release everything
-    playbar.Release();
     ocio.Release();
     loader.Release();
     application.Release();

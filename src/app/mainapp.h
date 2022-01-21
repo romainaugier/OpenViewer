@@ -39,7 +39,6 @@ OV_STATIC_FUNC void GLFWDropEventCallback(GLFWwindow* window, int count, const c
     Interface::Application* app = static_cast<Interface::Application*>(glfwGetWindowUserPointer(window));
 
     app->m_Logger->Log(LogLevel_Debug, "[MAIN] : Drop event detected");
-    app->m_Playbar->GoFirstFrame();
 
     const uint32_t mediaCount = app->m_Loader->GetMediaCount();
 
@@ -48,44 +47,38 @@ OV_STATIC_FUNC void GLFWDropEventCallback(GLFWwindow* window, int count, const c
         app->m_Loader->Load(paths[i]);
     }
 
-    // If no display is active, create one
-    if (app->m_DisplayCount == 0)
+    // If we drop only one media, show it on the active display, or create a new one to show it
+    if (count == 1)
     {
-        app->m_Loader->m_Cache->Flush();
-        
-        app->m_Loader->SetAllMediasInactive();
+        // If no display is active, create one || If we hold shift, create a new display to show the dropped media
+        if (app->m_DisplayCount == 0)
+        {    
+            Interface::Display* newDisplay = new Interface::Display(app->m_Loader->m_Profiler, app->m_Logger, app->m_Loader, app->m_DisplayCount + 1);
+            newDisplay->SetMedia(mediaCount);
 
-        app->m_Loader->SetMediaActive(mediaCount);
+            app->UpdateCache();
+            app->m_Loader->LoadImageToCache(mediaCount, 0);
+            
+            newDisplay->Initialize(*app->m_OcioModule, mediaCount);
+            newDisplay->NeedFrame();
 
-        app->m_Loader->LoadImageToCache(0);
-        
-        Interface::Display* newDisplay = new Interface::Display(app->m_Loader->m_Profiler, app->m_Logger, app->m_Loader, 1);
+            app->m_Displays[++app->m_DisplayCount] = std::make_pair(true, newDisplay);
+        }
+        else
+        {
+            Interface::Display* activeDisplay = app->GetActiveDisplay();
+            activeDisplay->SetMedia(mediaCount);
+            
+            app->UpdateCache();
+            app->m_Loader->LoadImageToCache(mediaCount, 0);
+            
+            activeDisplay->NeedReinit();
+            activeDisplay->NeedFrame();
 
-        newDisplay->Initialize(*app->m_OcioModule, mediaCount);
-        newDisplay->NeedFrame();
+            app->Changed();
+        }
         
-        app->m_Displays[++app->m_DisplayCount] = std::make_pair(true, newDisplay);
-        app->m_ActiveDisplayID = 1;
     }
-    else
-    {
-        app->m_Loader->m_Cache->Flush();
-
-        app->m_Loader->SetAllMediasInactive();
-
-        app->m_Loader->SetMediaActive(mediaCount);
-
-        Interface::Display* activeDisplay = app->GetActiveDisplay();
-        activeDisplay->NeedReinit();
-        activeDisplay->NeedFrame();
-        activeDisplay->m_MediaID = mediaCount;
-
-        app->m_Loader->LoadImageToCache(0);
-
-        app->Changed();
-    }
-    
-    app->m_Playbar->SetRange(app->m_Loader->m_Medias[mediaCount].m_TimelineRange);
 }
 
 OV_STATIC_FUNC void GLFWKeyEventCallback(GLFWwindow* window, int key, int scancode, int action, int mods)

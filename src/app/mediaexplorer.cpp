@@ -20,61 +20,49 @@ namespace Interface
             {
                 static bool selected = false;
 
-                for (uint32_t i = 0; i < this->m_Loader->m_MediaCount; i++)
+                for (auto& [id, media] : this->m_Loader->m_Medias)
                 {
-                    const std::string mediaPath = this->m_Loader->m_Medias[i].m_Images[0].m_Path;
+                    const std::string mediaPath = media->Path();
 
-                    const bool isSequence = this->m_Loader->m_Medias[i].m_Range.y > 1;
+                    const bool isSequence = media->GetRange().y > 1;
 
                     char selectableLabel[8192];
                     
                     if (isSequence) Utils::Str::Format(selectableLabel, "%s (%d images)", mediaPath.c_str(), 
-                                                                                          static_cast<uint32_t>(this->m_Loader->m_Medias[i].Size()));
+                                                                                          static_cast<uint32_t>(media->GetRange().y));
                     else Utils::Str::Format(selectableLabel, "%s (1 image)", mediaPath.c_str());
 
                     ImGui::Selectable(selectableLabel, selected);
 
                     if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
                     {    
-                        if (this->m_Loader->m_Medias[i].m_IsActive) continue;
+                        this->m_Logger->Log(LogLevel_Diagnostic, "[MEDIA] : Media %s [ID : %d] is now active", mediaPath.c_str(), media->ID());
+
+                        this->m_ActiveMediaID = media->ID();
+                        this->m_CurrentMediaRange = media->GetRange();
+
+                        // If no display is active, create one
+                        if (app->m_DisplayCount == 0)
+                        {
+                            Interface::Display* newDisplay = new Interface::Display(app->m_Loader->m_Profiler, app->m_Logger, app->m_Loader, 1);
+
+                            newDisplay->Initialize(*app->m_OcioModule, media->ID());
+                            newDisplay->NeedFrame();
+                            
+                            app->m_Displays[++app->m_DisplayCount] = std::make_pair(true, newDisplay);
+                        }
                         else
                         {
-                            for (uint32_t j = 0; j < this->m_Loader->m_MediaCount; j++) 
-                            {
-                                this->m_Loader->SetMediaInactive(j);
-                            }
-
-                            this->m_Logger->Log(LogLevel_Diagnostic, "[MEDIA] : Media %s [ID : %d] is now active", mediaPath.c_str(), this->m_Loader->m_Medias[i].m_ID);
-
-                            this->m_Loader->SetMediaActive(i);
-                            this->m_Loader->LoadImageToCache(0);
-
-                            this->m_ActiveMediaID = i;
-                            this->m_CurrentMediaRange = this->m_Loader->m_Medias[i].m_TimelineRange;
-
-                            // If no display is active, create one
-                            if (app->m_DisplayCount == 0)
-                            {
-                                this->m_Loader->LoadImageToCache(0);
-                                
-                                Interface::Display* newDisplay = new Interface::Display(app->m_Loader->m_Profiler, app->m_Logger, app->m_Loader, 1);
-
-                                newDisplay->Initialize(*app->m_OcioModule, i);
-                                newDisplay->NeedFrame();
-                                
-                                app->m_Displays[++app->m_DisplayCount] = std::make_pair(true, newDisplay);
-                                app->m_ActiveDisplayID = 1;
-                            }
-                            else
-                            {
-                                Interface::Display* activeDisplay = app->GetActiveDisplay();
-                                activeDisplay->NeedReinit();
-                                activeDisplay->NeedFrame();
-                                activeDisplay->m_MediaID = i;
-                            }
-
-                            this->m_CurrentMediaChanged = true;
+                            Interface::Display* activeDisplay = app->GetActiveDisplay();
+                            activeDisplay->NeedReinit();
+                            activeDisplay->NeedFrame();
+                            activeDisplay->m_MediaID = media->ID();
                         }
+
+                        app->UpdateCache();
+                        this->m_Loader->LoadImageToCache(media->ID(), 0);
+
+                        this->m_CurrentMediaChanged = true;
                     }
                 }
             }
