@@ -297,19 +297,27 @@ namespace Interface
         {
             if (!this->m_Loader->m_Cache->m_HasBeenInitialized)
 			{
-				this->m_Loader->m_Cache->Initialize(this->m_Loader->m_CacheSizeMB, this->m_Logger, true);
+				const uint64_t cacheInitSize = totalByteSize > (this->m_Loader->m_CacheMaxSizeMB * 1000000) ? 
+											   this->m_Loader->m_CacheMaxSizeMB * 1000000 : totalByteSize;
+				this->m_Loader->m_Cache->Initialize(totalByteSize, this->m_Logger);
 			}
 
 			if (totalBiggestImagesByteSize > this->m_Loader->m_Cache->m_BytesCapacity)
             {
-                this->m_Logger->Log(LogLevel_Warning, "[CACHE] : Manual image cache is not big enough to hold all medias being displayed, resizing it");
+                this->m_Logger->Log(LogLevel_Warning, "[CACHE] : Manual image cache is not big enough to hold media being displayed, resizing it");
                 this->m_Loader->ResizeCache(totalBiggestImagesByteSize);
             }
+			else
+			{
+				this->m_Loader->ResizeCache(totalByteSize);
+			}
         }
         else if (this->m_Loader->m_CacheMode == 2)
         {
             if (!this->m_Loader->m_Cache->m_HasBeenInitialized)
 			{
+				const uint64_t cacheInitSize = totalByteSize > (this->m_Loader->m_CacheMaxSizeMB * 1000000) ? 
+											   this->m_Loader->m_CacheMaxSizeMB * 1000000 : totalByteSize;
 				this->m_Loader->m_Cache->Initialize(totalByteSize, this->m_Logger);
 			}
 			else
@@ -323,31 +331,23 @@ namespace Interface
     {
         if (this->m_SettingsInterface.m_Settings.m_CacheSettingsChanged)
         {
-			uint64_t minimumByteSize = 0;
+			this->m_Loader->StopCacheLoader();
 
             for (auto& [id, display] : this->m_Displays)
 			{
 				display.second->AssociatedPlaybar()->Pause();
-				display.second->AssociatedPlaybar()->m_Frame = 0;
+				display.second->AssociatedPlaybar()->GoFirstFrame();
 			}
-            
-            // Find the biggest image we have in cache to make sure enough space will be allocated in the cache 
-            // Especially when size is set manually
-            uint64_t biggestImageSize = 0;
-
-            for (const auto& media : this->m_Loader->m_Medias)
-            {
-				const uint64_t mediaAvgImageSize = media.second->GetTotalByteSize() / media.second->Size() + 1000000;
-                biggestImageSize = mediaAvgImageSize > biggestImageSize ? mediaAvgImageSize : biggestImageSize;
-            }
 
             const int cacheMode = this->m_SettingsInterface.m_Settings.m_UserSettings["cache_mode"].get<int>();
+            this->m_Loader->m_CacheMode = cacheMode;
+
+			const uint64_t minimumByteSize = this->m_Loader->GetMedia(this->GetActiveDisplay()->GetMediaId())->GetBiggestImageSize();
+			const uint64_t seqSize = this->m_Loader->GetMedia(this->GetActiveDisplay()->GetMediaId())->GetTotalByteSize();
 
             // If we use the cache, and the loader is already initialized, just initialize the cache
             if (cacheMode > 0)
             {
-                this->m_Loader->m_CacheMode = cacheMode;
-
                 uint64_t newCacheSize = static_cast<uint64_t>(this->m_SettingsInterface.m_Settings.m_UserSettings["cache_max_size"].get<uint64_t>()) * 1000000;
 
 				if (cacheMode == 2)
@@ -355,24 +355,10 @@ namespace Interface
 					newCacheSize = Utils::GetTotalSystemMemory() * this->m_SettingsInterface.m_Settings.m_UserSettings["cache_max_ram_usage"].get<uint64_t>() / 100;
 				}
 
-                if (newCacheSize < biggestImageSize)
-                {
-                    this->m_Logger->Log(LogLevel_Warning, 
-                                        "[CACHE] : New size (%d MB) is not enough, setting size to %f MB",
-                                        this->m_SettingsInterface.m_Settings.m_UserSettings["cache_max_size"].get<uint64_t>(),
-                                        static_cast<float>(biggestImageSize) / 1000000.0f);
+                this->m_Loader->m_CacheMaxSizeMB = newCacheSize / 1000000 + 1000000;
 
-                    this->m_SettingsInterface.m_Settings.m_UserSettings["cache_max_size"] = static_cast<int>(biggestImageSize / 1000000);
-                }
-
-                if (this->m_Loader->m_Cache->m_HasBeenInitialized)
-                {
-                    this->m_Loader->m_Cache->Resize(newCacheSize);
-                }
-                else
-                {
-                    this->m_Loader->m_Cache->Initialize(newCacheSize, this->m_Logger);
-                }
+				const uint64_t cacheResizeSize = newCacheSize > seqSize ? seqSize : newCacheSize;
+				this->m_Loader->ResizeCache(cacheResizeSize);
 
                 // Load the first image
                 this->m_Loader->LoadImageToCache(this->GetActiveDisplay()->m_MediaID, 0);
@@ -380,20 +366,17 @@ namespace Interface
                 // Launch the sequence worker
                 this->m_Loader->m_Workers.emplace_back(&Core::Loader::LoadSequenceToCache, this->m_Loader, this->GetActiveDisplay()->m_MediaID, 0, 0);
 
-                // Launch the bg loader
-                this->m_Loader->LaunchCacheLoader();
             }
             else
-            {
-                this->m_Loader->StopCacheLoader();
-
-                this->m_Loader->m_CacheMode = 0;
+			{
                 this->m_Loader->m_Cache->Release();
 
-                this->m_Loader->m_Cache->Initialize(biggestImageSize, this->m_Logger, false);
+                this->m_Loader->m_Cache->Initialize(minimumByteSize, this->m_Logger, false);
 
                 this->m_Loader->LoadImageToCache(this->GetActiveDisplay()->m_MediaID, 0);
             }
+
+			this->m_Loader->LaunchCacheLoader();
         }
 
         this->m_SettingsInterface.m_Settings.m_CacheSettingsChanged = false;

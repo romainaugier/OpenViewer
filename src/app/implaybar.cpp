@@ -159,6 +159,8 @@ namespace Interface
 		char playbarName[32];
 		Utils::Str::Format(playbarName, "Playbar %d", this->m_PlaybarID);
 
+		ImGui::SetNextWindowSizeConstraints(ImVec2(400.0f, playbarHeight), ImVec2(8192.0f, playbarHeight));
+
 		ImGui::Begin(playbarName, &p_open, window_flags);
 		{	
 			ImDrawList* drawList = ImGui::GetWindowDrawList();
@@ -389,8 +391,8 @@ namespace Interface
 			Utils::Str::Format(frameNumberText, "%02d:%02d:%02d:%02d", hours, minutes, seconds, frame);
 			drawList->AddText(nullptr, 20.0f, ImVec2(frameInfosP0.x + 10.0f, frameInfosP0.y + 10.0f), WHITE, frameNumberText);
 
-			char framerateText[4];
-			Utils::Str::Format(framerateText, "%.2f", this->m_RealFramerate);
+			char framerateText[16];
+			Utils::Str::Format(framerateText, "%.1f", this->m_RealFramerate);
 			drawList->AddText(nullptr, 20.0f, ImVec2(frameInfosP0.x + 170.0f, frameInfosP0.y + 10.0f), WHITE, framerateText);
 
 			ImGui::PopClipRect();
@@ -447,8 +449,6 @@ namespace Interface
 						this->m_Loader->m_BgLoadFrameIndex = frameIdx;
 
 						playbarLock.unlock();
-
-						this->m_Loader->m_CondVar.notify_all();
 					}
 				}
 				else
@@ -466,8 +466,6 @@ namespace Interface
 				
 				bgUpdateLock.unlock();
 			}
-
-			this->m_CV.notify_all();
 		}
 	}
 
@@ -485,8 +483,6 @@ namespace Interface
 		std::unique_lock<std::mutex> lock(this->m_Mutex);
 		this->m_Release = true;
 		lock.unlock();
-
-		m_CV.notify_all();
 
 		// Make sure the thread has finished working
 		std::this_thread::sleep_for(std::chrono::milliseconds(50));

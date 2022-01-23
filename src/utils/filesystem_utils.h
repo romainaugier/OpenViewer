@@ -124,7 +124,13 @@ namespace Utils
                                                   "bmp", "ppm", "cin", "dds", "dcm", "dpx", "fits",
                                                   "hdr", "heic", "avif", "ico", "iff", "jp2", "j2k",
                                                   "pbm", "pgm", "ptex", "rla", "pic", "tga", "tpic",
-                                                  "zfile" };
+                                                  "zfile", "tex",
+                                                  "EXR", "JPG", "JPEG", "BMP", "TIF", "TIFF", "PNG",
+                                                  "RAW", "CR2", "ARW", "SR2", "NEF", "ORF", "PSD",
+                                                  "BMP", "PPM", "CIN", "DDS", "DCM", "DPX", "FITS",
+                                                  "HDR", "HEIC", "AVIF", "ICO", "IFF", "JP2", "J2K",
+                                                  "PBM", "PGM", "PTEX", "RLA", "PIC", "TGA", "TPIC",
+                                                  "ZFILE", "TEX" };
 
             for (uint8_t i = 0; i < OVARRAYSIZE(imageExtensions); i++)
             {
@@ -136,7 +142,8 @@ namespace Utils
 
         OV_STATIC_FUNC bool IsVideo(const std::string& path) noexcept
         {
-            constexpr char* videoExtensions[] = { "mp4", "m4p", "m4v", "mov", "qt", "avi", "yuv", "mkv" };
+            constexpr char* videoExtensions[] = { "mp4", "m4p", "m4v", "mov", "qt", "avi", "yuv", "mkv",
+                                                  "MP4", "M4P", "M4V", "MOV", "QT", "AVI", "YUV", "MKV" };
 
             for (uint8_t i = 0; i < OVARRAYSIZE(videoExtensions); i++)
             {

@@ -117,6 +117,7 @@ int application(int argc, char** argv)
         // If there is only one path in the cli, initialize a display to play it
         if (parsedPaths.size() == 1)
         {
+            application.UpdateCache();
             loader.LoadImageToCache(0, 0);
                                 
             Interface::Display* newDisplay = new Interface::Display(application.m_Loader->m_Profiler, application.m_Logger, application.m_Loader, 1);
@@ -124,6 +125,7 @@ int application(int argc, char** argv)
             newDisplay->Initialize(*application.m_OcioModule, 0);
             
             application.m_Displays[++application.m_DisplayCount] = std::make_pair(true, newDisplay);
+
         }
     }
 
@@ -197,7 +199,6 @@ int application(int argc, char** argv)
             }
         }
 
-
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -219,10 +220,10 @@ int application(int argc, char** argv)
             display->AssociatedPlaybar()->Draw();
 
             // One info window per display
-            // const Core::Image currentImage = *application.m_Loader->GetImage(display->m_MediaID, playbar.m_Frame);
+            const Core::Image currentImage = *application.m_Loader->GetImage(display->m_MediaID, display->AssociatedPlaybar()->m_Frame);
             
-            // imageInfosWindow.Draw(currentImage, loader.GetMedia(display->m_MediaID), application.showImageInfosWindow);
-            // pixelInfosWindow.Draw(&loader, currentImage, display, application.showPixelInfosWindow);
+            imageInfosWindow.Draw(currentImage, loader.GetMedia(display->m_MediaID), application.showImageInfosWindow);
+            pixelInfosWindow.Draw(&loader, currentImage, display, application.showPixelInfosWindow);
         }
 
         // settings windows
@@ -262,9 +263,9 @@ int application(int argc, char** argv)
     }
 
     // Release everything
+    application.Release();
     ocio.Release();
     loader.Release();
-    application.Release();
 
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();

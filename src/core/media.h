@@ -38,6 +38,7 @@ namespace Core
         
         // Getters/Setters
         OV_FORCEINLINE void SetImages(const std::vector<Image>& images) noexcept { this->m_Images = std::move(images); }
+        OV_FORCEINLINE void SetID(const uint32_t id) noexcept { this->m_ID = id; }
         OV_FORCEINLINE uint32_t ID() const noexcept { return this->m_ID; }
         OV_FORCEINLINE uint32_t Size() const noexcept { return static_cast<uint32_t>(this->m_Range.y); }
         OV_FORCEINLINE std::string Path() const noexcept { return this->m_Path; }

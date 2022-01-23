@@ -47,7 +47,7 @@ namespace Core
 
 		uint32_t m_BgLoadFrameIndex = 0; // Frame from where to start the bg loading
 
-		uint32_t m_CacheSizeMB = 0;
+		uint32_t m_CacheMaxSizeMB = 0;
 
 		int m_CacheMode = 0; // 0 : minimal, 1 : manual, 2 : smart
 

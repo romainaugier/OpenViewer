@@ -46,6 +46,9 @@ namespace Interface
                         {
                             Interface::Display* newDisplay = new Interface::Display(app->m_Loader->m_Profiler, app->m_Logger, app->m_Loader, 1);
 
+                            app->UpdateCache();
+                            this->m_Loader->LoadImageToCache(media->ID(), 0);
+                            
                             newDisplay->Initialize(*app->m_OcioModule, media->ID());
                             newDisplay->NeedFrame();
                             
@@ -54,13 +57,15 @@ namespace Interface
                         else
                         {
                             Interface::Display* activeDisplay = app->GetActiveDisplay();
+                            activeDisplay->SetMedia(media->ID());
+                            
+                            app->UpdateCache();
+                            this->m_Loader->LoadImageToCache(media->ID(), 0);
+                            
                             activeDisplay->NeedReinit();
                             activeDisplay->NeedFrame();
-                            activeDisplay->m_MediaID = media->ID();
                         }
 
-                        app->UpdateCache();
-                        this->m_Loader->LoadImageToCache(media->ID(), 0);
 
                         this->m_CurrentMediaChanged = true;
                     }

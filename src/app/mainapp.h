@@ -50,7 +50,7 @@ OV_STATIC_FUNC void GLFWDropEventCallback(GLFWwindow* window, int count, const c
     // If we drop only one media, show it on the active display, or create a new one to show it
     if (count == 1)
     {
-        // If no display is active, create one || If we hold shift, create a new display to show the dropped media
+        // If no display is active, create one
         if (app->m_DisplayCount == 0)
         {    
             Interface::Display* newDisplay = new Interface::Display(app->m_Loader->m_Profiler, app->m_Logger, app->m_Loader, app->m_DisplayCount + 1);
@@ -77,7 +77,6 @@ OV_STATIC_FUNC void GLFWDropEventCallback(GLFWwindow* window, int count, const c
 
             app->Changed();
         }
-        
     }
 }
 

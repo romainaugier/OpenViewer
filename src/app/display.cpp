@@ -281,13 +281,19 @@ namespace Interface
 		this->m_Profiler->Time(displayNameStr, dpUpdateStart, dpUpdateEnd);
 	}
 
+	void Display::SetMedia(const uint32_t mediaId) noexcept 
+	{ 
+		this->m_MediaID = mediaId; 
+		this->AssociatedPlaybar()->m_MediaId = mediaId; 
+		this->AssociatedPlaybar()->SetRange(this->m_Loader->GetMedia(mediaId)->GetRange()); 
+	}
+
 	// Main function that contains the window drawing 
 	void Display::Draw() noexcept
 	{
 		const uint32_t frameIndex = this->m_Playbar.m_Frame;
 
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse |
-										ImGuiWindowFlags_MenuBar;
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 
 		char displayName[64];
 		Utils::Str::Format(displayName, "Display %d", this->m_DisplayID);

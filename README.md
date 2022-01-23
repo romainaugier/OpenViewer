@@ -10,7 +10,7 @@ OpenViewer is a personal project and initiative since, after speaking with a few
 
 You can sponsor the project by clicking on the sponsor button, and it will help me unlock more time to work on the project.
 
-The wiki (under development) is [here](https://github.com/romainaugier/OpenViewer/wiki), and the roadmap of the project is [here](https://github.com/romainaugier/OpenViewer/wiki/Roadmap).
+The wiki (under development) is [here](https://github.com/romainaugier/OpenViewer/wiki), and the roadmap of the project is [here](https://trello.com/b/6MeUibVS/openviewer).
 
 If you or your studio are interested in implementing special features/need help to build the software and integrate it in your pipeline, you can email me at contact@romainaugier.com so we can discuss about it.
 

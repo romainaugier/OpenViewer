@@ -10,3 +10,4 @@ OpenViewer.vcxproj
 OpenViewer.vcxproj.filters
 OpenViewer.vcxproj.user
 imgui.ini
+settings.json

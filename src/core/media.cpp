@@ -14,7 +14,7 @@ namespace Core
 
     bool Media::InRange(const uint32_t index) const noexcept
     {
-        return index >= this->m_TimelineRange.x && index < this->m_TimelineRange.y;
+        return index >= this->m_Range.x && index < this->m_Range.y;
     }
 
     ImageSequence::ImageSequence(const std::string& path, const uint32_t id)

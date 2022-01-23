@@ -105,7 +105,7 @@ namespace Interface
 
 		// Few getters/setters
 		OV_FORCEINLINE double GetLastTimeActive() const noexcept { return this->m_LastTimeActive; }
-		OV_FORCEINLINE void SetMedia(const uint32_t mediaId) noexcept { this->m_MediaID = mediaId; }
+		void SetMedia(const uint32_t mediaId) noexcept;
 		OV_FORCEINLINE int32_t GetMediaId() const noexcept { return this->m_MediaID; }
 		OV_FORCEINLINE ImPlaybar* AssociatedPlaybar() noexcept { return &this->m_Playbar; }
 

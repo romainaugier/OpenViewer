@@ -209,33 +209,14 @@ namespace Core
     void ImageCache::Resize(const size_t newSize, const bool sizeInMB) noexcept
     {
         const uint64_t newSizeBytes = sizeInMB ? newSize * 1000000 : newSize + 1000000; // We add 1 MB to be sure it fits in case of rounding/error
-
-        void* oldAddress = this->m_MemoryArena;
-        
-        void* tmpMemArena = OvAlloc(newSizeBytes, 32);
-        
-        memmove(tmpMemArena, this->m_MemoryArena, this->m_BytesSize);
         
         OvFree(this->m_MemoryArena);
 
-        this->m_MemoryArena = tmpMemArena;
+        this->m_MemoryArena = OvAlloc(newSizeBytes, 32);;
         
         this->m_BytesCapacity = newSizeBytes;
 
-        for (auto it = this->m_Items.begin(); it != this->m_Items.end(); it++)
-        {
-            ImageCacheItem* item = &this->m_Items[it.key()];
-
-            const uint64_t cacheOffset = static_cast<char*>(item->m_DataPtr) - static_cast<char*>(oldAddress);
-
-            item->m_DataPtr = static_cast<char*>(this->m_MemoryArena) + cacheOffset;
-        }
-
-        // this->m_Items.clear();
-        // this->m_Size = 0;
-        // this->m_BytesSize = 0;
-        // this->m_CurrentIndex = 1;
-        this->m_CurrentTraversingIndex = 0;
+        this->Flush();
 
         this->m_Logger->Log(LogLevel_Diagnostic, "[CACHE] : Image Cache resized (%.2f MB)", sizeInMB ? 
                                                                                        static_cast<float>(newSize) :
@@ -250,20 +231,11 @@ namespace Core
             this->m_MemoryArena = nullptr;
         }
 
-        for (auto& [index, cacheItem] : this->m_Items)
-        {
-            cacheItem.m_Image->m_CacheIndex = 0;
-        }
-
-        this->m_Items.clear();
-        this->m_Size = 0;
-        this->m_BytesSize = 0;
-        this->m_CurrentIndex = 1;
-        this->m_CurrentTraversingIndex = 0;
+        this->Flush();
 
         this->m_HasBeenInitialized = false;
 
         // Logger is null if cache has not been initialized
-        if (this->m_Logger != nullptr) this->m_Logger->Log(LogLevel_Diagnostic, "[CACHE] : Releasing cache");
+        if (this->m_Logger != nullptr) this->m_Logger->Log(LogLevel_Diagnostic, "[CACHE] : Released cache");
     }
 } // end namespace Core

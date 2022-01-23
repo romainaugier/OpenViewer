@@ -24,11 +24,11 @@ namespace Core
 
 		if (cacheMode == 1)
 		{
-			this->m_CacheSizeMB = cacheSize;
+			this->m_CacheMaxSizeMB = cacheSize;
 		}
 		else if (cacheMode == 2)
 		{
-			this->m_CacheSizeMB = ((Utils::GetTotalSystemMemory() * cacheSize) / 100) / 1000000;
+			this->m_CacheMaxSizeMB = ((Utils::GetTotalSystemMemory() * cacheSize) / 100) / 1000000;
 		}
 
 		this->m_AutoDetectFileSequence = autodetect;
@@ -100,19 +100,19 @@ namespace Core
 			// {
 			// 	if (!this->m_Cache->m_HasBeenInitialized)
 			// 	{
-			// 		this->m_Cache->Initialize(this->m_CacheSizeMB, this->m_Logger, true);
+			// 		this->m_Cache->Initialize(this->m_CacheMaxSizeMB, this->m_Logger, true);
 			// 	}
 			// }
 			// else if(this->m_CacheMode == 2)
 			// {
 			// 	if (!this->m_Cache->m_HasBeenInitialized)
 			// 	{
-			// 		if ((totalByteSize / 1000000) < this->m_CacheSizeMB) this->m_Cache->Initialize(totalByteSize, this->m_Logger);
-			// 		else this->m_Cache->Initialize(this->m_CacheSizeMB, this->m_Logger, true);
+			// 		if ((totalByteSize / 1000000) < this->m_CacheMaxSizeMB) this->m_Cache->Initialize(totalByteSize, this->m_Logger);
+			// 		else this->m_Cache->Initialize(this->m_CacheMaxSizeMB, this->m_Logger, true);
 			// 	}
 			// 	else
 			// 	{
-			// 		if ((totalByteSize / 1000000) < this->m_CacheSizeMB) this->m_Cache->Resize(totalByteSize, 0);
+			// 		if ((totalByteSize / 1000000) < this->m_CacheMaxSizeMB) this->m_Cache->Resize(totalByteSize, 0);
 			// 	}
 			// }
 
@@ -172,6 +172,7 @@ namespace Core
 						if (Utils::Fs::IsOpenEXR(cleanMediaPath))
 						{
 							EXRSequence* newMedia = new EXRSequence(cleanMediaPath, this->m_MediaCount);
+						    newMedia->SetID(this->m_MediaCount);
 							newMedia->SetImages(images);
 							newMedia->SetLayers();
 							newMedia->SetRange(ImVec2(0, imageIndex));
@@ -183,6 +184,7 @@ namespace Core
 						else
 						{
 							ImageSequence* newMedia = new ImageSequence(cleanMediaPath, this->m_MediaCount);
+						    newMedia->SetID(this->m_MediaCount);
 							newMedia->SetImages(images);
 							newMedia->SetRange(ImVec2(0, imageIndex));
 							newMedia->SetTotalByteSize(totalByteSize);
@@ -214,6 +216,7 @@ namespace Core
 					if (Utils::Fs::IsOpenEXR(cleanMediaPath))
 					{
 						EXRSequence* newMedia = new EXRSequence(cleanMediaPath, this->m_MediaCount);
+						newMedia->SetID(this->m_MediaCount);
 						newMedia->SetImages(image);
 						newMedia->SetLayers();
 						newMedia->SetRange(ImVec2(0, 1));
@@ -225,6 +228,7 @@ namespace Core
 					else
 					{
 						ImageSequence* newMedia = new ImageSequence(cleanMediaPath, this->m_MediaCount);
+						newMedia->SetID(this->m_MediaCount);
 						newMedia->SetImages(image);
 						newMedia->SetRange(ImVec2(0, 1));
 						newMedia->SetTotalByteSize(totalByteSize);
@@ -324,16 +328,8 @@ namespace Core
 
 	void Loader::ResizeCache(const uint64_t size, const bool sizeInMB) noexcept
 	{
-		uint64_t newSize = size;
-		
-		if (this->m_CacheMode == 2)
-		{
-			uint64_t maxSize = Utils::GetTotalSystemMemory() * this->m_CacheMaxRamToUse / 100;
-
-			if (sizeInMB) maxSize /= 1000000;
-
-			newSize = newSize > maxSize ? maxSize : newSize;
-		}
+		const uint64_t newSize = sizeInMB ? size > this->m_CacheMaxSizeMB ? this->m_CacheMaxSizeMB : 
+								 size : size > (this->m_CacheMaxSizeMB * 1000000) ? this->m_CacheMaxSizeMB * 1000000 : size;
 
 		this->m_Cache->Resize(newSize, sizeInMB);
 	}
