@@ -70,7 +70,9 @@ namespace Utils
                     const std::regex itMatchPatternRegex(itMatchStr);
 
                     std::string itMatchSub = itFileStem;
-                    itMatchSub = std::regex_replace(itMatchSub, itMatchPatternRegex, "#");
+                    // itMatchSub = std::regex_replace(itMatchSub, itMatchPatternRegex, "#");
+
+                    itMatchSub.replace(itMatch.position(), itMatch.length(), "#");
 
                     for (std::sregex_iterator base = baseNumBegin; base != baseNumEnd; ++base)
                     {
@@ -78,8 +80,11 @@ namespace Utils
                         const std::string baseMatchStr = baseMatch.str();
                         const std::regex baseMatchPatternRegex(baseMatchStr);
 
+
                         std::string baseMatchSub = baseFileStem;
-                        baseMatchSub = std::regex_replace(baseMatchSub, baseMatchPatternRegex, "#");
+                        // baseMatchSub = std::regex_replace(baseMatchSub, baseMatchPatternRegex, "#");
+                        
+                        baseMatchSub.replace(baseMatch.position(), baseMatch.length(), "#");
 
                         // std::cout << baseMatchStr << " " << baseMatchSub << " // " << itMatchStr << " " << itMatchSub << "\n";
 

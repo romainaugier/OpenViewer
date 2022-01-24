@@ -12,11 +12,14 @@ int application(int argc, char** argv)
 #endif
 
     // Initialize the application
+#ifdef OV_VECTOR_EXT
+    printf("OpenViewer %s %s %s\n", OV_VERSION_STR, OV_PLATFORM_STR, OV_VECTOR_EXT);
+#else
     printf("OpenViewer %s %s\n", OV_VERSION_STR, OV_PLATFORM_STR);
-
+#endif
     // Logger
     Logger logger;
-    logger.SetLevel(LogLevel_Diagnostic);
+    logger.SetLevel(LogLevel_Warning);
     logger.Log(LogLevel_Diagnostic, "[MAIN] : Initializing Logger");
 
     // Profiler
@@ -30,6 +33,10 @@ int application(int argc, char** argv)
     Core::Loader loader(&logger, &profiler);
 
     Interface::Application application(&logger, &loader, &ocio);
+
+    // FFMPEG
+    logger.Log(LogLevel_Diagnostic, "[FFMPEG] : Registering library");
+    av_register_all();
 
     // Setup GLFW
     glfwSetErrorCallback(GLFWErrorCallback);

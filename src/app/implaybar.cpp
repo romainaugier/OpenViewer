@@ -137,7 +137,7 @@ namespace Interface
 	{
 		this->Pause();
 
-		this->m_Frame = 0;
+		this->GoFirstFrame();
 
 		this->m_Range = newRange;
 

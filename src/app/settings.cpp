@@ -202,6 +202,16 @@ namespace Interface
 						ifd::FileDialog::Instance().Open("ConfigFileDialog", "Select an OCIO Config", "Ocio file (*.ocio){.ocio},.*");
 					}
 				}
+
+				// Interface
+				if (ImGui::CollapsingHeader("Interface"))
+				{
+					ImGui::Text("Windows Opacity");
+
+					ImGui::SameLineWidget(120.0f);
+
+					IM_ID(5, ImGui::SliderFloat("###", &ImGui::GetStyle().Colors[ImGuiCol_WindowBg].w, 0.0f, 1.0f));
+				}
 			}
 
 			if (ifd::FileDialog::Instance().IsDone("ConfigFileDialog"))

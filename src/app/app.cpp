@@ -133,14 +133,19 @@ namespace Interface
                     if (this->m_Shortcuts.m_Pressed[GLFW_KEY_LEFT_CONTROL] ||
                         this->m_Shortcuts.m_Pressed[GLFW_KEY_RIGHT_CONTROL])
                     {
-                        ifd::FileDialog::Instance().Open("FolderOpenDialog", "Open a directory", "");
-                        break;
-                    }
-                    else
-                    {
-                        ifd::FileDialog::Instance().Open("SingleFileOpenDialog", 
-                        "Select an image file", "Image File (*.exr,*.png;*.jpg;*.jpeg;*.bmp;*.tga){.exr,.png,.jpg,.jpeg,.bmp,.tga},.*");
-                        break;
+						if (this->m_Shortcuts.m_Pressed[GLFW_KEY_K])
+						{
+							ifd::FileDialog::Instance().Open("FolderOpenDialog", "Open a directory", "");
+
+							break;
+						}
+						else
+						{
+							ifd::FileDialog::Instance().Open("SingleFileOpenDialog", 
+							"Select an image file", "Image File (*.exr,*.png;*.jpg;*.jpeg;*.bmp;*.tga){.exr,.png,.jpg,.jpeg,.bmp,.tga},.*");
+
+							break;
+						}
                     }
                 }
 
@@ -216,51 +221,9 @@ namespace Interface
                 }
             }
 
-            glfwWaitEventsTimeout(0.75);
+            glfwWaitEventsTimeout(1.0);
         }
-
-        if (ifd::FileDialog::Instance().IsDone("SingleFileOpenDialog"))
-        {
-            if (ifd::FileDialog::Instance().HasResult())
-            {
-                const auto& res = ifd::FileDialog::Instance().GetResults();
-                const std::string fp = res[0].u8string();
-
-                if (!this->m_Loader->m_HasBeenInitialized)
-                {
-                    this->m_Loader->Initialize(this->m_SettingsInterface.m_Settings.m_UserSettings["cache_mode"].get<int>(),
-                                               this->m_SettingsInterface.m_Settings.m_UserSettings["cache_max_size"].get<uint64_t>());
-                }
-
-                const int32_t newMediaID = this->m_Loader->Load(fp);
-				this->GetActiveDisplay()->SetMedia(newMediaID);
-                this->m_Loader->LoadImageToCache(newMediaID, 0);
-            }
-
-            ifd::FileDialog::Instance().Close();
-        }
-
-        if (ifd::FileDialog::Instance().IsDone("FolderOpenDialog"))
-        {
-            if (ifd::FileDialog::Instance().HasResult())
-            {
-                const auto& res = ifd::FileDialog::Instance().GetResult();
-                const std::string fp = res.u8string();
-
-                if (!this->m_Loader->m_HasBeenInitialized)
-                {
-                    this->m_Loader->Initialize(this->m_SettingsInterface.m_Settings.m_UserSettings["cache_mode"].get<int>(),
-                                               this->m_SettingsInterface.m_Settings.m_UserSettings["cache_max_size"].get<uint64_t>());
-                }
-
-                const int32_t newMediaID = this->m_Loader->Load(fp);
-				this->GetActiveDisplay()->SetMedia(newMediaID);
-                this->m_Loader->LoadImageToCache(newMediaID, 0);
-            }
-
-            ifd::FileDialog::Instance().Close();
-        }
-    }
+	}
 
 	void Application::UpdateCache() noexcept
 	{
@@ -429,9 +392,9 @@ namespace Interface
 						this->m_HasOpenedIFD = true;
 					}
 
-					if (ImGui::MenuItem("Media Explorer", "M"))
+					if (ImGui::MenuItem("Media Explorer", "E"))
 					{
-						app.showMediaExplorerWindow = true;
+						app.ShowMediaExplorerWindow();
 					}
 
 					ImGui::EndMenu();
@@ -444,15 +407,39 @@ namespace Interface
 						const auto& res = ifd::FileDialog::Instance().GetResults();
 						const std::string fp = res[0].u8string();
 
-						if (!app.m_Loader->m_HasBeenInitialized)
-						{
-							app.m_Loader->Initialize(app.m_SettingsInterface.m_Settings.m_UserSettings["cache_mode"].get<int>(),
-                                                     app.m_SettingsInterface.m_Settings.m_UserSettings["cache_max_size"].get<uint64_t>());
-						}
-
 						const int32_t newMediaID = app.m_Loader->Load(fp);
-						app.GetActiveDisplay()->SetMedia(newMediaID);
-						app.m_Loader->LoadImageToCache(newMediaID, 0);
+						
+						if (newMediaID > -1)
+						{
+							if (app.m_DisplayCount == 0)
+							{    
+								Interface::Display* newDisplay = new Interface::Display(app.m_Loader->m_Profiler, app.m_Logger, app.m_Loader, app.m_DisplayCount + 1);
+								newDisplay->SetMedia(newMediaID);
+
+								app.m_Displays[++app.m_DisplayCount] = std::make_pair(true, newDisplay);
+
+								app.UpdateCache();
+								app.m_Loader->LoadImageToCache(newMediaID, 0);
+								
+								newDisplay->Initialize(*app.m_OcioModule, newMediaID);
+								newDisplay->NeedFrame();
+								
+								app.Changed();
+							}
+							else
+							{
+								Interface::Display* activeDisplay = app.GetActiveDisplay();
+								activeDisplay->SetMedia(newMediaID);
+								
+								app.UpdateCache();
+								app.m_Loader->LoadImageToCache(newMediaID, 0);
+								
+								activeDisplay->NeedReinit();
+								activeDisplay->NeedFrame();
+
+								app.Changed();
+							}
+						}
 					}
 
 					ifd::FileDialog::Instance().Close();
@@ -465,15 +452,39 @@ namespace Interface
 						const auto& res = ifd::FileDialog::Instance().GetResult();
 						const std::string fp = res.u8string();
 
-						if (!app.m_Loader->m_HasBeenInitialized)
-						{
-							app.m_Loader->Initialize(app.m_SettingsInterface.m_Settings.m_UserSettings["cache_mode"].get<int>(),
-                                                     app.m_SettingsInterface.m_Settings.m_UserSettings["cache_max_size"].get<uint64_t>());
-						}
-
 						const int32_t newMediaID = app.m_Loader->Load(fp);
-						app.GetActiveDisplay()->SetMedia(newMediaID);
-						app.m_Loader->LoadImageToCache(newMediaID, 0);
+
+						if (newMediaID > -1)
+						{
+							if (app.m_DisplayCount == 0)
+							{    
+								Interface::Display* newDisplay = new Interface::Display(app.m_Loader->m_Profiler, app.m_Logger, app.m_Loader, app.m_DisplayCount + 1);
+								newDisplay->SetMedia(newMediaID);
+
+								app.m_Displays[++app.m_DisplayCount] = std::make_pair(true, newDisplay);
+
+								app.UpdateCache();
+								app.m_Loader->LoadImageToCache(newMediaID, 0);
+								
+								newDisplay->Initialize(*app.m_OcioModule, newMediaID);
+								newDisplay->NeedFrame();
+								
+								app.Changed();
+							}
+							else
+							{
+								Interface::Display* activeDisplay = app.GetActiveDisplay();
+								activeDisplay->SetMedia(newMediaID);
+								
+								app.UpdateCache();
+								app.m_Loader->LoadImageToCache(newMediaID, 0);
+								
+								activeDisplay->NeedReinit();
+								activeDisplay->NeedFrame();
+
+								app.Changed();
+							}
+						}
 					}
 
 					ifd::FileDialog::Instance().Close();
@@ -819,6 +830,10 @@ namespace Interface
 
 						if (ImGui::IsItemEdited())
 						{
+							app.GetActiveDisplay()->AssociatedPlaybar()->Pause();
+
+							app.GetActiveDisplay()->AssociatedPlaybar()->GoFirstFrame();
+
 							tmpExrMedia->UpdateCurrentLayer();
 
 							app.m_Loader->m_Cache->Flush();

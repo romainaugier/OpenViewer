@@ -37,6 +37,11 @@ namespace Core
         return &this->m_Images[frameIndex];
     }
 
+    void ImageSequence::Release() noexcept
+    {
+
+    }
+
     EXRSequence::EXRSequence(const std::string& path, const uint32_t id)
     {
         this->m_Path = path;
@@ -105,6 +110,11 @@ namespace Core
         this->m_Layers.shrink_to_fit();
     }
 
+    void EXRSequence::Release() noexcept
+    {
+
+    }
+
     Video::Video(const std::string& path, const uint32_t id)
     {
         this->m_Path = path;
@@ -120,5 +130,10 @@ namespace Core
     {
         printf("video\n");
         return nullptr;
+    }
+
+    void Video::Release() noexcept
+    {
+        
     }
 }

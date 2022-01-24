@@ -21,9 +21,9 @@ namespace ImGui
 
         const ImVec2 leftSpace = ImGui::GetContentRegionAvail();
 
-        Dummy(ImVec2(leftSpace.x - 100.0f, 1.0f));
+        Dummy(ImVec2(leftSpace.x - widgetWidth, 1.0f));
         SameLine();
 
-        SetNextItemWidth(100.0f);
+        SetNextItemWidth(widgetWidth);
 }
 } // End namespace ImGui

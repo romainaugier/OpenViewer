@@ -19,11 +19,6 @@ else()
 	endif()
 endif()
 
-# Linux std lib
-if(UNIX)
-	set(CMAKE_CXX_STANDARD_LIBRARIES "-ldl")
-endif()
-
 if(WIN32)
 	if("${CMAKE_SIZEOF_VOID_P}" EQUAL 4)
 		set(VCPKG_TARGET_TRIPLET "x86-windows" CACHE STRING "VCPKG Triplet" FORCE)
@@ -39,6 +34,12 @@ elseif(UNIX)
 	endif()
 endif()
 
+
+# Linux std lib
+if(UNIX)
+set(CMAKE_CXX_STANDARD_LIBRARIES "-ldl")
+endif()
+
 # Project
 project(OpenViewer)
 
@@ -47,19 +48,41 @@ set(CMAKE_CXX_STANDARD 17)
 
 # to correct the bug appearing in half.h
 if(WIN32)
-	add_definitions(-DOPENEXR_DLL)
+add_definitions(-DOPENEXR_DLL)
 endif()
 
+# OpenViewer version str
+if(DEFINED OPENVIEWER_VERSION_STR)
+	add_definitions("-DOV_VERSION_STR=\"${OPENVIEWER_VERSION_STR}\"")
+	message(STATUS "Building OpenViewer version : ${OPENVIEWER_VERSION_STR}")
+	else()
+	add_definitions("-DOV_VERSION_STR=\"Debug\"")
+	message(STATUS "Building OpenViewer version : Debug")
+endif()
+	
+# Compilation flags
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-	add_compile_definitions(-D_CRT_SECURE_NO_WARNINGS -DOPENEXR_DLL)
-	set(MSVC_COMPILER_FLAGS "/fp:fast /Os /Oy /GT /GL /Oi /arch:AVX2 /Zi /Gm- /Zc:inline /Qpar")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}" "${MSVC_COMPILER_FLAGS}")
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}" "${MSVC_COMPILER_FLAGS}")
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS -DOPENEXR_DLL)
+	set(MSVC_COMPILER_FLAGS "/fp:fast /Os /Oy /GT /GL /Oi /Zi /Gm- /Zc:inline /Qpar")
+
+	if(DEFINED AVX2)
+		add_definitions("-DOV_VECTOR_EXT=\"avx2\"")
+		set(MSVC_COMPILER_FLAGS "${MSVC_COMPILER_FLAGS} /arch:AVX2")
+	elseif(DEFINED AVX)
+		add_definitions("-DOV_VECTOR_EXT=\"avx\"")
+		set(MSVC_COMPILER_FLAGS "${MSVC_COMPILER_FLAGS} /arch:AVX")
+	elseif(DEFINED SSE2)
+		add_definitions("-DOV_VECTOR_EXT=\"sse2\"")
+		set(MSVC_COMPILER_FLAGS "${MSVC_COMPILER_FLAGS} /arch:SSE2")
+	endif()
+
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}" "${MSVC_COMPILER_FLAGS} /O2")
 	add_link_options("/LTCG")
 elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0")
 	set(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE} -O3")
-	add_compile_options(-fopenmp -mavx2 -mveclibabi=svml -mf16c -fpermissive -Wall)
+	add_compile_options(-fopenmp -mveclibabi=svml -mf16c -fpermissive -Wall)
 	add_link_options(-lstdc++fs -fopenmp)
 else()
 	message(FATAL_ERROR "Your compiler is not supported yet, CMake will exit.")

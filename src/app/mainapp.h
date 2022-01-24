@@ -41,14 +41,17 @@ OV_STATIC_FUNC void GLFWDropEventCallback(GLFWwindow* window, int count, const c
     app->m_Logger->Log(LogLevel_Debug, "[MAIN] : Drop event detected");
 
     const uint32_t mediaCount = app->m_Loader->GetMediaCount();
+    bool anyLoadError = false;
 
     for(uint32_t i = 0; i < count; i++)
     {
-        app->m_Loader->Load(paths[i]);
+        const int32_t mediaId = app->m_Loader->Load(paths[i]);
+
+        if (mediaId < 0) anyLoadError = true;
     }
 
     // If we drop only one media, show it on the active display, or create a new one to show it
-    if (count == 1)
+    if (count == 1 && !anyLoadError)
     {
         // If no display is active, create one
         if (app->m_DisplayCount == 0)

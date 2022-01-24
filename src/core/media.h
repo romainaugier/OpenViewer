@@ -35,6 +35,8 @@ namespace Core
         // Returns an image corresponding to the frame. If the frameIndex is out of range,
         // returns nullptr
         virtual Image* GetImage(const uint32_t frameIndex) noexcept = 0;
+
+        virtual void Release() noexcept = 0;
         
         // Getters/Setters
         OV_FORCEINLINE void SetImages(const std::vector<Image>& images) noexcept { this->m_Images = std::move(images); }
@@ -77,6 +79,8 @@ namespace Core
         void LoadImage(const uint32_t frameIndex, void* buffer) noexcept override;
 
         Image* GetImage(const uint32_t frameIndex) noexcept override;
+
+        void Release() noexcept override;
     };
 
     // Special case for exr has they have layers
@@ -95,6 +99,8 @@ namespace Core
         void LoadImage(const uint32_t frameIndex, void* buffer) noexcept override;
 
         Image* GetImage(const uint32_t frameIndex) noexcept override;
+
+        void Release() noexcept override;
 
         void SetLayers() noexcept;
 
@@ -121,5 +127,7 @@ namespace Core
         void LoadImage(const uint32_t frameIndex, void* buffer) noexcept override;
 
         Image* GetImage(const uint32_t frameIndex) noexcept override;
+        
+        void Release() noexcept override;
     };
 }
