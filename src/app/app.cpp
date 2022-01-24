@@ -272,6 +272,8 @@ namespace Interface
         // the biggest images and if not, reallocate some
         // - If the cache is set to smart, allocate memory to hold everything until the limit it reached
 		
+		this->m_Logger->Log(LogLevel_Debug, "[APP] : Updating cache");
+
 		uint64_t totalBiggestImagesByteSize = 0;
         uint64_t totalByteSize = 0;
 
@@ -281,6 +283,9 @@ namespace Interface
             totalBiggestImagesByteSize += this->m_Loader->m_Medias[mediaId]->GetBiggestImageSize();
             totalByteSize += this->m_Loader->m_Medias[mediaId]->GetTotalByteSize();
         }
+		
+		this->m_Logger->Log(LogLevel_Debug, "[APP] : Biggest Image Size : %d bytes", totalBiggestImagesByteSize);
+		this->m_Logger->Log(LogLevel_Debug, "[APP] : Total Sequence Size : %d bytes", totalByteSize);
 
         if (this->m_Loader->m_CacheMode == 0)
         {
@@ -297,27 +302,31 @@ namespace Interface
         {
             if (!this->m_Loader->m_Cache->m_HasBeenInitialized)
 			{
-				const uint64_t cacheInitSize = totalByteSize > (this->m_Loader->m_CacheMaxSizeMB * 1000000) ? 
-											   this->m_Loader->m_CacheMaxSizeMB * 1000000 : totalByteSize;
+				const uint64_t cacheInitSize = totalByteSize > (Utils::MegaToBytes(this->m_Loader->m_CacheMaxSizeMB)) ? 
+											   Utils::MegaToBytes(this->m_Loader->m_CacheMaxSizeMB) : totalByteSize;
+
 				this->m_Loader->m_Cache->Initialize(totalByteSize, this->m_Logger);
 			}
-
-			if (totalBiggestImagesByteSize > this->m_Loader->m_Cache->m_BytesCapacity)
-            {
-                this->m_Logger->Log(LogLevel_Warning, "[CACHE] : Manual image cache is not big enough to hold media being displayed, resizing it");
-                this->m_Loader->ResizeCache(totalBiggestImagesByteSize);
-            }
 			else
 			{
-				this->m_Loader->ResizeCache(totalByteSize);
+				if (totalBiggestImagesByteSize > Utils::MegaToBytes(this->m_Loader->m_CacheMaxSizeMB))
+				{
+					this->m_Logger->Log(LogLevel_Warning, "[CACHE] : Manual image cache is not big enough to hold media being displayed, resizing it");
+					this->m_Loader->ResizeCache(totalBiggestImagesByteSize);
+				}
+				else
+				{
+					this->m_Loader->ResizeCache(totalByteSize);
+				}
 			}
         }
         else if (this->m_Loader->m_CacheMode == 2)
         {
             if (!this->m_Loader->m_Cache->m_HasBeenInitialized)
 			{
-				const uint64_t cacheInitSize = totalByteSize > (this->m_Loader->m_CacheMaxSizeMB * 1000000) ? 
-											   this->m_Loader->m_CacheMaxSizeMB * 1000000 : totalByteSize;
+				const uint64_t cacheInitSize = totalByteSize > (Utils::MegaToBytes(this->m_Loader->m_CacheMaxSizeMB)) ? 
+											   Utils::MegaToBytes(this->m_Loader->m_CacheMaxSizeMB) : totalByteSize;
+				
 				this->m_Loader->m_Cache->Initialize(totalByteSize, this->m_Logger);
 			}
 			else
@@ -331,6 +340,8 @@ namespace Interface
     {
         if (this->m_SettingsInterface.m_Settings.m_CacheSettingsChanged)
         {
+			this->m_Logger->Log(LogLevel_Debug, "Cache settings changed, updating cache");
+
 			this->m_Loader->StopCacheLoader();
 
             for (auto& [id, display] : this->m_Displays)
@@ -348,14 +359,14 @@ namespace Interface
             // If we use the cache, and the loader is already initialized, just initialize the cache
             if (cacheMode > 0)
             {
-                uint64_t newCacheSize = static_cast<uint64_t>(this->m_SettingsInterface.m_Settings.m_UserSettings["cache_max_size"].get<uint64_t>()) * 1000000;
+                uint64_t newCacheSize = Utils::MegaToBytes(static_cast<uint64_t>(this->m_SettingsInterface.m_Settings.m_UserSettings["cache_max_size"].get<uint64_t>()));
 
 				if (cacheMode == 2)
 				{
 					newCacheSize = Utils::GetTotalSystemMemory() * this->m_SettingsInterface.m_Settings.m_UserSettings["cache_max_ram_usage"].get<uint64_t>() / 100;
 				}
 
-                this->m_Loader->m_CacheMaxSizeMB = newCacheSize / 1000000 + 1000000;
+                this->m_Loader->m_CacheMaxSizeMB = Utils::BytesToMega(newCacheSize) + 1000000;
 
 				const uint64_t cacheResizeSize = newCacheSize > seqSize ? seqSize : newCacheSize;
 				this->m_Loader->ResizeCache(cacheResizeSize);

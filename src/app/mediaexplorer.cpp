@@ -45,14 +45,14 @@ namespace Interface
                         if (app->m_DisplayCount == 0)
                         {
                             Interface::Display* newDisplay = new Interface::Display(app->m_Loader->m_Profiler, app->m_Logger, app->m_Loader, 1);
+                            newDisplay->SetMedia(media->ID());
+                            app->m_Displays[++app->m_DisplayCount] = std::make_pair(true, newDisplay);
 
                             app->UpdateCache();
                             this->m_Loader->LoadImageToCache(media->ID(), 0);
                             
                             newDisplay->Initialize(*app->m_OcioModule, media->ID());
                             newDisplay->NeedFrame();
-                            
-                            app->m_Displays[++app->m_DisplayCount] = std::make_pair(true, newDisplay);
                         }
                         else
                         {

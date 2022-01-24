@@ -297,7 +297,7 @@ namespace Core
 		if (size == 0)
 		{
 			uint32_t index = 0;
-			uint64_t accumulatedByteSize = 0;
+			uint64_t accumulatedByteSize = this->m_Cache->m_BytesSize;
 			endIndex = 0;
 
 			while (true)
@@ -320,18 +320,25 @@ namespace Core
 		// if (startIndex != this->m_Range.x) --endIndex;
 		for (uint32_t i = startIndex; i < endIndex; i++)
 		{
+			std::unique_lock<std::mutex> lock(this->m_Mutex);
+
 			const uint32_t idx = i % static_cast<uint32_t>(this->m_Medias[mediaId]->GetRange().y);
 
 			this->LoadImageToCache(mediaId, idx);
+
+			lock.unlock();
 		}
 	}
 
 	void Loader::ResizeCache(const uint64_t size, const bool sizeInMB) noexcept
 	{
-		const uint64_t newSize = sizeInMB ? size > this->m_CacheMaxSizeMB ? this->m_CacheMaxSizeMB : 
-								 size : size > (this->m_CacheMaxSizeMB * 1000000) ? this->m_CacheMaxSizeMB * 1000000 : size;
+		uint64_t newSize = size;
 
-		this->m_Cache->Resize(newSize, sizeInMB);
+		if (sizeInMB) newSize = Utils::MegaToBytes(size);
+
+		this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Resizing cache (%lld bytes)", newSize);
+		
+		this->m_Cache->Resize(newSize, false);
 	}
 
 	void Loader::BackgroundLoad() noexcept

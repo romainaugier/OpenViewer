@@ -15,12 +15,9 @@ namespace Core
         this->m_BytesCapacity = sizeInMB ? size * 1000000 : size;
         this->m_Logger = logger;
 
-        const char* minimalCacheMsg = sizeInMB ? " " : " minimal ";
-
-        this->m_Logger->Log(LogLevel_Diagnostic, "[CACHE] : Initializing%sImage Cache (%.2f MB)", minimalCacheMsg,
-                                                                                                  sizeInMB ? 
-                                                                                                  static_cast<float>(size) :
-                                                                                                  static_cast<float>(size) / 1000000.0f);
+        this->m_Logger->Log(LogLevel_Diagnostic, "[CACHE] : Initializing Image Cache (%.2f MB)", sizeInMB ? 
+                                                                                                 static_cast<float>(size) :
+                                                                                                 static_cast<float>(size) / 1000000.0f);
 
         this->m_MemoryArena = OvAlloc(this->m_BytesCapacity, 32);
     }
@@ -34,6 +31,7 @@ namespace Core
 
         if (imgByteSize > this->m_BytesCapacity)
         {
+            this->m_Logger->Log(LogLevel_Debug, "Resizing cache urgently, file size is bigger than cache capacity");
             this->Resize(imgByteSize, false);
         }
 

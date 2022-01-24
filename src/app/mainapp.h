@@ -56,13 +56,15 @@ OV_STATIC_FUNC void GLFWDropEventCallback(GLFWwindow* window, int count, const c
             Interface::Display* newDisplay = new Interface::Display(app->m_Loader->m_Profiler, app->m_Logger, app->m_Loader, app->m_DisplayCount + 1);
             newDisplay->SetMedia(mediaCount);
 
+            app->m_Displays[++app->m_DisplayCount] = std::make_pair(true, newDisplay);
+
             app->UpdateCache();
             app->m_Loader->LoadImageToCache(mediaCount, 0);
             
             newDisplay->Initialize(*app->m_OcioModule, mediaCount);
             newDisplay->NeedFrame();
-
-            app->m_Displays[++app->m_DisplayCount] = std::make_pair(true, newDisplay);
+            
+            app->Changed();
         }
         else
         {

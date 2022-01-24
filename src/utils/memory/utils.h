@@ -26,4 +26,14 @@ namespace Utils
         return pages * page_size;
     }
 #endif
+
+    OV_STATIC_FUNC OV_FORCEINLINE uint64_t MegaToBytes(const uint64_t megabytes) noexcept
+    {
+        return megabytes * 1000000;
+    }
+    
+    OV_STATIC_FUNC OV_FORCEINLINE uint64_t BytesToMega(const uint64_t bytes) noexcept
+    {
+        return bytes / 1000000;
+    }
 } // End namespace Utils
