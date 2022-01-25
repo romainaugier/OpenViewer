@@ -70,8 +70,6 @@ namespace Utils
                     const std::regex itMatchPatternRegex(itMatchStr);
 
                     std::string itMatchSub = itFileStem;
-                    // itMatchSub = std::regex_replace(itMatchSub, itMatchPatternRegex, "#");
-
                     itMatchSub.replace(itMatch.position(), itMatch.length(), "#");
 
                     for (std::sregex_iterator base = baseNumBegin; base != baseNumEnd; ++base)
@@ -82,11 +80,7 @@ namespace Utils
 
 
                         std::string baseMatchSub = baseFileStem;
-                        // baseMatchSub = std::regex_replace(baseMatchSub, baseMatchPatternRegex, "#");
-                        
                         baseMatchSub.replace(baseMatch.position(), baseMatch.length(), "#");
-
-                        // std::cout << baseMatchStr << " " << baseMatchSub << " // " << itMatchStr << " " << itMatchSub << "\n";
 
                         if (baseMatchSub == itMatchSub)
                         {
@@ -113,11 +107,6 @@ namespace Utils
             fileSeq.shrink_to_fit();
 
             std::sort(fileSeq.begin(), fileSeq.end(), [&](const FileSequenceItem& a, const FileSequenceItem& b){ return a.second < b.second; });
-
-            // for (const auto& file : fileSeq)
-            // {
-            //     std::cout << file.first << " / Frame : " << file.second << "\n";
-            // }
 
             fileSequence = std::move(fileSeq);
         }

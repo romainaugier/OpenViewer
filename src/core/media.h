@@ -109,6 +109,7 @@ namespace Core
         OV_FORCEINLINE std::string GetCurrentLayerName() const noexcept { return this->m_CurrentLayer; }
         OV_FORCEINLINE std::vector<Layer> GetLayers() const noexcept { return this->m_Layers; }
         OV_FORCEINLINE void UpdateCurrentLayer() noexcept { this->m_CurrentLayer = this->m_Layers[this->m_CurrentLayerID].first; }
+        OV_FORCEINLINE void SetNumThreads(const uint8_t numThreads) noexcept { this->m_NumThreads = numThreads; }
 
     private:
         std::vector<Layer> m_Layers;

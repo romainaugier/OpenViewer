@@ -112,6 +112,12 @@ namespace Core
 							newMedia->SetTotalByteSize(totalByteSize);
 							newMedia->SetBiggestImageSize(biggestImageByteSize);
 
+							this->m_Logger->Log(LogLevel_Debug, "Found layers : ");
+							for (const auto& layer : newMedia->GetLayers()) 
+							{
+								this->m_Logger->Log(LogLevel_Debug, "%s (channels : %s)", layer.first.c_str(), layer.second.c_str());
+							}
+
 							this->m_Medias[this->m_MediaCount] = newMedia;
 						}
 						else
@@ -148,6 +154,13 @@ namespace Core
 							newMedia->SetRange(ImVec2(0, 1));
 							newMedia->SetTotalByteSize(totalByteSize);
 							newMedia->SetBiggestImageSize(biggestImageByteSize);
+
+							this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Found layers : ");
+							for (const auto& layer : newMedia->GetLayers()) 
+							{
+								this->m_Logger->Log(LogLevel_Debug, "%s (channels : %s)", layer.first.c_str(), layer.second.c_str());
+							}
+
 
 							this->m_Medias[this->m_MediaCount] = newMedia;
 						}
@@ -227,6 +240,12 @@ namespace Core
 							newMedia->SetTotalByteSize(totalByteSize);
 							newMedia->SetBiggestImageSize(biggestImageByteSize);
 
+							this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Found layers : ");
+							for (const auto& layer : newMedia->GetLayers()) 
+							{
+								this->m_Logger->Log(LogLevel_Debug, "%s (channels : %s)", layer.first.c_str(), layer.second.c_str());
+							}
+
 							this->m_Medias[this->m_MediaCount] = newMedia;
 						}
 						else
@@ -270,6 +289,12 @@ namespace Core
 						newMedia->SetRange(ImVec2(0, 1));
 						newMedia->SetTotalByteSize(totalByteSize);
 						newMedia->SetBiggestImageSize(biggestImageByteSize);
+
+						this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Found layers : ");
+						for (const auto& layer : newMedia->GetLayers()) 
+						{
+							this->m_Logger->Log(LogLevel_Debug, "%s (channels : %s)", layer.first.c_str(), layer.second.c_str());
+						}
 
 						this->m_Medias[this->m_MediaCount] = newMedia;
 					}
@@ -326,7 +351,11 @@ namespace Core
 		// If the media is an exr sequence, verify that the current image matches the caracteristics of the selected image layer
 		EXRSequence* tmpExrMedia;
 		
-		if (tmpExrMedia = dynamic_cast<EXRSequence*>(this->GetMedia(mediaId))) tmpImg->VerifyChannelSize(tmpExrMedia->GetCurrentChannels());
+		if (tmpExrMedia = dynamic_cast<EXRSequence*>(this->GetMedia(mediaId)))
+		{
+			tmpImg->VerifyChannelSize(tmpExrMedia->GetCurrentChannels());
+			tmpExrMedia->SetNumThreads(this->m_OpenEXRThreads);
+		}	
 		
 		const uint32_t cachedIndex = this->m_Cache->Add(tmpImg, mediaId);
 

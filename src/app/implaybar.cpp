@@ -269,7 +269,7 @@ namespace Interface
 										ImVec2(leftP0.x + 32.5f, leftP0.y + 5.0f), 
 										ImVec2(leftP0.x + 32.5f, leftP0.y + 20.0f), LIGHTGRAY);
 
-			if (Hover(leftP0, leftP1, mousePos))
+			if (ImGui::Hover(leftP0, leftP1, mousePos))
 			{
 				drawList->AddRectFilled(leftP0, leftP1, HOVERGRAY);
 
@@ -290,7 +290,7 @@ namespace Interface
 										ImVec2(left2P0.x + 27.5f, left2P0.y + 5.0f),
 										ImVec2(left2P0.x + 27.5f, left2P0.y + 20.0f), LIGHTGRAY);
 
-			if (Hover(left2P0, left2P1, mousePos))
+			if (ImGui::Hover(left2P0, left2P1, mousePos))
 			{
 				drawList->AddRectFilled(left2P0, left2P1, HOVERGRAY);
 
@@ -320,7 +320,7 @@ namespace Interface
 											ImVec2(playP0.x + 12.5f, leftP0.y + 20.0f), playButtonColor);
 			}
 
-			if (Hover(playP0, playP1, mousePos))
+			if (ImGui::Hover(playP0, playP1, mousePos))
 			{
 				drawList->AddRectFilled(playP0, playP1, HOVERGRAY);
 
@@ -342,7 +342,7 @@ namespace Interface
 										ImVec2(right2P0.x + 27.5f, (right2P0.y + right2P1.y) / 2.0f),
 										ImVec2(right2P0.x + 12.5f, right2P0.y + 20.0f), LIGHTGRAY);
 
-			if (Hover(right2P0, right2P1, mousePos))
+			if (ImGui::Hover(right2P0, right2P1, mousePos))
 			{
 				drawList->AddRectFilled(right2P0, right2P1, HOVERGRAY);
 				if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
@@ -364,7 +364,7 @@ namespace Interface
 										ImVec2(rightP0.x + 32.5f, (rightP0.y + rightP1.y) / 2.0f), 
 										ImVec2(rightP0.x + 17.5f, rightP0.y + 20.0f), LIGHTGRAY);
 
-			if(Hover(rightP0, rightP1, mousePos))
+			if(ImGui::Hover(rightP0, rightP1, mousePos))
 			{
 				drawList->AddRectFilled(rightP0, rightP1, HOVERGRAY);
 
