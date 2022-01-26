@@ -152,9 +152,18 @@ namespace Utils
             return Str::EndsWith(path, "exr");
         }
 
-        OV_STATIC_FUNC std::string ExpandCwd(const std::string& pathToExpand) noexcept
+        OV_STATIC_FUNC std::string ExpandExeDir(const std::string& pathToExpand) noexcept
         {
-            std::string cwd = std::filesystem::current_path().string();
+#ifdef OV_WIN
+            wchar_t szPath[MAX_PATH];
+            GetModuleFileNameW(nullptr, szPath, MAX_PATH);
+#else if OV_LINUX
+            char szPath[PATH_MAX];
+            ssize_t count = readlink("/proc/self/exe", szPath, PATH_MAX);
+            if (count < 0 || count >= PATH_MAX) return "";
+            szPath[count] = "\0";
+#endif
+            std::string cwd = std::filesystem::path(szPath).parent_path().string();
             Str::CleanOSPath(cwd);
             return cwd + pathToExpand;
         }

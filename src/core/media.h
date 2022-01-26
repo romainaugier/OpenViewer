@@ -117,6 +117,8 @@ namespace Core
         std::string m_CurrentLayer = "Beauty";
 
         uint8_t m_NumThreads = 8;
+
+        bool m_IsMultipart = false;
     };
 
     // Class that holds a video stream

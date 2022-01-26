@@ -85,10 +85,20 @@ namespace Core
 	// loads an image
 	void Image::LoadExr(void* __restrict buffer, const std::string& layers, const uint8_t exrThreads) const noexcept
 	{
-		Imf::InputFile in(this->m_Path.c_str(), exrThreads);
+		std::vector<std::string> channelNames;
+		Utils::Str::Split(channelNames, layers, ';');
 
-		const Imath::Box2i display = in.header().displayWindow();
-		const Imath::Box2i data = in.header().dataWindow();
+		Imf::MultiPartInputFile in(this->m_Path.c_str(), exrThreads);
+
+		int partIdx = 0;
+
+		for (uint16_t i = 0; i < in.parts(); i++)
+		{
+			if (in.header(i).channels().findChannel(channelNames[0]) != nullptr) partIdx = i;
+		}
+
+		const Imath::Box2i display = in.header(0).displayWindow();
+		const Imath::Box2i data = in.header(0).dataWindow();
 		const Imath::V2i dim(data.max.x - data.min.x + 1, data.max.y - data.max.y + 1);
 
 		const int dx = data.min.x;
@@ -114,10 +124,6 @@ namespace Core
 			dataSize = Size::Size32;
 			pixelType = Imf::FLOAT;
 		}
-
-		std::vector<std::string> channelNames;
-
-		Utils::Str::Split(channelNames, layers, ';');
 		
 		if (data.max.x < display.max.x || data.max.y < display.max.y ||
 			data.min.x > display.min.x || data.min.y > display.min.y)
@@ -125,7 +131,7 @@ namespace Core
 			memset(buffer, 0.0f, this->m_Xres * this->m_Yres * (channelNames.size() < 3 ? 3 : channelNames.size()) * dataSize);
 		}
 		
-		for (const auto& channelName : channelNames)
+		for (auto& channelName : channelNames)
 		{
 			if (channelName == "") continue;
 			
@@ -144,9 +150,11 @@ namespace Core
 
 			++strideOffset;
 		}
-		
-		in.setFrameBuffer(frameBuffer);
-		in.readPixels(data.min.y, data.max.y);
+
+		Imf::InputPart inputPart(in, partIdx);
+
+		inputPart.setFrameBuffer(frameBuffer);
+		inputPart.readPixels(data.min.y, data.max.y);
 
 		// When we only have one channel, for example the z depth, we need to copy it to the other channels G and B
 		if (channelNames.size() < 3)
@@ -188,9 +196,17 @@ namespace Core
 
 			const uint8_t channelCount = channelNames.size() >= 3 ? channelNames.size() : 3;
 
-			Imf::InputFile in(this->m_Path.c_str(), 4);
+			Imf::MultiPartInputFile in(this->m_Path.c_str());
 
-			const uint8_t channelPixType = in.header().channels().find(channelNames[0]).channel().type;
+			uint8_t channelPixType;
+			
+			for (uint32_t i = 0; i < in.parts(); i++)
+			{
+				if (in.header(i).channels().findChannel(channelNames[0]) != nullptr)
+				{
+					channelPixType = in.header(i).channels().find(channelNames[0]).channel().type;
+				}
+			}
 
 			if (channelPixType == 1)
 			{

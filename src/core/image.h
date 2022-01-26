@@ -14,6 +14,7 @@
 #include "OpenEXR/ImfInputFile.h"
 #include "OpenEXR/ImfChannelList.h"
 #include "OpenEXR/ImfMultiPartInputFile.h"
+#include "OpenEXR/ImfInputPart.h"
 
 extern "C" 
 {

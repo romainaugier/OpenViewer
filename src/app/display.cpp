@@ -47,8 +47,8 @@ namespace Interface
 		this->UnbindRBO();
 
 		// Get the alpha blending shader
-		const std::string vertShaderPath = Utils::Fs::ExpandCwd("/shaders/alpha_blend.vert");
-		const std::string fragShaderPath = Utils::Fs::ExpandCwd("/shaders/alpha_blend.frag");
+		const std::string vertShaderPath = Utils::Fs::ExpandExeDir("/shaders/alpha_blend.vert");
+		const std::string fragShaderPath = Utils::Fs::ExpandExeDir("/shaders/alpha_blend.frag");
 
 		this->m_AlphaBlendingShader.LoadAndCompile(vertShaderPath.c_str(), fragShaderPath.c_str());
 	}

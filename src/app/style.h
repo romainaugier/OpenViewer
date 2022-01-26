@@ -100,6 +100,6 @@ namespace Interface
     {
         ImGuiIO io = ImGui::GetIO();
 
-        io.Fonts->AddFontFromFileTTF(Utils::Fs::ExpandCwd("/resources/fonts/OpenSans/OpenSans-Light.ttf").c_str(), 16.0f);
+        io.Fonts->AddFontFromFileTTF(Utils::Fs::ExpandExeDir("/resources/fonts/OpenSans/OpenSans-Light.ttf").c_str(), 16.0f);
     }
 } // End namespace Interface

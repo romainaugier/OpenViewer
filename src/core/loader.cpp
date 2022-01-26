@@ -240,11 +240,14 @@ namespace Core
 							newMedia->SetTotalByteSize(totalByteSize);
 							newMedia->SetBiggestImageSize(biggestImageByteSize);
 
-							this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Found layers : ");
+							std::stringstream foundLayers;
+
 							for (const auto& layer : newMedia->GetLayers()) 
 							{
-								this->m_Logger->Log(LogLevel_Debug, "%s (channels : %s)", layer.first.c_str(), layer.second.c_str());
+								foundLayers << layer.first << " (channels : " << layer.second << ")\n";
 							}
+							
+							this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Found layers : \n%s", foundLayers.str().c_str());
 
 							this->m_Medias[this->m_MediaCount] = newMedia;
 						}
@@ -290,11 +293,14 @@ namespace Core
 						newMedia->SetTotalByteSize(totalByteSize);
 						newMedia->SetBiggestImageSize(biggestImageByteSize);
 
-						this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Found layers : ");
+						std::stringstream foundLayers;
+
 						for (const auto& layer : newMedia->GetLayers()) 
 						{
-							this->m_Logger->Log(LogLevel_Debug, "%s (channels : %s)", layer.first.c_str(), layer.second.c_str());
+							foundLayers << layer.first << " (channels : " << layer.second << ")\n";
 						}
+						
+						this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Found layers : \n%s", foundLayers.str().c_str());
 
 						this->m_Medias[this->m_MediaCount] = newMedia;
 					}
@@ -404,6 +410,8 @@ namespace Core
 			this->LoadImageToCache(mediaId, idx);
 
 			lock.unlock();
+
+			if (this->m_StopBgLoad) break;
 		}
 	}
 
@@ -435,6 +443,8 @@ namespace Core
 			}
 			else if (this->m_NeedBgLoad)
 			{
+				bgLoaderLock.unlock();
+				
 				this->LoadSequenceToCache(0, this->m_BgLoadFrameIndex, this->m_BgLoadChunkSize);
 
 				this->m_NeedBgLoad = false;

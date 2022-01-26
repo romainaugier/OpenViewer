@@ -14,7 +14,7 @@ namespace Core
 
         const std::string currentPath = std::filesystem::current_path().string();
 
-        const std::string defaultConfigPath = Utils::Fs::ExpandCwd("/configs/default/default.ocio");
+        const std::string defaultConfigPath = Utils::Fs::ExpandExeDir("/configs/default/default.ocio");
         
         if(envPath != nullptr)
         {

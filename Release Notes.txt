@@ -1,5 +1,8 @@
+0.0.2 Alpha WIN64 :
+- Added support for multipart OpenEXR files and optimized the reader
+
 0.0.1 Alpha WIN64 (first released version of OpenViewer ever) :
 - Many images formats supported (for both single image files and image sequences)
 - OCIO V2 support 
-- OpenEXR multilayer support and optimized reading
+- OpenEXR multichannels support and optimized reading
 - Fast, responsive and smooth playback and cache

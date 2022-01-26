@@ -15,9 +15,9 @@ namespace Interface
 
 			Utils::Str::CleanOSPath(currentPath);
 
-			const std::string vertexShaderPath = Utils::Fs::ExpandCwd("/shaders/parade.vert");
+			const std::string vertexShaderPath = Utils::Fs::ExpandExeDir("/shaders/parade.vert");
 			
-			const std::string plotFragShaderPath = Utils::Fs::ExpandCwd("/shaders/parade.frag");
+			const std::string plotFragShaderPath = Utils::Fs::ExpandExeDir("/shaders/parade.frag");
 
 			this->m_ScopeShader.LoadAndCompile(vertexShaderPath.c_str(), plotFragShaderPath.c_str());
 

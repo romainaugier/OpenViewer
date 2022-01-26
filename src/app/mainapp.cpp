@@ -19,7 +19,11 @@ int application(int argc, char** argv)
 #endif
     // Logger
     Logger logger;
+#ifdef _DEBUG
+    logger.SetLevel(LogLevel_Debug);
+#else
     logger.SetLevel(LogLevel_Warning);
+#endif
     logger.Log(LogLevel_Diagnostic, "[MAIN] : Initializing Logger");
 
     // Profiler
