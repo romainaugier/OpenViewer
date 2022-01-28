@@ -1,5 +1,6 @@
 0.0.2 Alpha WIN64 :
 - Added support for multipart OpenEXR files and optimized the reader
+- Fixed a bug with command-line file loading
 
 0.0.1 Alpha WIN64 (first released version of OpenViewer ever) :
 - Many images formats supported (for both single image files and image sequences)
