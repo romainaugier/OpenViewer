@@ -87,6 +87,8 @@ int application(int argc, char** argv)
     ImGui::CreateContext();
     ImPlot::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.IniFilename = nullptr;
+    ImGui::LoadIniSettingsFromDisk(Utils::Fs::ExpandExeDir("/ui/interface.ini").c_str());
 
     // Setup Dear ImGui style
     Interface::DarkTheme();
@@ -128,15 +130,18 @@ int application(int argc, char** argv)
         // If there is only one path in the cli, initialize a display to play it
         if (parsedPaths.size() == 1)
         {
-            application.UpdateCache();
-            loader.LoadImageToCache(0, 0);
-                                
             Interface::Display* newDisplay = new Interface::Display(application.m_Loader->m_Profiler, application.m_Logger, application.m_Loader, 1);
+            newDisplay->SetMedia(0);
 
-            newDisplay->Initialize(*application.m_OcioModule, 0);
-            
             application.m_Displays[++application.m_DisplayCount] = std::make_pair(true, newDisplay);
 
+            application.UpdateCache();
+            loader.LoadImageToCache(0, 0);
+
+            newDisplay->Initialize(*application.m_OcioModule, 0);
+            newDisplay->NeedFrame();
+
+            application.Changed();
         }
     }
 
