@@ -6,5 +6,22 @@
 
 namespace Core
 {
-    
+    void Timeline::Initialize(const ImVec2& range) noexcept
+    {
+        this->m_Range = range;
+    }
+
+    void Timeline::Add(Media* media) noexcept
+    {
+        Sequence* newSequence = new Sequence;
+        newSequence->m_Media = media;
+        newSequence->m_Range = media->GetRange();
+
+        this->m_Sequences[media->Path()] = newSequence; 
+    }
+
+    void Timeline::Remove(Media* media) noexcept
+    {
+
+    }
 }

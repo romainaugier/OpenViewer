@@ -72,13 +72,14 @@ namespace Core
 
         uint16_t layerCount = 0;
 
-        // Simple and dirty method to retrieve the basic rgb/rgba channels and approximate the number of layers
+        // Simple and dirty method to retrieve the basic rgb/rgba/z channels and approximate the number of layers
         uint8_t rgbOrRgbaChannels = 0;
 
         const std::regex singleRChannelPattern("^R$");
         const std::regex singleGChannelPattern("^G$");
         const std::regex singleBChannelPattern("^B$");
         const std::regex singleAChannelPattern("^A$");
+        const std::regex zDepthChannelPattern("^Z$|^Z\\.|Z_1|^z$|^z\\.|z_1");
 
         for (uint32_t i = 0; i < file.parts(); i++)
         {
@@ -88,6 +89,7 @@ namespace Core
                 else if (std::regex_search(f.name(), singleGChannelPattern)) ++rgbOrRgbaChannels;
                 else if (std::regex_search(f.name(), singleBChannelPattern)) ++rgbOrRgbaChannels;
                 else if (std::regex_search(f.name(), singleAChannelPattern)) ++rgbOrRgbaChannels;
+                else if (std::regex_search(f.name(), zDepthChannelPattern)) this->m_Layers.emplace_back(std::make_pair(f.name(), f.name()));
 
                 ++layerCount;
             }
@@ -98,11 +100,11 @@ namespace Core
 
         if (rgbOrRgbaChannels == 3)
         {
-            this->m_Layers.emplace_back(std::make_pair("Beauty", "R;G;B"));
+            this->m_Layers.insert(this->m_Layers.begin(), std::make_pair("Beauty", "R;G;B"));
         }
         else if (rgbOrRgbaChannels == 4)
         {
-            this->m_Layers.emplace_back(std::make_pair("Beauty", "R;G;B;A"));
+            this->m_Layers.insert(this->m_Layers.begin(), std::make_pair("Beauty", "R;G;B;A"));
         }
 
         const std::regex rChannelPattern("\\.R|^R$|\\.R\\.");

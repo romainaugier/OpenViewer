@@ -11,6 +11,17 @@
 
 namespace Core
 {
+    // A sequence is just a little container to represent a media in the timeline of OpenViewer
+    struct Sequence
+    {
+        Media* m_Media;
+
+        ImVec2 m_Range;
+
+        uint32_t m_Offset; // When the sequence is cut, offset from the beginning of the sequence
+    };
+
+    // The timeline is the organisation of the different sequences and how to play them (to make editing/montage)
     class Timeline
     {
     public:
@@ -18,7 +29,7 @@ namespace Core
 
         ~Timeline() {}
 
-        void Initialize(const ImVec2 range) noexcept;
+        void Initialize(const ImVec2& range) noexcept;
 
         void Add(Media* media) noexcept;
 
@@ -32,7 +43,7 @@ namespace Core
         void Release() noexcept;
 
     private:
-        tsl::robin_map<std::string, Media*> m_Medias;
+        tsl::robin_map<std::string, Sequence*> m_Sequences;
 
         ImVec2 m_Range;
     };
