@@ -226,28 +226,64 @@ namespace Core
 
 				if (spec.format == OIIO::TypeDesc::UINT8)
 				{
+					this->m_OIIOTypeDesc = OIIO::TypeDesc::UINT8;
 					this->m_Depth = 1;
-					this->m_Format = Format_RGB_U8;
-					this->m_GLInternalFormat = GL_RGB8;
-					this->m_GLFormat = GL_RGB;
+
+					if (this->m_Channels == 4)
+					{
+						this->m_Format = Format_RGBA_U8;
+						this->m_GLInternalFormat = GL_RGBA8;
+						this->m_GLFormat = GL_RGBA;
+					}
+					else
+					{
+						this->m_Format = Format_RGB_U8;
+						this->m_GLInternalFormat = GL_RGB8;
+						this->m_GLFormat = GL_RGB;
+					}
+
 					this->m_GLType = GL_UNSIGNED_BYTE;
 					this->m_Stride = m_Size * Size::Size8;
 				}
 				else if (spec.format == OIIO::TypeDesc::UINT16)
 				{
+					this->m_OIIOTypeDesc = OIIO::TypeDesc::UINT16;
 					this->m_Depth = 2;
-					this->m_Format = Format_RGB_U16;
-					this->m_GLInternalFormat = GL_RGB16;
-					this->m_GLFormat = GL_RGB;
+					
+					if (this->m_Channels == 4)
+					{
+						this->m_Format = Format_RGBA_U16;
+						this->m_GLInternalFormat = GL_RGBA16;
+						this->m_GLFormat = GL_RGBA;
+					}
+					else
+					{
+						this->m_Format = Format_RGB_U16;
+						this->m_GLInternalFormat = GL_RGB16;
+						this->m_GLFormat = GL_RGB;
+					}
+
 					this->m_GLType = GL_UNSIGNED_SHORT;
 					this->m_Stride = m_Size * Size::Size16;
 				}
 				else if (spec.format == OIIO::TypeDesc::FLOAT)
 				{
+					this->m_OIIOTypeDesc = OIIO::TypeDesc::FLOAT;
 					this->m_Depth = 4;
-					this->m_Format = Format_RGB_FLOAT;
-					this->m_GLInternalFormat = GL_RGB32F;
-					this->m_GLFormat = GL_RGB;
+
+					if (this->m_Channels == 4)
+					{
+						this->m_Format = Format_RGBA_FLOAT;
+						this->m_GLInternalFormat = GL_RGBA32F;
+						this->m_GLFormat = GL_RGBA;
+					}
+					else
+					{
+						this->m_Format = Format_RGB_FLOAT;
+						this->m_GLInternalFormat = GL_RGB32F;
+						this->m_GLFormat = GL_RGB;
+					}
+
 					this->m_GLType = GL_FLOAT;
 					this->m_Stride = m_Size * Size::Size32;
 				}
