@@ -6,8 +6,9 @@
 
 namespace Core
 {
-    void Timeline::Initialize(const ImVec2& range) noexcept
+    void Timeline::Initialize(const ImVec2& range, Logger* logger) noexcept
     {
+        this->m_Logger = logger;
         this->m_Range = range;
     }
 
@@ -17,11 +18,21 @@ namespace Core
         newSequence->m_Media = media;
         newSequence->m_Range = media->GetRange();
 
-        this->m_Sequences[media->Path()] = newSequence; 
+        this->m_Sequences[++this->m_SequenceCount] = newSequence; 
     }
 
     void Timeline::Remove(Media* media) noexcept
     {
 
+    }
+
+    void Timeline::Release() noexcept
+    {
+        for (auto it = this->m_Sequences.cbegin(); it != this->m_Sequences.cend(); ++it)
+        {
+            delete it.value();
+        }
+
+        this->m_Logger->Log(LogLevel_Diagnostic, "[TIMELINE] : Release timeline"),
     }
 }
