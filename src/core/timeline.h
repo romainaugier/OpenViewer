@@ -22,6 +22,7 @@ namespace Core
 
         OV_FORCEINLINE void SetRange(const ImVec2& newRange) noexcept { this->m_Range = newRange; }
         OV_FORCEINLINE ImVec2 GetRange() const noexcept { return this->m_Range; }
+        OV_FORCEINLINE bool InRange(const uint32_t frame) const noexcept { return frame >= this->m_Range.x && frame < this->m_Range.y;; }
     };
 
     // The timeline is the organisation of the different sequences and how to play them (to make editing/montage).

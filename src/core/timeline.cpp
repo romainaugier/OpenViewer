@@ -61,7 +61,12 @@ namespace Core
 
     Media* Timeline::GetMediaAtFrame(const uint32_t frame) noexcept
     {
+		for (const auto& [id, sequence] : this->m_Sequences)
+		{
+			if (sequence->InRange(frame)) return sequence->m_Media;
+		}
 
+		return nullptr;
     }
 
     void Timeline::NeedUpdate(const bool need) noexcept
