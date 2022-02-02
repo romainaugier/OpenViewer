@@ -45,16 +45,19 @@ namespace Core
 			{
 				if (this->m_Update)
 				{
-					// this->m_Loader->LoadImageToCache(this->m_MediaId, this->m_Frame);
+					const uint32_t mediaId = this->GetMediaAtFrame(this->m_Frame)->ID();
+					this->m_Loader->LoadImageToCache(mediaId, this->m_Frame);
 				}
 			}
 
 			// Update cache indices
 			for (uint32_t i = this->m_Range.x; i < this->m_Range.y; i++)
 			{
-				// const Core::Image* tmpImage = this->m_Loader->GetImage(this->m_MediaId, i);
+				const uint32_t mediaId = this->GetMediaAtFrame(this->m_Frame)->ID();
 
-				// this->m_CachedIndices[i] = tmpImage->m_CacheIndex > 0 ? 1 : 0;
+				const Core::Image* tmpImage = this->m_Loader->GetImage(mediaId, i);
+
+				this->m_CachedIndices[i] = tmpImage->m_CacheIndex > 0 ? 1 : 0;
 			}
 		}
 	}
@@ -191,7 +194,8 @@ namespace Core
 				if (this->m_Loader->m_CacheMode > 0)
 				{
 					// Urgent load in case of fast scrolling while cache is activated
-					// if (!this->m_CachedIndices[this->m_Frame]) this->m_Loader->LoadImageToCache(this->m_MediaId, this->m_Frame);
+					const uint32_t mediaId = this->GetMediaAtFrame(this->m_Frame)->ID();
+					if (!this->m_CachedIndices[this->m_Frame]) this->m_Loader->LoadImageToCache(mediaId, this->m_Frame);
 
 					const uint32_t offset = this->m_Loader->m_Cache->m_Size - this->m_Loader->m_BgLoadChunkSize * 2;
 					const uint32_t frameIdx = static_cast<uint32_t>(fmodf((this->m_Frame + offset), (this->m_Range.y - 1)));
@@ -208,7 +212,8 @@ namespace Core
 				}
 				else
 				{
-					// this->m_Loader->LoadImageToCache(this->m_MediaId, this->m_Frame);
+					const uint32_t mediaId = this->GetMediaAtFrame(this->m_Frame)->ID();
+					this->m_Loader->LoadImageToCache(mediaId, this->m_Frame);
 				}
 
 				const auto updateEnd = Profiler::StaticEnd();

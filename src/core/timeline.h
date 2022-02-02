@@ -42,12 +42,17 @@ namespace Core
 
         void Update() noexcept;
 
-        // Getters / Setters
         Media* GetMediaAtFrame(const uint32_t frame) noexcept;
-        OV_FORCEINLINE void SetRange(const ImVec2& newRange) noexcept { this->m_Range = newRange; }
+
+        void NeedUpdate(const bool need = true) noexcept;
+        
+        // Getters / Setters
+        OV_FORCEINLINE void SetRange(const ImVec2& newRange) noexcept { this->Pause(); this->m_Range = newRange; }
         OV_FORCEINLINE ImVec2 GetRange() const noexcept { return this->m_Range; }
         OV_FORCEINLINE bool IsPlaying() const noexcept { return this->m_Play; }
-        void NeedUpdate(const bool need = true) noexcept;
+        OV_FORCEINLINE uint32_t GetCurrentFrame() const noexcept { return this->m_Frame; };
+        OV_FORCEINLINE void SetFramerate(const uint8_t frameRate) noexcept { this->Pause(); this->m_FrameRate = frameRate; this->Play(); }
+        OV_FORCEINLINE float GetPlaybackFramerate() const noexcept { return this->m_RealFramerate; }
 
         // Play/Pause functions
         OV_FORCEINLINE void Play() noexcept;
@@ -57,7 +62,6 @@ namespace Core
         OV_FORCEINLINE void GoFirstFrame() noexcept;
         OV_FORCEINLINE void GoLastFrame() noexcept;
         OV_FORCEINLINE void SetFrame() noexcept;
-        OV_FORCEINLINE uint32_t GetCurrentFrame() const noexcept;
 
         void BackgroundTimeUpdate() noexcept;
         
