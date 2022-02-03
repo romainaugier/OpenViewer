@@ -146,6 +146,11 @@ public:
         level = newLevel;
     }
 
+    inline char GetLevel() const noexcept
+    {
+        return this->level;
+    }
+
     inline void SetLogFile(const char* logFilePath) noexcept
     {
         this->logFile = fopen(logFilePath, "a");

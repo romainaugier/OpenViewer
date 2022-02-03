@@ -70,12 +70,19 @@ namespace Core
 				}
 				else if (Utils::Fs::IsImage(it.value()))
 				{
+					const auto startFileSeqDetection = this->m_Profiler->Start();
+
 					Utils::Fs::FileSequence fileSeq;
 					Utils::Fs::GetFileSequenceFromFile(fileSeq, it.value());
+
+					const auto endFileSeqDetection = this->m_Profiler->End();
+					this->m_Profiler->Time("File Sequence Detection", startFileSeqDetection, endFileSeqDetection);
 
 					if (fileSeq.size() > 1)
 					{
 						this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : File sequence detected");
+
+						const auto fileConstructionStart = this->m_Profiler->Start();
 
 						std::vector<Image> images;
 						images.reserve(fileSeq.size());
@@ -101,6 +108,11 @@ namespace Core
 
 							++imageIndex;
 						}
+
+						const auto fileConstructionEnd = this->m_Profiler->End();
+						this->m_Profiler->Time("File Sequence Construction", fileConstructionStart, fileConstructionEnd);
+
+						const auto mediaConstructionStart = this->m_Profiler->End();
 
 						if (Utils::Fs::IsOpenEXR(fileSeq[0].first))
 						{
@@ -131,50 +143,13 @@ namespace Core
 
 							this->m_Medias[this->m_MediaCount] = newMedia;
 						}
+
+						const auto mediaConstructionEnd = this->m_Profiler->End();
+						this->m_Profiler->Time("Media Construction", mediaConstructionStart, mediaConstructionEnd);
 					}
 					else
 					{
-						this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : Single image detected");
-
-						std::vector<Image> image;
-
-						image.emplace_back(it.value());
-
-						const uint64_t biggestImageByteSize = image[0].m_Stride;
-						const uint64_t totalByteSize = biggestImageByteSize;
-
-						this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loaded : %s", it.value().c_str());
-						
-						if (Utils::Fs::IsOpenEXR(it.value()))
-						{
-							EXRSequence* newMedia = new EXRSequence(it.value(), this->m_MediaCount);
-							newMedia->SetID(this->m_MediaCount);
-							newMedia->SetImages(image);
-							newMedia->SetLayers();
-							newMedia->SetRange(ImVec2(0, 1));
-							newMedia->SetTotalByteSize(totalByteSize);
-							newMedia->SetBiggestImageSize(biggestImageByteSize);
-
-							this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Found layers : ");
-							for (const auto& layer : newMedia->GetLayers()) 
-							{
-								this->m_Logger->Log(LogLevel_Debug, "%s (channels : %s)", layer.first.c_str(), layer.second.c_str());
-							}
-
-
-							this->m_Medias[this->m_MediaCount] = newMedia;
-						}
-						else
-						{
-							ImageSequence* newMedia = new ImageSequence(it.value(), this->m_MediaCount);
-							newMedia->SetID(this->m_MediaCount);
-							newMedia->SetImages(image);
-							newMedia->SetRange(ImVec2(0, 1));
-							newMedia->SetTotalByteSize(totalByteSize);
-							newMedia->SetBiggestImageSize(biggestImageByteSize);
-
-							this->m_Medias[this->m_MediaCount] = newMedia;
-						}
+						goto singleimage;
 					}
 
 					++it;
@@ -203,12 +178,19 @@ namespace Core
 			{	
 				if (this->m_AutoDetectFileSequence)
 				{
+					const auto startFileSeqDetection = this->m_Profiler->Start();
+
 					Utils::Fs::FileSequence fileSeq;
 					Utils::Fs::GetFileSequenceFromFile(fileSeq, cleanMediaPath);
+
+					const auto endFileSeqDetection = this->m_Profiler->End();
+					this->m_Profiler->Time("File Sequence Detection", startFileSeqDetection, endFileSeqDetection);
 
 					if (fileSeq.size() > 1)
 					{
 						this->m_Logger->Log(LogLevel_Diagnostic, "[LOADER] : File sequence detected");
+
+						const auto fileConstructionStart = this->m_Profiler->Start();
 
 						std::vector<Image> images;
 						images.reserve(fileSeq.size());
@@ -229,6 +211,11 @@ namespace Core
 
 							++imageIndex;
 						}
+						
+						const auto fileConstructionEnd = this->m_Profiler->End();
+						this->m_Profiler->Time("File Sequence Construction", fileConstructionStart, fileConstructionEnd);
+
+						const auto mediaConstructionStart = this->m_Profiler->Start();
 
 						if (Utils::Fs::IsOpenEXR(cleanMediaPath))
 						{
@@ -239,15 +226,18 @@ namespace Core
 							newMedia->SetRange(ImVec2(0, imageIndex));
 							newMedia->SetTotalByteSize(totalByteSize);
 							newMedia->SetBiggestImageSize(biggestImageByteSize);
-
-							std::stringstream foundLayers;
-
-							for (const auto& layer : newMedia->GetLayers()) 
-							{
-								foundLayers << layer.first << " (channels : " << layer.second << ")\n";
-							}
 							
-							this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Found layers : \n%s", foundLayers.str().c_str());
+							if (this->m_Logger->GetLevel() & LogLevel_Debug)
+							{
+								std::stringstream foundLayers;
+
+								for (const auto& layer : newMedia->GetLayers()) 
+								{
+									foundLayers << layer.first << " (channels : " << layer.second << ")\n";
+								}
+								
+								this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Found layers : \n%s", foundLayers.str().c_str());
+							}
 
 							this->m_Medias[this->m_MediaCount] = newMedia;
 						}
@@ -262,6 +252,9 @@ namespace Core
 
 							this->m_Medias[this->m_MediaCount] = newMedia;
 						}
+
+						const auto mediaConstructionEnd = this->m_Profiler->End();
+						this->m_Profiler->Time("Media Construction", mediaConstructionStart, mediaConstructionEnd);
 					}
 					else
 					{
@@ -293,14 +286,17 @@ namespace Core
 						newMedia->SetTotalByteSize(totalByteSize);
 						newMedia->SetBiggestImageSize(biggestImageByteSize);
 
-						std::stringstream foundLayers;
-
-						for (const auto& layer : newMedia->GetLayers()) 
+						if (this->m_Logger->GetLevel() & LogLevel_Debug)
 						{
-							foundLayers << layer.first << " (channels : " << layer.second << ")\n";
+							std::stringstream foundLayers;
+
+							for (const auto& layer : newMedia->GetLayers()) 
+							{
+								foundLayers << layer.first << " (channels : " << layer.second << ")\n";
+							}
+							
+							this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Found layers : \n%s", foundLayers.str().c_str());
 						}
-						
-						this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Found layers : \n%s", foundLayers.str().c_str());
 
 						this->m_Medias[this->m_MediaCount] = newMedia;
 					}
