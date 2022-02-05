@@ -84,6 +84,8 @@ namespace Core
 
 						const auto fileConstructionStart = this->m_Profiler->Start();
 
+						Image firstImage(fileSeq[0].first);
+
 						std::vector<Image> images;
 						images.reserve(fileSeq.size());
 
@@ -94,7 +96,8 @@ namespace Core
 
 						for (const auto& fileSeqItem : fileSeq)
 						{
-							images.emplace_back(fileSeqItem.first);
+							firstImage.m_Path = fileSeqItem.first;
+							images.emplace_back(firstImage);
 
 							this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loaded %s", fileSeqItem.first.c_str());
 
@@ -192,6 +195,8 @@ namespace Core
 
 						const auto fileConstructionStart = this->m_Profiler->Start();
 
+						Image firstImage(fileSeq[0].first);
+
 						std::vector<Image> images;
 						images.reserve(fileSeq.size());
 
@@ -199,7 +204,9 @@ namespace Core
 
 						for (const auto& fileSeqItem : fileSeq)
 						{
-							images.emplace_back(fileSeqItem.first);
+							firstImage.m_Path = fileSeqItem.first;
+
+							images.emplace_back(firstImage);
 
 							this->m_Logger->Log(LogLevel_Debug, "[LOADER] : Loaded %s", fileSeqItem.first.c_str());
 
