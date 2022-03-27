@@ -66,14 +66,16 @@ namespace Core
 
     void EXRSequence::SetLayers() noexcept
     {
-        Imf::MultiPartInputFile file(this->m_Path.c_str());
+        Imf::MultiPartInputFile multiPartInputFile(this->m_Path.c_str());
 
-        this->m_IsMultipart = file.parts() > 1;
+        this->m_IsMultipart = multiPartInputFile.parts() > 1;
 
         uint16_t layerCount = 0;
 
         // Simple and dirty method to retrieve the basic rgb/rgba/z channels and approximate the number of layers
         uint8_t rgbOrRgbaChannels = 0;
+
+        bool rChannel = false; bool gChannel = false; bool bChannel = false;
 
         const std::regex singleRChannelPattern("^R$");
         const std::regex singleGChannelPattern("^G$");
@@ -81,16 +83,18 @@ namespace Core
         const std::regex singleAChannelPattern("^A$");
         const std::regex zDepthChannelPattern("^Z$|^Z\\.|Z_1|^z$|^z\\.|z_1");
 
-        for (uint32_t i = 0; i < file.parts(); i++)
+        for (uint32_t i = 0; i < multiPartInputFile.parts(); i++)
         {
-            for (auto f = file.header(i).channels().begin(); f != file.header(i).channels().end(); ++f)
-            {
-                if (std::regex_search(f.name(), singleRChannelPattern)) ++rgbOrRgbaChannels;
-                else if (std::regex_search(f.name(), singleGChannelPattern)) ++rgbOrRgbaChannels;
-                else if (std::regex_search(f.name(), singleBChannelPattern)) ++rgbOrRgbaChannels;
-                else if (std::regex_search(f.name(), singleAChannelPattern)) ++rgbOrRgbaChannels;
-                else if (std::regex_search(f.name(), zDepthChannelPattern)) this->m_Layers.emplace_back(std::make_pair(f.name(), f.name()));
-
+            for (auto f = multiPartInputFile.header(i).channels().begin(); f != multiPartInputFile.header(i).channels().end(); ++f)
+            {   
+                if (multiPartInputFile.header(i).name().size() == 0)
+                {
+                    if (std::regex_search(f.name(), singleRChannelPattern)) { ++rgbOrRgbaChannels; rChannel = true; printf("R\n"); }
+                    else if (std::regex_search(f.name(), singleGChannelPattern)) { ++rgbOrRgbaChannels; gChannel = true; printf("G\n"); }
+                    else if (std::regex_search(f.name(), singleBChannelPattern)) { ++rgbOrRgbaChannels; bChannel = true; printf("B\n"); }
+                    else if (std::regex_search(f.name(), singleAChannelPattern)) { ++rgbOrRgbaChannels; printf("A\n"); }
+                    else if (std::regex_search(f.name(), zDepthChannelPattern)) this->m_Layers.emplace_back(std::make_pair(f.name(), f.name()));
+                }
                 ++layerCount;
             }
         }
@@ -106,6 +110,9 @@ namespace Core
         {
             this->m_Layers.insert(this->m_Layers.begin(), std::make_pair("Beauty", "R;G;B;A"));
         }
+        else if (rChannel && !gChannel && !bChannel) this->m_Layers.insert(this->m_Layers.begin(), std::make_pair("Beauty", "R"));
+        else if (!rChannel && gChannel && !bChannel) this->m_Layers.insert(this->m_Layers.begin(), std::make_pair("Beauty", "G"));
+        else if (!rChannel && !gChannel && bChannel) this->m_Layers.insert(this->m_Layers.begin(), std::make_pair("Beauty", "B"));
 
         const std::regex rChannelPattern("\\.R|^R$|\\.R\\.");
         const std::regex gChannelPattern("\\.G|^G$|\\.G\\.");
@@ -115,21 +122,25 @@ namespace Core
         const std::regex yChannelPattern("\\.Y|^Y$|\\.Y\\.");
         const std::regex zChannelPattern("\\.Z|^Z$|\\.Z\\.");
 
-        for (uint32_t i = 0; i < file.parts(); i++)
+        for (uint32_t i = 0; i < multiPartInputFile.parts(); i++)
         {
             std::set<std::string> layers;
 
-            file.header(i).channels().layers(layers);
+            multiPartInputFile.header(i).channels().layers(layers);
 
             std::string channelPrefix;
 
-            if (file.header(i).hasName())
+            if (multiPartInputFile.header(i).hasName())
             {
-                channelPrefix += file.header(i).name();
+                channelPrefix += multiPartInputFile.header(i).name();
                 channelPrefix += ".";
             }
+            else
+            {
+                continue;
+            }
 
-            if (file.header(i).hasView())
+            if (multiPartInputFile.header(i).hasView())
             {
 
             }
@@ -138,7 +149,7 @@ namespace Core
             {
                 Imf::ChannelList::ConstIterator layerBegin, layerEnd;
 
-                file.header(i).channels().channelsInLayer(layer, layerBegin, layerEnd);
+                multiPartInputFile.header(i).channels().channelsInLayer(layer, layerBegin, layerEnd);
 
                 std::vector<std::string> channelNamesSorted; channelNamesSorted.resize(4);
 

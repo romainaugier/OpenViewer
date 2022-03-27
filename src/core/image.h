@@ -107,7 +107,15 @@ namespace Core
 				this->m_Xres = spec.full_width;
 				this->m_Yres = spec.full_height;
 				this->m_Channels = spec.nchannels;
-				this->m_Size = this->m_Xres * this->m_Yres * (this->m_Channels > 4 ? 4 : this->m_Channels);
+
+				if (this->m_Channels < 3)
+				{
+					this->m_Size = this->m_Xres * this->m_Yres * 3;
+				}
+				else
+				{
+					this->m_Size = this->m_Xres * this->m_Yres * (this->m_Channels > 4 ? 4 : this->m_Channels);
+				}
 
 				if (spec.format == OIIO::TypeDesc::HALF)
 				{
