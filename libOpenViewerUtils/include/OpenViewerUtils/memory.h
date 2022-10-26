@@ -10,30 +10,30 @@
 LOVU_NAMESPACE_BEGIN 
 
 // Aligned memory allocation function
-LOVU_DLL void* mem_alloc(const size_t size, const size_t align) noexcept;
+LOVU_DLL void* _mem_alloc(const size_t size, const size_t align) noexcept;
 
 // Aligned memory free function
-LOVU_DLL void mem_free(void* ptr) noexcept;
+LOVU_DLL void _mem_free(void* ptr) noexcept;
 
 // Helper macros to find where memory is allocated and freed
 // To use them, define LOVU_MEM_DEBUG
 #ifdef LOVU_MEM_DEBUG
 
 #define mem_alloc(size, align) do { \
-    mem_alloc(size, align); \
+    _mem_alloc(size, align); \
     spdlog::debug("[MEM DEBUG] : Allocated {} bytes (L:{}|F:{})", size, __LINE__, __FILE__); \
 } while(0)
 
 #define mem_free(ptr) do { \
-    mem_free(ptr);
+    _mem_free(ptr);
     spdlog::debug("[MEM DEBUG] : Freed ptr {:p} (L:{}|F:{})", ptr, __LINE__, __FILE__); \
 } while(0)
 
 #else
 
-#define mem_alloc(size, align) mem_alloc(size, align)
+#define mem_alloc(size, align) _mem_alloc(size, align)
 
-#define mem_free(ptr) mem_free(ptr)
+#define mem_free(ptr) _mem_free(ptr)
 
 #endif
 

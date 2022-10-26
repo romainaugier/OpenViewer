@@ -3,3 +3,8 @@
 # All rights reserved.
 
 add_subdirectory(src)
+
+if(DEFINED RUN_TESTS)
+    message(STATUS "Building libOpenViewerUtils tests")
+    add_subdirectory(tests)
+endif()

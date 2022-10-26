@@ -33,7 +33,7 @@ LOVU_FORCEINLINE LOVU_DLL bool ends_with(const std::string_view& str, const std:
 LOVU_FORCEINLINE LOVU_DLL bool starts_with(const std::string& str, const std::string& prefix) noexcept;
 LOVU_FORCEINLINE LOVU_DLL bool starts_with(const std::string_view& str, const std::string& prefix) noexcept;
 
-// Removes the spaces within a string at the beginning and the end
+// Removes the trailing spaces within a string
 LOVU_DLL void strip(std::string& s) noexcept;
 
 // Replaces a char occurence with another char within a string

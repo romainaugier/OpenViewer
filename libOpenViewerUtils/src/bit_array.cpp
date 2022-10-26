@@ -7,8 +7,13 @@
 
 LOVU_NAMESPACE_BEGIN
 
-bit_array::bit_array(const size_t& size)
+bit_array::bit_array()
 {
+    m_array = static_cast<uint64_t*>(mem_alloc(RESERVE_BITS(64), 32));
+}
+
+bit_array::bit_array(const size_t& size)
+{   
     m_array = static_cast<uint64_t*>(mem_alloc(RESERVE_BITS(size), 32));
 }
 
@@ -50,7 +55,7 @@ void bit_array::resize(const size_t& new_size) noexcept
     {
         void* new_ptr = mem_alloc(RESERVE_BITS(new_size), 32);
 
-        memcpy(new_ptr, m_array, get_size());
+        memcpy(new_ptr, m_array, new_size);
 
         mem_free(m_array);
 

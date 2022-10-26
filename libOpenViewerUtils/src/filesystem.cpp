@@ -20,83 +20,333 @@ LOVU_FORCEINLINE size_t file_count_in_directory(const std::string_view& director
     return static_cast<size_t>(std::distance(std::filesystem::directory_iterator(directory_path), std::filesystem::directory_iterator{}));
 }
 
-LOVU_DLL void get_file_sequence_from_file(file_sequence& file_seq, const std::string& file_path) noexcept
+LOVU_DLL std::string get_file_sequence_from_file(const std::string& file_path) noexcept
 {
-    const std::filesystem::path parent_dir = std::filesystem::path(file_path).parent_path();
-    const std::string base_file_name = std::filesystem::path(file_path).filename().string();
-    const std::string base_file_stem = std::filesystem::path(file_path).stem().string();
-    const std::string base_file_extension = std::filesystem::path(file_path).extension().string();
-    
-    file_sequence tmp_file_seq;
-    tmp_file_seq.reserve(file_count_in_directory(parent_dir.string()));
-
     const std::regex num_pattern("\\d+");
 
-    auto base_num_begin = std::sregex_iterator(base_file_stem.begin(), base_file_stem.end(), num_pattern);
-    auto base_num_end = std::sregex_iterator();
-
-    uint32_t base_file_frame_num = UINT32_MAX;
+    const std::filesystem::path parent_directory = std::filesystem::path(file_path).parent_path();
+    const std::string base_file_name = std::filesystem::path(file_path).filename().string();
     
-    for (const auto& file : std::filesystem::directory_iterator(parent_dir))
+    const std::string filename = std::filesystem::path(file_path).filename().string();
+
+
+    const auto matches_begin = std::sregex_iterator(filename.begin(), filename.end(), num_pattern);
+    const auto matches_end = std::sregex_iterator();
+
+    std::vector<std::string> entries_name_transformed;
+
+    bool found_match = false;
+    int32_t match_transformed_entry_index = -1;
+
+    for(std::sregex_iterator it = matches_begin; it != matches_end; ++it)
     {
-        const std::string it_file_name = std::filesystem::path(file).filename().string();
+        const std::smatch match = *it;
+        const uint8_t padding = match.length();
 
-        if (it_file_name == base_file_name) continue;
+        std::string dash = "";
 
-        const std::string it_file_stem = std::filesystem::path(file).stem().string();
-        const std::string it_file_extension = std::filesystem::path(file).extension().string();
+        for(uint8_t i = 0; i < padding; i++) dash += "#";
 
-        auto it_num_begin = std::sregex_iterator(it_file_stem.begin(), it_file_stem.end(), num_pattern);
-        auto it_num_end = std::sregex_iterator();
+        entries_name_transformed.emplace_back(fmt::format("{}{}{}",
+                                                        filename.substr(0, match.position()),
+                                                        dash,
+                                                        filename.substr(match.position() + match.length())));
+    }
 
-        bool found_another_file = false;
+    for(const auto& new_entry : std::filesystem::directory_iterator(parent_directory))
+    {
+        if(new_entry.is_directory()) continue;
 
-        for (std::sregex_iterator it = it_num_begin; it != it_num_end; ++it)
+        const std::string new_filename = new_entry.path().filename().string();
+
+        if(new_filename == filename) continue;
+
+        uint8_t j = 0;
+
+        const auto new_matches_begin = std::sregex_iterator(new_filename.begin(), 
+                                                            new_filename.end(), 
+                                                            num_pattern);
+        const auto new_matches_end = std::sregex_iterator();
+
+        for(std::sregex_iterator it = new_matches_begin; it != new_matches_end; ++it)
         {
-            const std::smatch it_match = *it;
-            const std::string it_match_str = it_match.str();
-            const std::regex it_match_pattern_regex(it_match_str);
+            const std::smatch new_match = *it;
+            const uint8_t padding = new_match.length();
 
-            std::string it_match_sub = it_file_stem;
-            it_match_sub.replace(it_match.position(), it_match.length(), "#");
+            std::string dash = "";
 
-            for (std::sregex_iterator base = base_num_begin; base != base_num_end; ++base)
+            for(uint8_t i = 0; i < padding; i++) dash += "#";
+
+            const std::string new_entry_name_transformed = fmt::format("{}{}{}",
+                                                                    new_filename.substr(0, new_match.position()),
+                                                                    dash,
+                                                                    new_filename.substr(new_match.position() + new_match.length()));
+
+            if(std::find(entries_name_transformed.begin(), 
+                        entries_name_transformed.end(), 
+                        new_entry_name_transformed) != entries_name_transformed.end())
             {
-                const std::smatch base_match = *base;
-                const std::string base_match_str = base_match.str();
-                const std::regex base_match_pattern_regex(base_match_str);
+                found_match = true;
+                match_transformed_entry_index = j;
+                break;
+            }
 
+            j++;
+        }
 
-                std::string base_match_sub = base_file_stem;
-                base_match_sub.replace(base_match.position(), base_match.length(), "#");
+        if(found_match)
+        {
+            break;
+        }
+    }
 
-                if (base_match_sub == it_match_sub)
+    if(found_match)
+    {
+        const std::string_view file_sequence_entry = entries_name_transformed[match_transformed_entry_index];
+
+        int32_t fileseq_count = 0;
+        int32_t fileseq_start = INT32_MAX;
+        int32_t fileseq_end = INT32_MIN;
+
+        for(const auto& new_entry : std::filesystem::directory_iterator(parent_directory))
+        {
+            if(new_entry.is_directory()) continue;
+
+            const std::string new_filename = new_entry.path().filename().string();
+
+            const auto new_matches_begin = std::sregex_iterator(new_filename.begin(), 
+                                                                new_filename.end(), 
+                                                                num_pattern);
+            const auto new_matches_end = std::sregex_iterator();
+
+            for(std::sregex_iterator it = new_matches_begin; it != new_matches_end; ++it)
+            {
+                const std::smatch new_match = *it;
+                const int32_t match_int = std::stoi(new_match.str());
+                const uint8_t padding = new_match.length();
+
+                std::string dash = "";
+
+                for(uint8_t i = 0; i < padding; i++) dash += "#";
+
+                const std::string new_entry_name_transformed = fmt::format("{}{}{}",
+                                                                        new_filename.substr(0, new_match.position()),
+                                                                        dash,
+                                                                        new_filename.substr(new_match.position() + new_match.length()));
+
+                if(new_entry_name_transformed == file_sequence_entry)
                 {
-                    const uint32_t it_frame_num = std::stoi(it_match_str);
-
-                    tmp_file_seq.emplace_back(std::make_pair(str::clean_os_path(file.path().string()), it_frame_num));
-
-                    found_another_file = true;
-
-                    if (base_file_frame_num == UINT32_MAX) 
+                    if(match_int > fileseq_end)
                     {
-                        base_file_frame_num = std::stoi(base_match_str);
-                        tmp_file_seq.emplace_back(std::make_pair(str::clean_os_path(file_path), base_file_frame_num));
+                        fileseq_end = match_int;
                     }
+
+                    if(match_int < fileseq_start)
+                    {
+                        fileseq_start = match_int;
+                    }
+
+                    fileseq_count++;
 
                     break;
                 }
             }
+        }
 
-            if (found_another_file) break;
+        return fmt::format("seq?{} [{}-{}]", file_sequence_entry, 
+                                            fileseq_start, 
+                                            fileseq_end);
+    }
+
+    return "";
+}
+
+LOVU_DLL void get_filenames_from_dir(std::vector<std::string>& file_names, 
+                                     const std::string& directory_path) noexcept
+{
+    const std::regex num_pattern("\\d+");
+
+    const uint32_t num_files = file_count_in_directory(directory_path);
+
+    std::vector<std::string> files;
+    files.reserve(num_files);
+    std::vector<std::string> processed_files;
+    processed_files.reserve(num_files);
+
+    if(!exists(directory_path)) return;
+
+    for(const auto& entry : std::filesystem::directory_iterator(directory_path))
+    {
+        if(entry.is_directory()) 
+        {
+            continue;
+        }
+
+        const std::string filename = entry.path().filename().string();
+
+        if(std::find(processed_files.begin(), 
+                     processed_files.end(), 
+                     filename) != processed_files.end())
+        {
+            continue;
+        }
+
+        const auto matches_begin = std::sregex_iterator(filename.begin(), filename.end(), num_pattern);
+        const auto matches_end = std::sregex_iterator();
+
+        std::vector<std::string> entries_name_transformed;
+
+        bool found_match = false;
+        int32_t match_transformed_entry_index = -1;
+
+        for(std::sregex_iterator it = matches_begin; it != matches_end; ++it)
+        {
+            const std::smatch match = *it;
+            const uint8_t padding = match.length();
+
+            std::string dash = "";
+
+            for(uint8_t i = 0; i < padding; i++) dash += "#";
+
+            entries_name_transformed.emplace_back(fmt::format("{}{}{}",
+                                                              filename.substr(0, match.position()),
+                                                              dash,
+                                                              filename.substr(match.position() + match.length())));
+        }
+
+        for(const auto& new_entry : std::filesystem::directory_iterator(directory_path))
+        {
+            if(new_entry.is_directory()) continue;
+
+            const std::string new_filename = new_entry.path().filename().string();
+
+            if(new_filename == filename) continue;
+
+            uint8_t j = 0;
+
+            const auto new_matches_begin = std::sregex_iterator(new_filename.begin(), 
+                                                                new_filename.end(), 
+                                                                num_pattern);
+            const auto new_matches_end = std::sregex_iterator();
+
+            for(std::sregex_iterator it = new_matches_begin; it != new_matches_end; ++it)
+            {
+                const std::smatch new_match = *it;
+                const uint8_t padding = new_match.length();
+
+                std::string dash = "";
+
+                for(uint8_t i = 0; i < padding; i++) dash += "#";
+
+                const std::string new_entry_name_transformed = fmt::format("{}{}{}",
+                                                                           new_filename.substr(0, new_match.position()),
+                                                                           dash,
+                                                                           new_filename.substr(new_match.position() + new_match.length()));
+
+                if(std::find(entries_name_transformed.begin(), 
+                             entries_name_transformed.end(), 
+                             new_entry_name_transformed) != entries_name_transformed.end())
+                {
+                    found_match = true;
+                    match_transformed_entry_index = j;
+                    break;
+                }
+
+                j++;
+            }
+
+            if(found_match)
+            {
+                break;
+            }
+        }
+
+        if(found_match)
+        {
+            const std::string_view file_sequence_entry = entries_name_transformed[match_transformed_entry_index];
+
+            int32_t fileseq_count = 0;
+            int32_t fileseq_start = INT32_MAX;
+            int32_t fileseq_end = INT32_MIN;
+
+            for(const auto& new_entry : std::filesystem::directory_iterator(directory_path))
+            {
+                if(new_entry.is_directory()) continue;
+
+                const std::string new_filename = new_entry.path().filename().string();
+
+                if(std::find(processed_files.begin(), 
+                             processed_files.end(), 
+                             new_filename) != processed_files.end())
+                    {
+                        continue;
+                    }
+
+                const auto new_matches_begin = std::sregex_iterator(new_filename.begin(), 
+                                                                    new_filename.end(), 
+                                                                    num_pattern);
+                const auto new_matches_end = std::sregex_iterator();
+
+                for(std::sregex_iterator it = new_matches_begin; it != new_matches_end; ++it)
+                {
+                    const std::smatch new_match = *it;
+                    const int32_t match_int = std::stoi(new_match.str());
+                    const uint8_t padding = new_match.length();
+
+                    std::string dash = "";
+
+                    for(uint8_t i = 0; i < padding; i++) dash += "#";
+
+                    const std::string new_entry_name_transformed = fmt::format("{}{}{}",
+                                                                               new_filename.substr(0, new_match.position()),
+                                                                               dash,
+                                                                               new_filename.substr(new_match.position() + new_match.length()));
+
+                    if(new_entry_name_transformed == file_sequence_entry)
+                    {
+                        if(match_int > fileseq_end)
+                        {
+                            fileseq_end = match_int;
+                        }
+
+                        if(match_int < fileseq_start)
+                        {
+                            fileseq_start = match_int;
+                        }
+
+                        fileseq_count++;
+
+                        if(std::find(processed_files.begin(),
+                                     processed_files.end(),
+                                     new_filename) == processed_files.end())
+                        {
+                            processed_files.emplace_back(std::move(new_filename));
+                        }
+
+                        break;
+                    }
+                }
+            }
+
+            files.emplace_back(fmt::format("seq?{} [{}-{}]", file_sequence_entry, 
+                                                             fileseq_start, 
+                                                             fileseq_end));
+        }
+        else
+        {
+            files.emplace_back(filename);
+        }
+
+        if(std::find(processed_files.begin(),
+                     processed_files.end(),
+                     filename) == processed_files.end())
+        {
+            processed_files.emplace_back(filename);
         }
     }
 
-    tmp_file_seq.shrink_to_fit();
-
-    std::sort(tmp_file_seq.begin(), tmp_file_seq.end(), [&](const file_sequence_item& a, const file_sequence_item& b){ return a.second < b.second; });
-
-    file_seq = std::move(tmp_file_seq);
+    files.shrink_to_fit();
+    file_names = std::move(files);
 }
 
 LOVU_DLL bool is_image(const std::string& path) noexcept
@@ -155,7 +405,7 @@ LOVU_DLL std::string expand_from_executable_dir(const std::string& path_to_expan
     return cwd + path_to_expand;
 }
 
-LOVU_DLL std::string get_documents_folder() noexcept
+LOVU_DLL std::string get_documents_folder_path() noexcept
 {
 #ifdef LOVU_WIN
     PWSTR ppsz_path;
@@ -171,6 +421,10 @@ LOVU_DLL std::string get_documents_folder() noexcept
         CoTaskMemFree(ppsz_path); 
         return std::string(my_path.begin(), my_path.end());
     }
+    else
+    {
+        return "";
+    }
 #else if LOVU_LINUX
 // https://stackoverflow.com/questions/2910377/get-home-directory-in-linux
     const char* homedir;
@@ -184,6 +438,11 @@ LOVU_DLL std::string get_documents_folder() noexcept
 
     return doc_dir;
 #endif
+}
+
+LOVU_DLL bool exists(const std::string& path) noexcept
+{
+    return std::filesystem::exists(std::filesystem::path(path));
 }
 
 FS_NAMESPACE_END

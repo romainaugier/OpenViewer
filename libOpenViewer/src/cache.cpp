@@ -2,7 +2,7 @@
 // Copyright (c) 2022 - Present Romain Augier
 // All rights reserved.
 
-#include "cache.h"
+#include "OpenViewer/cache.h"
 #include "OpenViewerUtils/memory.h"
 
 LOV_NAMESPACE_BEGIN
@@ -38,6 +38,23 @@ Cache::~Cache()
     flush();
 
     spdlog::debug("[CACHE] : Released cache");
+}
+
+uint32_t add(const uint32_t hash, Media* item, const uint32_t frame) noexcept;
+
+void Cache::remove(const uint32_t hash) noexcept
+{
+
+}
+
+void Cache::flush() noexcept
+{
+
+}
+
+void Cache::resize(const size_t new_size) noexcept
+{
+
 }
 
 LOV_NAMESPACE_END

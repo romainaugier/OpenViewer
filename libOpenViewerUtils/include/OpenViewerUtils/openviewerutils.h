@@ -76,5 +76,12 @@
 
 #define CAST(type, var) static_cast<type>(var)
 
+#define BIT(bit) 1 << bit
+
+#define GET_VARNAME(var) (#var)
+#define DEBUG_VAR(var) spdlog::info("{} = {}", #var, var)
+
+#define STRINGIFY(x) #x
+
 #define LOVU_NAMESPACE_BEGIN namespace lovu {
 #define LOVU_NAMESPACE_END }

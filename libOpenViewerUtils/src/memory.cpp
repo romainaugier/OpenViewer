@@ -7,7 +7,7 @@
 
 LOVU_NAMESPACE_BEGIN
 
-LOVU_DLL void* mem_alloc(const size_t size, const size_t align) noexcept
+LOVU_DLL void* _mem_alloc(const size_t size, const size_t align) noexcept
 {
     if(size == 0) return nullptr;
 
@@ -24,7 +24,7 @@ LOVU_DLL void* mem_alloc(const size_t size, const size_t align) noexcept
     }
 }
 
-LOVU_DLL void mem_free(void* ptr) noexcept
+LOVU_DLL void _mem_free(void* ptr) noexcept
 {
     if(ptr) _mm_free(ptr);
 }

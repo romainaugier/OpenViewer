@@ -4,18 +4,16 @@
 
 # libOpenViewer library #
 
-set(LIBNAME libOpenViewer)
-
 file(GLOB_RECURSE src_files *.cpp)
 
 add_definitions(-DLOV_BUILD_DLL -DSPDLOG_FMT_EXTERNAL)
 
-add_library(${LIBNAME} SHARED ${src_files} ${h_files})
-target_link_libraries(${LIBNAME} ${CONAN_LIBS})
+add_library(${OPENVIEWER_LIBS} SHARED ${src_files} ${h_files})
+target_link_libraries(${OPENVIEWER_LIBS} ${CONAN_LIBS} ${OPENVIEWERUTILS_LIBS})
 
 add_custom_command(
-    TARGET ${LIBNAME}
+    TARGET ${OPENVIEWER_LIBS}
     POST_BUILD 
     COMMAND ${CMAKE_COMMAND} -E copy
-    $<TARGET_FILE:${LIBNAME}> ${CMAKE_SOURCE_DIR}/bin
+    $<TARGET_FILE:${OPENVIEWER_LIBS}> ${CMAKE_SOURCE_DIR}/bin
 )

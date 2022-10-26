@@ -9,7 +9,7 @@
 
 #include <string>
 #include <string_view>
-#include <filesystem.h>
+#include <filesystem>
 
 LOV_NAMESPACE_BEGIN
 
@@ -17,8 +17,8 @@ LOV_NAMESPACE_BEGIN
 // All single channel media (for example, an exr file with only the R channel) will be treated as an rgb media
 enum Format_
 {
-    Format_RGB = 0x1,
-    Format_RGBA = 0x2
+    Format_RGB = BIT(0),
+    Format_RGBA = BIT(1)
 };
 
 // Helper macro the deduce the format given the number of channels
@@ -28,11 +28,11 @@ enum Format_
 // If the type cannot be deduced, it will be half float by default
 enum Type_
 {
-    Type_HALF = 0x1,
-    Type_FLOAT = 0x2,
-    Type_U8 = 0x4,
-    Type_U16 = 0x8,
-    Type_U32 = 0x10
+    Type_HALF = BIT(0),
+    Type_FLOAT = BIT(1),
+    Type_U8 = BIT(2),
+    Type_U16 = BIT(3),
+    Type_U32 = BIT(4)
 };
 
 // Helper macro to get the byte size of a type
@@ -153,12 +153,12 @@ public:
     virtual void set_cached_at_frame(const uint32_t frame, const bool cached = true) noexcept override;
 
 private:
-    int is_cached : 1;
+    bool m_is_cached : 1;
 };
 
 // Image sequence
 // The path will be specific for a sequence, and formatted like this
-// fs#D:/path/to/image_sequence_#.exr 100-150n
+// seq#D:/path/to/image_sequence_#.exr 100-150
 class LOV_DLL ImageSequence : public Media
 {
     ImageSequence(const std::string& path);
@@ -174,7 +174,7 @@ class LOV_DLL ImageSequence : public Media
     virtual void set_cached_at_frame(const uint32_t frame, const bool cached = true) noexcept override;
 
 private:
-    lovu::bit_array is_cached;
+    lovu::bit_array m_is_cached;
 };
 
 // Any video
@@ -193,26 +193,26 @@ class LOV_DLL Video : public Media
     virtual void set_cached_at_frame(const uint32_t frame, const bool cached = true) noexcept override;
 
 private:
-    lovu::bit_array is_cached;
+    lovu::bit_array m_is_cached;
 };  
 
 // Not implemented for now
-class LOV_DLL Audio : public Media
-{
-    Audio(const std::string& path);
+// class LOV_DLL Audio : public Media
+// {
+//     Audio(const std::string& path);
 
-    virtual ~Audio() override;
+//     virtual ~Audio() override;
 
-    virtual uint32_t get_hash_at_frame(const uint32_t frame) const noexcept override;
+//     virtual uint32_t get_hash_at_frame(const uint32_t frame) const noexcept override;
 
-    virtual void load_frame_to_cache(void* cache_address, const uint32_t frame) const noexcept override;
+//     virtual void load_frame_to_cache(void* cache_address, const uint32_t frame) const noexcept override;
 
-    virtual bool is_cached_at_frame(const uint32_t frame) const noexcept override;
+//     virtual bool is_cached_at_frame(const uint32_t frame) const noexcept override;
 
-    virtual void set_cached_at_frame(const uint32_t frame, const bool cached = true) noexcept override;
+//     virtual void set_cached_at_frame(const uint32_t frame, const bool cached = true) noexcept override;
 
-private:
-    lovu::bit_array is_cached;
-};
+// private:
+//     lovu::bit_array m_is_cached;
+// };
 
 LOV_NAMESPACE_END

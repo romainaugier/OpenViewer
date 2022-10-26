@@ -5,31 +5,41 @@
 #pragma once
 
 #include <chrono>
-#include "tsl/robin_map.h"
 
 #include "openviewerutils.h"
 
 LOVU_NAMESPACE_BEGIN
 
-// Very simple profiler to get timings of some actions at runtime to help finding hotspots in the application
-struct LOVU_DLL Profiler
+struct ScopedTimer
 {
-    tsl::robin_map<std::string, float> times;
-    tsl::robin_map<std::string, float> mem_usage;
+    ScopedTimer(std::string title)
+    {
+        this->title = std::move(title);
+        this->start = std::chrono::steady_clock::now();
+    }
 
-    // Adds a memory usage to the profiler
-    LOVU_FORCEINLINE void add_mem_usage(const std::string& name, float memory) noexcept;
+    ~ScopedTimer()
+    {
+        const auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - this->start).count();
+        spdlog::debug("Scoped Timer \"{}\" : {} ms", this->title, elapsed / 1000.0f);
+    }
 
-    // Starts a timer
-    LOVU_FORCEINLINE auto start() const noexcept;
-
-    // Ends a timer
-    LOVU_FORCEINLINE auto end() const noexcept;
-
-    // Adds a time to the profiler
-    LOVU_FORCEINLINE void time(const std::string& name,
-                                const std::chrono::time_point<std::chrono::system_clock>& start, 
-                                const std::chrono::time_point<std::chrono::system_clock>& end) noexcept;
+    std::string title;
+    std::chrono::time_point<std::chrono::steady_clock> start;
 };
+
+#define SCOPED_TIMER(title) lovu::ScopedTimer timer(title)
+#define SCOPED_TIMER_STRINGIFY(title) lovu::ScopedTimer timer(#title)
+
+template<typename F, typename ...Args>
+static auto _func_timer(const char* func_name, 
+                        F&& func, 
+                        Args&&... args)
+{
+    SCOPED_TIMER(func_name);
+    return func(std::forward<Args>(args)...);
+}
+
+#define func_timer(func, ...) _func_timer(#func, func, ##__VA_ARGS__)
 
 LOVU_NAMESPACE_END

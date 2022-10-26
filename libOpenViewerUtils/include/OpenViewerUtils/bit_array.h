@@ -17,6 +17,9 @@ LOVU_NAMESPACE_BEGIN
 class LOVU_DLL bit_array
 {
 public:
+    // Default constructor with a size of 64 bits
+    bit_array();
+
     // Constructs a bit_array
     bit_array(const size_t& size);
 

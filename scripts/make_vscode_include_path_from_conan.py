@@ -30,6 +30,9 @@ def get_conan_packages(file : str) -> list[str]:
     return packages
 
 def find_pkg_include_path(package : str) -> str:
+    if "@" in package:
+        package = package.split("@")[0]
+        
     package_name, package_version = package.split("/")
     
     package_dir = f"{CONAN_PATH}/{package_name}/{package_version}"

@@ -6,7 +6,7 @@ openimageio/2.4@openviewer/1.0
 tsl-robin-map/1.0.1
 glew/2.2.0
 glfw/3.3.7
-ffmpeg/5.0
+nlohmann_json/3.11.2
 
 [generators]
 cmake

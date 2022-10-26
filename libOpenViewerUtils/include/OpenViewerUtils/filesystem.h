@@ -22,9 +22,6 @@ LOVU_NAMESPACE_BEGIN
 
 FS_NAMESPACE_BEGIN
 
-using file_sequence_item = std::pair<std::string, uint32_t>;
-using file_sequence = std::vector<file_sequence_item>;
-
 constexpr char* image_extensions[] = { "exr", "jpg", "jpeg", "bmp", "tif", "tiff", "png",
                                        "raw", "cr2", "arw", "sr2", "nef", "orf", "psd",
                                        "bmp", "ppm", "cin", "dds", "dcm", "dpx", "fits",
@@ -45,8 +42,15 @@ constexpr char* video_extensions[] = { "mp4", "m4p", "m4v", "mov", "qt", "avi", 
 LOVU_FORCEINLINE size_t file_count_in_directory(const std::string& directory_path) noexcept;
 LOVU_FORCEINLINE size_t file_count_in_directory(const std::string_view& directory_path) noexcept;
 
-// Fills a file sequence with file sequence items
-LOVU_DLL void get_file_sequence_from_file(file_sequence& file_sequence, const std::string& file_path) noexcept;
+// Finds if the given file is part of a filesequence, and if so returns a string formatted with necessary infos,
+// like this : seq?D:/path/to/image_sequence_#.exr 100-150
+LOVU_DLL std::string get_file_sequence_from_file(const std::string& file_path) noexcept;
+
+// Finds all available filenames inside a directory, looking for file sequences which will be formatted
+// like this : seq?D:/path/to/image_sequence_#.exr 100-150,
+// and single files
+LOVU_DLL void get_filenames_from_dir(std::vector<std::string>& file_names, 
+                                     const std::string& directory_path) noexcept;
 
 // Checks if the given filepath is an image file
 LOVU_DLL bool is_image(const std::string& path) noexcept;
@@ -61,6 +65,9 @@ LOVU_DLL std::string expand_from_executable_dir(const std::string& path_to_expan
 
 // Returns the path to the documents folder
 LOVU_DLL std::string get_documents_folder_path() noexcept;
+
+// Returns true if the given path exists, whether it is a directory or a file
+LOVU_DLL bool exists(const std::string& path) noexcept;
 
 FS_NAMESPACE_END
 
