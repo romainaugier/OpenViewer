@@ -18,9 +18,9 @@ public:
     ~MediaPool();
 
     // This method does the heavy lifting
-    void add_media(const std::string_view& media_path) noexcept;
+    void add_media(std::string& media_path) noexcept;
 
-    void remove_media(const std::string_view& media_path) noexcept;
+    void remove_media(const std::string& media_path) noexcept;
 
     LOVU_FORCEINLINE media_map get_medias() const noexcept { return this->m_medias; }
 

@@ -7,6 +7,7 @@
 
 int main(int argc, char** argv)
 {
+    SET_SPDLOG_FMT;
     spdlog::set_level(spdlog::level::debug);
     spdlog::info("Starting Settings Test");
 

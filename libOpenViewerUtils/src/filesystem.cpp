@@ -5,6 +5,8 @@
 #include "OpenViewerUtils/filesystem.h"
 
 #include <filesystem>
+#include <locale>
+#include <codecvt>
 
 LOVU_NAMESPACE_BEGIN
 
@@ -153,9 +155,10 @@ LOVU_DLL std::string get_file_sequence_from_file(const std::string& file_path) n
             }
         }
 
-        return fmt::format("seq?{} [{}-{}]", file_sequence_entry, 
-                                            fileseq_start, 
-                                            fileseq_end);
+        return fmt::format("seq?{}/{} [{}-{}]", parent_directory.string(),
+                                                file_sequence_entry, 
+                                                fileseq_start, 
+                                                fileseq_end);
     }
 
     return "";
@@ -328,13 +331,14 @@ LOVU_DLL void get_filenames_from_dir(std::vector<std::string>& file_names,
                 }
             }
 
-            files.emplace_back(fmt::format("seq?{} [{}-{}]", file_sequence_entry, 
-                                                             fileseq_start, 
-                                                             fileseq_end));
+            files.emplace_back(fmt::format("seq?{}/{} [{}-{}]", directory_path,
+                                                                file_sequence_entry, 
+                                                                fileseq_start, 
+                                                                fileseq_end));
         }
         else
         {
-            files.emplace_back(filename);
+            files.emplace_back(fmt::format("{}/{}", directory_path, filename));
         }
 
         if(std::find(processed_files.begin(),
@@ -419,7 +423,9 @@ LOVU_DLL std::string get_documents_folder_path() noexcept
         my_path = ppsz_path;
         
         CoTaskMemFree(ppsz_path); 
-        return std::string(my_path.begin(), my_path.end());
+
+        // https://stackoverflow.com/questions/4804298/how-to-convert-wstring-into-string
+        return std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t>().to_bytes(my_path);
     }
     else
     {
@@ -433,10 +439,7 @@ LOVU_DLL std::string get_documents_folder_path() noexcept
         homedir = getpwuid(getuid())->pw_dir;
     }
 
-    std::string doc_dir = homedir;
-    doc_dir += "/Documents";
-
-    return doc_dir;
+    return fmt::format("{}/Documents", homedir);
 #endif
 }
 

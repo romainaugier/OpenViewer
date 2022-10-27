@@ -4,11 +4,11 @@
 
 #pragma once
 
+#include "OpenViewer/media.h"
+
+#include "tsl/ordered_map.h"
+
 #include <mutex>
-
-#include "media.h"
-
-#include "tsl/robin_map.h"
 
 LOV_NAMESPACE_BEGIN
 
@@ -36,8 +36,7 @@ struct LOV_DLL cache_item
     uint32_t m_frame;
 
     cache_item(Media* media, void* ptr, const uint64_t stride, const uint64_t size, const uint32_t frame);
-
-    
+    ~cache_item();
 };
 
 class LOV_DLL Cache
@@ -53,7 +52,7 @@ public:
     uint32_t add(const uint32_t hash, Media* item, const uint32_t frame) noexcept;
 
     // Removes an image from the cache
-    void remove(const uint32_t hash) noexcept;
+    void remove(const uint32_t index) noexcept;
 
     // Clears all the items, but keeps the allocated memory available
     void flush() noexcept;
@@ -61,10 +60,12 @@ public:
     // Resizes the cache. Size needs to be in bytes
     void resize(const size_t new_size) noexcept;
     
-    
+    // Print the cache to the console for debugging purpose
+    void debug() const noexcept;
+
 private:
     // Store the adresses to images (and some other informations)
-    tsl::robin_map<uint32_t, cache_item> m_items;
+    tsl::ordered_map<uint32_t, cache_item> m_items;
 
     std::mutex m_mtx;
 
@@ -78,6 +79,9 @@ private:
     uint32_t m_current_traversing_index = 0;
     uint32_t m_size = 0;
     uint32_t m_capacity = 0;
+
+    // Iterate through the queue of the items map to find the cache index
+    uint32_t get_hash_from_index(const uint32_t index) const noexcept;
 };
 
 LOV_NAMESPACE_END

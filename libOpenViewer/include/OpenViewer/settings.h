@@ -39,40 +39,16 @@ public:
     template <class T>
     typename item_return<T>::type get(const std::string& key) const noexcept { return this->m_data[key].get<T>(); }
 
-    // template<>
-    // struct item_return<int> { using type = int; };
-    // template<>
-    // int get<int>(const std::string& key) const noexcept { return this->m_data[key].get<int>(); }
-    
-    // template<>
-    // struct item_return<unsigned int> { using type = unsigned int; };
-    // template<>
-    // unsigned int get<unsigned int>(const std::string& key) const noexcept { return this->m_data[key].get<unsigned int>(); }
-
-    // template<>
-    // struct item_return<float> { using type = float; };
-    // template<>
-    // float get<float>(const std::string& key) const noexcept { return this->m_data[key].get<float>(); }
-
-    // template<>
-    // struct item_return<bool> { using type = bool; };
-    // template<>
-    // bool get<bool>(const std::string& key) const noexcept { return this->m_data[key].get<bool>(); }
-
-    // template<>
-    // struct item_return<std::string> { using type = std::string; };
-    // template<>
-    // std::string get<std::string>(const std::string& key) const noexcept { return this->m_data[key].get<std::string>(); }
-
     // [] operator
     auto operator [] (const std::string& key) const noexcept { return this->m_data[key]; }
     auto operator [] (const std::string& key) noexcept { return this->m_data[key]; }
 
 private:
-    Settings() {}
-    ~Settings() {}
+    Settings() { this->load(); }  
+    ~Settings() { this->save(); }
 
     json m_data;
+    bool m_loaded = false;
 };
 
 // A little macro to have cleaner and more understandable code

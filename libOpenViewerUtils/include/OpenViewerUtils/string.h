@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 #include <regex>
+#include <locale>
+#include <codecvt>
 
 #include "openviewerutils.h"
 

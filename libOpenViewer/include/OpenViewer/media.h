@@ -10,6 +10,7 @@
 #include <string>
 #include <string_view>
 #include <filesystem>
+#include <regex>
 
 LOV_NAMESPACE_BEGIN
 
@@ -47,6 +48,12 @@ using layer = std::pair<std::string, std::string>;
 
 // Helper macro to get the channels of a layer
 #define GET_LAYER_CHANNELS(layer) layer.second
+
+// Regex pattern used to replace frame numbers
+static const std::regex re_dash_pattern("#+");
+static const std::regex re_frames_pattern(" \\[.+\\]");
+static const std::regex re_frames_getter_pattern(" \\[(\\d+).+\\]");
+static const std::regex re_seq_pattern("^seq\\?");
 
 // A media represents anything that OpenViewer can read, i.e a video, an image or an image sequence
 // It holds informations such as the dimensions, the number of channels, the start/end frames, the pixel type
@@ -119,10 +126,12 @@ public:
     // Returns a layer given its id
     LOV_FORCEINLINE layer get_layer(const uint32_t id) const noexcept { return m_layers[id]; }
 
-private:
+protected:
     std::vector<layer> m_layers;
 
     std::string m_path;
+
+private:
 
     uint32_t m_width = 0;
     uint32_t m_height = 0;
@@ -161,9 +170,12 @@ private:
 // seq#D:/path/to/image_sequence_#.exr 100-150
 class LOV_DLL ImageSequence : public Media
 {
+public:
     ImageSequence(const std::string& path);
 
     virtual ~ImageSequence() override;
+
+    std::string make_path_at_frame(const uint32_t frame) const noexcept;
 
     virtual uint32_t get_hash_at_frame(const uint32_t frame) const noexcept override;
 
@@ -180,6 +192,7 @@ private:
 // Any video
 class LOV_DLL Video : public Media
 {
+public:
     Video(const std::string& path);
 
     virtual ~Video() override;
@@ -199,6 +212,7 @@ private:
 // Not implemented for now
 // class LOV_DLL Audio : public Media
 // {
+//public:
 //     Audio(const std::string& path);
 
 //     virtual ~Audio() override;

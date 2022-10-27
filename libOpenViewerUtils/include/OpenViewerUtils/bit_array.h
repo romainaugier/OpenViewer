@@ -45,6 +45,7 @@ public:
 
 private:
     uint64_t* m_array = nullptr;
+    uint32_t m_size = 0;
 };
 
 LOVU_NAMESPACE_END

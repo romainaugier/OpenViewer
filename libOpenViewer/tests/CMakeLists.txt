@@ -4,7 +4,7 @@
 
 # libOpenViewer tests #
 
-# Generql
+# General
 set(TESTNAME TestGeneral)
 
 add_executable(${TESTNAME} test_general.cpp)
@@ -16,6 +16,22 @@ add_test(${TESTNAME} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TESTNAME})
 set(TESTNAME TestSettings)
 
 add_executable(${TESTNAME} test_settings.cpp)
+target_link_libraries(${TESTNAME} ${OPENVIEWER_LIBS})
+
+add_test(${TESTNAME} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TESTNAME})
+
+# Media
+set(TESTNAME TestMedia)
+
+add_executable(${TESTNAME} test_media.cpp)
+target_link_libraries(${TESTNAME} ${OPENVIEWER_LIBS})
+
+add_test(${TESTNAME} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TESTNAME})
+
+# Media Pool
+set(TESTNAME TestMediaPool)
+
+add_executable(${TESTNAME} test_mediapool.cpp)
 target_link_libraries(${TESTNAME} ${OPENVIEWER_LIBS})
 
 add_test(${TESTNAME} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TESTNAME})

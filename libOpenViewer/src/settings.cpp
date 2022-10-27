@@ -53,6 +53,8 @@ void Settings::load() noexcept
             { "log_level",  "info" }
         };
     }
+
+    this->m_loaded = true;
 }
 
 LOV_NAMESPACE_END

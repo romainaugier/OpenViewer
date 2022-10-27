@@ -4,16 +4,16 @@
 
 // Reference: http://www.isthe.com/chongo/tech/comp/fnv/
 
-#include "openviewerutils.h"
+#include "OpenViewerUtils/openviewerutils.h"
 
 LOVU_NAMESPACE_BEGIN
 
 #define EMPTY_HASH ((uint32_t)0x811c9dc5)
 
 // 32 bits FNV 1A string hash
-uint32_t hash_fnv1a(char *str) noexcept;
+LOVU_DLL uint32_t hash_fnv1a(const char *str) noexcept;
 
 // 32 bits string hash function
-LOVU_FORCEINLINE uint32_t hash_string(char* str) noexcept { return hash_fnv1a(str); }
+LOVU_FORCEINLINE uint32_t hash_string(const char* str) noexcept { return hash_fnv1a(str); }
 
 LOVU_NAMESPACE_END

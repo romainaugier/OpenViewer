@@ -6,7 +6,7 @@
 
 LOVU_NAMESPACE_BEGIN
 
-uint32_t hash_fnv1a(char *str) noexcept
+LOVU_DLL uint32_t hash_fnv1a(const char *str) noexcept
 {
     uint32_t result = EMPTY_HASH;
     uint8_t* s = (uint8_t*)str;
