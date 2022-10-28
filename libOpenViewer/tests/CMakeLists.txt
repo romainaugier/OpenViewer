@@ -4,51 +4,31 @@
 
 # libOpenViewer tests #
 
-# General
-set(TESTNAME TestGeneral)
+file(GLOB_RECURSE TEST_FILES *.cpp)
 
-add_executable(${TESTNAME} test_general.cpp)
-target_link_libraries(${TESTNAME} ${OPENVIEWER_LIBS})
+foreach(test_file ${TEST_FILES})
+    get_filename_component(TESTNAME ${test_file} NAME_WLE)
+    message(STATUS "Adding libOpenViewer test : ${TESTNAME}")
 
-add_test(${TESTNAME} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TESTNAME})
+    add_executable(${TESTNAME} ${test_file})
+    target_link_libraries(${TESTNAME} ${OPENVIEWER_LIBS})
 
-# Settings
-set(TESTNAME TestSettings)
-
-add_executable(${TESTNAME} test_settings.cpp)
-target_link_libraries(${TESTNAME} ${OPENVIEWER_LIBS})
-
-add_test(${TESTNAME} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TESTNAME})
-
-# Media
-set(TESTNAME TestMedia)
-
-add_executable(${TESTNAME} test_media.cpp)
-target_link_libraries(${TESTNAME} ${OPENVIEWER_LIBS})
-
-add_test(${TESTNAME} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TESTNAME})
-
-# Media Pool
-set(TESTNAME TestMediaPool)
-
-add_executable(${TESTNAME} test_mediapool.cpp)
-target_link_libraries(${TESTNAME} ${OPENVIEWER_LIBS})
-
-add_test(${TESTNAME} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TESTNAME})
+    add_test(${TESTNAME} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TESTNAME})
+endforeach()
 
 # Copy all binaries from conan in the runtime directory to link dynamic libraries
 # to test executables
 if(WIN32)
-set(CONAN_DLL_DIR ${CMAKE_SOURCE_DIR}/bin)
+    set(CONAN_DLL_DIR ${CMAKE_SOURCE_DIR}/bin)
 
-file(GLOB_RECURSE CONAN_DLLS ${CONAN_DLL_DIR}/*.dll)
+    file(GLOB_RECURSE CONAN_DLLS ${CONAN_DLL_DIR}/*.dll)
 
-foreach(dll_file ${CONAN_DLLS})
-    add_custom_command(
-        TARGET ${TESTNAME}
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-        ${dll_file} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-    )
-endforeach(dll_file)
+    foreach(dll_file ${CONAN_DLLS})
+        add_custom_command(
+            TARGET ${TESTNAME}
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${dll_file} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+        )
+    endforeach(dll_file)
 endif()

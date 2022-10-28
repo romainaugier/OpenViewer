@@ -8,6 +8,7 @@ LOVU_NAMESPACE_BEGIN
 
 // We use 64 bits integers in the bit array
 #define SIZEOF_BITARRAY_INT 64 
+#define BITARRAY_INT_TYPE uint64_t
 
 // Calculate the number of uint64_t we need to hold how many bytes are requested
 #define RESERVE_BITS(bits) (bits + 0x3F) / SIZEOF_BITARRAY_INT

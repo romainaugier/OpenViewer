@@ -43,11 +43,11 @@ LOVU_FORCEINLINE size_t file_count_in_directory(const std::string& directory_pat
 LOVU_FORCEINLINE size_t file_count_in_directory(const std::string_view& directory_path) noexcept;
 
 // Finds if the given file is part of a filesequence, and if so returns a string formatted with necessary infos,
-// like this : seq?D:/path/to/image_sequence_#.exr 100-150
+// like this : seq?D:/path/to/image_sequence_#.exr [100-150]
 LOVU_DLL std::string get_file_sequence_from_file(const std::string& file_path) noexcept;
 
 // Finds all available filenames inside a directory, looking for file sequences which will be formatted
-// like this : seq?D:/path/to/image_sequence_#.exr 100-150,
+// like this : seq?D:/path/to/image_sequence_#.exr [100-150],
 // and single files
 LOVU_DLL void get_filenames_from_dir(std::vector<std::string>& file_names, 
                                      const std::string& directory_path) noexcept;

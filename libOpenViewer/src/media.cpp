@@ -3,7 +3,10 @@
 // All rights reserved.
 
 #include "OpenViewer/media.h"
+#include "OpenViewer/exceptions.h"
 #include "OpenViewerUtils/hash.h"
+
+#include "OpenImageIO/imageio.h"
 
 LOV_NAMESPACE_BEGIN
 
@@ -13,7 +16,30 @@ LOV_NAMESPACE_BEGIN
 
 Image::Image(const std::string& path) 
 {
-    this->m_path = path;
+    this->m_path = std::move(path);
+
+    this->m_start = 0;
+    this->m_end = 1;
+
+    const auto input = OIIO::ImageInput::open(path);
+
+    if(!input)
+    {
+        throw ImageInputError(fmt::format("[OIIO] : Cannot open input file \"{}\"\n{}", path, OIIO::geterror()));
+    }
+
+    const OIIO::ImageSpec& spec = input->spec();
+
+    this->set_width(spec.width);
+    this->set_height(spec.height);
+
+    const uint8_t type = OIIO_TYPEDESC_TO_TYPE(spec.format);
+    this->set_type(type);
+    
+    const bool has_alpha = spec.alpha_channel > -1;
+    this->set_nchannels(spec.nchannels > 4 ? 4 : spec.nchannels);
+
+    input->close();
 }
 
 Image::~Image() 
@@ -41,13 +67,53 @@ void Image::set_cached_at_frame(const uint32_t frame, const bool cached) noexcep
     this->m_is_cached = cached;
 }
 
+void Image::debug() const noexcept
+{
+
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Image Sequence Media
 ////////////////////////////////////////////////////////////////////////////////
 
 ImageSequence::ImageSequence(const std::string& path) 
 {
-    this->m_path = path;
+    this->m_path = std::move(path);
+    
+    std::smatch match;
+    std::regex_search(this->m_path, match, re_frames_getter_pattern);
+
+    if(match.size() < 3)
+    {
+        throw ImageInputError(fmt::format("Cannot open input file \"{}\"", this->m_path));
+    }
+    
+    this->m_start = std::stoi(match[1].str());
+    this->m_end = std::stoi(match[2].str());
+    
+    const std::string path_at_first_frame = this->make_path_at_frame(this->m_start);
+
+    const auto input = OIIO::ImageInput::open(path_at_first_frame);
+
+    if(!input)
+    {
+        throw ImageInputError(fmt::format("[OIIO] : Cannot open input file \"{}\"\n{}", path_at_first_frame, OIIO::geterror()));
+    }
+
+    const OIIO::ImageSpec& spec = input->spec();
+
+    this->set_width(spec.width);
+    this->set_height(spec.height);
+
+    const uint8_t type = OIIO_TYPEDESC_TO_TYPE(spec.format);
+    this->set_type(type);
+    
+    const bool has_alpha = spec.alpha_channel > -1;
+    this->set_nchannels(spec.nchannels > 4 ? 4 : spec.nchannels);
+
+    input->close();
+
+    this->m_is_cached.resize(this->get_length());
 }
 
 ImageSequence::~ImageSequence()
@@ -67,7 +133,6 @@ std::string ImageSequence::make_path_at_frame(const uint32_t frame) const noexce
     tmp_path = std::regex_replace(tmp_path, re_seq_pattern, "");
 
     return std::regex_replace(tmp_path, re_dash_pattern, fmt::format("{0:0{1}}", frame, padding));
-
 }
 
 uint32_t ImageSequence::get_hash_at_frame(const uint32_t frame) const noexcept
@@ -84,12 +149,56 @@ void ImageSequence::load_frame_to_cache(void* cache_address, const uint32_t fram
 
 bool ImageSequence::is_cached_at_frame(const uint32_t frame) const noexcept
 {
-    return this->m_is_cached.test(frame);
+    return this->m_is_cached.test(frame - this->m_start);
 }
 
 void ImageSequence::set_cached_at_frame(const uint32_t frame, const bool cached) noexcept
 {
+    spdlog::debug("{}, {}", frame, cached);
 
+    if(cached) 
+    {
+        this->m_is_cached.set(frame - this->m_start);
+    }
+    else
+    {
+        this->m_is_cached.clear(frame - this->m_start);
+    }
+}
+
+void ImageSequence::debug() const noexcept
+{
+    spdlog::debug("------------------------------");
+    spdlog::debug("Media debugging");
+    spdlog::debug("Path : {}", this->m_path);
+    spdlog::debug("Frames : {}-{}", this->m_start, this->m_end);
+    spdlog::debug("Width : {} px", this->get_width());
+    spdlog::debug("Height : {} px", this->get_height());
+    spdlog::debug("Channels : {}", this->get_nchannels());
+    spdlog::debug("Depth : {} bits", this->get_type_size() * 8);
+    spdlog::debug("Size : {} bits", this->get_size());
+    spdlog::debug("Bytes Size : {} bits", this->get_byte_size());
+    
+    std::string cached;
+    cached.reserve(this->get_length() + 2);
+    cached += "[";
+
+    for(int i = this->m_start; i < this->m_end; i++)
+    {
+        if(this->is_cached_at_frame(i))
+        {
+            cached += "O";
+        }
+        else
+        {
+            cached += "X";
+        }
+    }
+
+    cached += "]";
+    
+    spdlog::debug("Cached : {}", cached);
+    spdlog::debug("------------------------------");
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -122,6 +231,11 @@ bool Video::is_cached_at_frame(const uint32_t frame) const noexcept
 }
 
 void Video::set_cached_at_frame(const uint32_t frame, const bool cached) noexcept
+{
+
+}
+
+void Video::debug() const noexcept
 {
 
 }

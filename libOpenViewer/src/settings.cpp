@@ -32,7 +32,7 @@ void Settings::load() noexcept
 {
     const std::string settings_file_path = fmt::format("{}/{}", lovu::fs::get_documents_folder_path(), SETTINGS_FILE_PATH);
 
-    if(lovu::fs::exists(settings_file_path))
+    if(lovu::fs::exists(settings_file_path) && std::filesystem::file_size(settings_file_path) > 0)
     {
         spdlog::debug("Found settings file, loading settings");
         

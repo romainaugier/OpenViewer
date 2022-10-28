@@ -8,6 +8,7 @@ tsl-ordered-map/1.0.0
 glew/2.2.0
 glfw/3.3.7
 nlohmann_json/3.11.2
+boost/1.78.0
 
 [generators]
 cmake
@@ -20,6 +21,8 @@ openimageio:shared=True
 glew:shared=True
 glfw:shared=True
 openimageio:with_ffmpeg=False
+boost:shared=True
+openjpeg:shared=True
 
 [imports]
 bin, *.dll -> ./bin

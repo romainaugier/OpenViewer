@@ -3,7 +3,6 @@
 // All rights reserved.
 
 #include "OpenViewer/openviewer.h"
-#include "OpenViewer/cache.h"
 #include "OpenViewer/settings.h"
 
 int main(int argc, char** argv)

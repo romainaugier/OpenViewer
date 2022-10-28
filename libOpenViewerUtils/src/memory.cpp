@@ -100,9 +100,5 @@ LOVU_DLL size_t get_peak_rss() noexcept
 }
 
 #endif 
-LOVU_FORCEINLINE float to_mb(size_t size_in_bytes) noexcept
-{
-    return float(size_in_bytes) / float(1 << 20);
-}
 
 LOVU_NAMESPACE_END

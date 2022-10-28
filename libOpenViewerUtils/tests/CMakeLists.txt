@@ -4,18 +4,14 @@
 
 # libOpenViewerUtils tests #
 
-# Filesystem
-set(TESTNAME TestFilesystem)
+file(GLOB_RECURSE TEST_FILES *.cpp)
 
-add_executable(${TESTNAME} test_filesystem.cpp)
-target_link_libraries(${TESTNAME} ${OPENVIEWERUTILS_LIBS})
+foreach(test_file ${TEST_FILES})
+    get_filename_component(TESTNAME ${test_file} NAME_WLE)
+    message(STATUS "Adding libOpenViewerUtils test : ${TESTNAME}")
 
-add_test(${TESTNAME} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TESTNAME})
+    add_executable(${TESTNAME} ${test_file})
+    target_link_libraries(${TESTNAME} ${OPENVIEWER_LIBS})
 
-# Bitarray
-set(TESTNAME TestBitArray)
-
-add_executable(${TESTNAME} test_bitarray.cpp)
-target_link_libraries(${TESTNAME} ${OPENVIEWERUTILS_LIBS})
-
-add_test(${TESTNAME} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TESTNAME})
+    add_test(${TESTNAME} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TESTNAME})
+endforeach()

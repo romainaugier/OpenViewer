@@ -4,11 +4,11 @@
 
 #include "OpenViewer/media.h"
 
-#include "tsl/robin_map.h"
+#include "tsl/ordered_map.h"
 
 LOV_NAMESPACE_BEGIN
 
-using media_map = tsl::robin_map<std::string, Media*>;
+using media_map = tsl::ordered_map<std::string, Media*>;
 
 class LOV_DLL MediaPool
 {
@@ -23,6 +23,10 @@ public:
     void remove_media(const std::string& media_path) noexcept;
 
     LOVU_FORCEINLINE media_map get_medias() const noexcept { return this->m_medias; }
+
+    LOVU_FORCEINLINE Media* get_media(const std::string& media_path) noexcept { return this->m_medias[media_path]; }
+    
+    LOVU_FORCEINLINE Media* get_media(const uint32_t media_index) noexcept { return this->m_medias.values_container()[media_index].second; }
 
     void debug_media() const noexcept;
 
