@@ -5,6 +5,7 @@
 #pragma once
 
 #include "string.h"
+#include <filesystem>
 
 #ifdef LOVU_WIN
 #include "windows.h"
@@ -68,6 +69,9 @@ LOVU_DLL std::string get_documents_folder_path() noexcept;
 
 // Returns true if the given path exists, whether it is a directory or a file
 LOVU_DLL bool exists(const std::string& path) noexcept;
+
+// Returns the extension of the given file path
+LOVU_FORCEINLINE std::string get_extension(const std::string& path) noexcept { return std::filesystem::path(path).extension().string(); }
 
 FS_NAMESPACE_END
 

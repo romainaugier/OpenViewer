@@ -4,7 +4,6 @@
 
 #include "OpenViewerUtils/filesystem.h"
 
-#include <filesystem>
 #include <locale>
 #include <codecvt>
 

@@ -55,7 +55,7 @@ Cache::Cache()
     }
     else if(cache_mode == 2)
     {
-        this->m_max_capacity = CAST(uint64_t, lovu::from_mb(lov::settings.get<uint32_t>("cache_max_ram_usage")));
+        this->m_max_capacity = CAST(uint64_t, lovu::from_mb(lov::settings.get<uint32_t>("cache_max_ram_usage"))) / 100.0f * max_ram_capacity;
     }
 }
 
@@ -138,6 +138,9 @@ void* Cache::add(Media* media, const uint32_t frame) noexcept
                                                      item_img_size, 
                                                      frame));
 
+        const uint32_t hash = media->get_hash_at_frame(frame);
+        this->m_hash_to_items[hash] = &this->m_items[this->m_current_index];
+
         spdlog::debug("[CACHE] : Loaded image \"{} - {}\" at index {}", 
                                   media->get_path_view(),
                                   frame,
@@ -201,6 +204,9 @@ void* Cache::add(Media* media, const uint32_t frame) noexcept
                                                              item_img_size, 
                                                              frame);
 
+                const uint32_t hash = media->get_hash_at_frame(frame);
+                this->m_hash_to_items[hash] = &this->m_items[clean_index];
+
                 // Update cache infos
                 this->m_bytes_size += item_img_byte_size;
 
@@ -232,6 +238,9 @@ void* Cache::add(Media* media, const uint32_t frame) noexcept
                 if(item_img_byte_size <= cleaned_byte_size || item_img_byte_size <= this->m_bytes_size)
                 {
                     this->m_items[clean_index] = cache_item(media, clean_address, item_img_byte_size, item_img_size, frame);
+                    
+                    const uint32_t hash = media->get_hash_at_frame(frame);
+                    this->m_hash_to_items[hash] = &this->m_items[clean_index];
 
                     this->m_current_traversing_index = clean_index;
                     this->m_current_index = traversing_index + 1;
@@ -259,7 +268,7 @@ void* Cache::add(Media* media, const uint32_t frame) noexcept
                 }
             }
 
-            ++ traversing_index;
+            ++traversing_index;
         }
     }
 }
@@ -268,10 +277,14 @@ void Cache::remove(const uint32_t index) noexcept
 {
     std::unique_lock<std::mutex> remove_lock(this->m_mtx);
 
-    this->m_items[index].m_media->set_cached_at_frame(this->m_items[index].m_frame, false);
+    const uint32_t frame = this->m_items[index].m_frame;
+    const uint32_t hash = this->m_items[index].m_media->get_hash_at_frame(frame);
+
+    this->m_items[index].m_media->set_cached_at_frame(frame, false);
     this->m_bytes_size -= this->m_items[index].m_stride;
 
     this->m_items.erase(index);
+    this->m_hash_to_items.erase(hash);
 
     --this->m_current_index;
     --this->m_size;
@@ -329,6 +342,18 @@ void Cache::debug() const noexcept
     spdlog::debug("------------------------------");
     
     spdlog::debug("************************");
+}
+
+cache_item* Cache::get_cache_item(const uint32_t hash) const noexcept
+{
+    auto it = this->m_hash_to_items.find(hash);
+
+    if(it != this->m_hash_to_items.end())
+    {
+        return it.value();
+    }
+
+    return nullptr;
 }
 
 LOV_NAMESPACE_END

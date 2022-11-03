@@ -129,7 +129,7 @@ public:
     
     // Returns the whole media byte size, i.e if its a video or a sequence, returns get_byte_size() * number of frames
     LOV_FORCEINLINE uint64_t get_media_byte_size() const noexcept { return this->get_byte_size() * 
-                                                                    (this->m_end - this->m_start); }
+                                                                    CAST(uint64_t, (this->m_end - this->m_start)); }
 
     // ** Media path **
 
@@ -202,7 +202,7 @@ private:
 // Image sequence
 // The path will be specific for a sequence, and formatted like this
 // seq#D:/path/to/image_sequence_#.exr 100-150 
-// There must the same amount of # as there is of padding
+// There must the same amount of # as there is of padding in the frame number
 class LOV_DLL ImageSequence : public Media
 {
 public:

@@ -6,12 +6,18 @@
 
 #include "OpenImageIO/imageio.h"
 
-void exr_input_func(void* __restrict buffer, const std::string& path) noexcept
+LOV_NAMESPACE_BEGIN
+
+LOV_DLL void exr_input_func(void* __restrict buffer, const std::string& path) noexcept
 {
+    auto in = OIIO::ImageInput::open(path);
+    const OIIO::ImageSpec& spec = in->spec();
+    in->read_image(0, -1, spec.format, buffer);
+    in->close();
 
 }
 
-void png_input_func(void* __restrict buffer, const std::string& path) noexcept
+LOV_DLL void png_input_func(void* __restrict buffer, const std::string& path) noexcept
 {
     auto in = OIIO::ImageInput::open(path);
     const OIIO::ImageSpec& spec = in->spec();
@@ -19,7 +25,7 @@ void png_input_func(void* __restrict buffer, const std::string& path) noexcept
     in->close();
 }
 
-void jpg_input_func(void* __restrict buffer, const std::string& path) noexcept
+LOV_DLL void jpg_input_func(void* __restrict buffer, const std::string& path) noexcept
 {
     auto in = OIIO::ImageInput::open(path);
     const OIIO::ImageSpec& spec = in->spec();
@@ -27,10 +33,12 @@ void jpg_input_func(void* __restrict buffer, const std::string& path) noexcept
     in->close();
 }
 
-void any_input_func(void* __restrict buffer, const std::string& path) noexcept
+LOV_DLL void any_input_func(void* __restrict buffer, const std::string& path) noexcept
 {
     auto in = OIIO::ImageInput::open(path);
     const OIIO::ImageSpec& spec = in->spec();
     in->read_image(0, -1, spec.format, buffer);
     in->close();
 }
+
+LOV_NAMESPACE_END

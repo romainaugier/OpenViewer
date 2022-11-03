@@ -68,9 +68,17 @@ public:
     // Print the cache to the console for debugging purpose
     void debug() const noexcept;
 
+    // Returns a ptr to an item cache given a hash (return nullptr if the item is not in cache)
+    cache_item* get_cache_item(const uint32_t hash) const noexcept;
+
 private:
     // Store the adresses to images (and some other informations)
+    // The key is the cache index
     tsl::robin_map<uint32_t, cache_item> m_items;
+
+    // Store the pointers to associated image cache item
+    // The key is the path hash
+    tsl::robin_map<uint32_t, cache_item*> m_hash_to_items;
 
     std::mutex m_mtx;
 

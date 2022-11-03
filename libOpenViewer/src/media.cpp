@@ -5,6 +5,7 @@
 #include "OpenViewer/media.h"
 #include "OpenViewer/exceptions.h"
 #include "OpenViewerUtils/hash.h"
+#include "OpenViewerUtils/filesystem.h"
 
 #include "OpenImageIO/imageio.h"
 
@@ -21,11 +22,11 @@ Image::Image(const std::string& path)
     this->m_start = 0;
     this->m_end = 1;
 
-    const auto input = OIIO::ImageInput::open(path);
+    const auto input = OIIO::ImageInput::open(this->m_path);
 
     if(!input)
     {
-        throw ImageInputError(fmt::format("[OIIO] : Cannot open input file \"{}\"\n{}", path, OIIO::geterror()));
+        throw ImageInputError(fmt::format("[OIIO] : Cannot open input file \"{}\"\n{}", this->m_path, OIIO::geterror()));
     }
 
     const OIIO::ImageSpec& spec = input->spec();
@@ -40,6 +41,9 @@ Image::Image(const std::string& path)
     this->set_nchannels(spec.nchannels > 4 ? 4 : spec.nchannels);
 
     input->close();
+
+    const std::string ext = lovu::fs::get_extension(this->m_path);
+    this->set_image_input_func(input_funcs[ext]);
 }
 
 Image::~Image() 
@@ -54,7 +58,7 @@ uint32_t Image::get_hash_at_frame(const uint32_t frame) const noexcept
 
 void Image::load_frame_to_cache(void* cache_address, const uint32_t frame) const noexcept
 {
-
+    this->m_input_func(cache_address, this->m_path);
 }
 
 bool Image::is_cached_at_frame(const uint32_t frame) const noexcept
@@ -114,6 +118,9 @@ ImageSequence::ImageSequence(const std::string& path)
     input->close();
 
     this->m_is_cached.resize(this->get_length());
+
+    const std::string ext = lovu::fs::get_extension(path_at_first_frame);
+    this->set_image_input_func(input_funcs[&ext.c_str()[1]]);
 }
 
 ImageSequence::~ImageSequence()
@@ -144,7 +151,9 @@ uint32_t ImageSequence::get_hash_at_frame(const uint32_t frame) const noexcept
 
 void ImageSequence::load_frame_to_cache(void* cache_address, const uint32_t frame) const noexcept
 {
-
+    const std::string path_at_frame = this->make_path_at_frame(frame);
+    
+    this->m_input_func(cache_address, path_at_frame);
 }
 
 bool ImageSequence::is_cached_at_frame(const uint32_t frame) const noexcept
@@ -154,8 +163,6 @@ bool ImageSequence::is_cached_at_frame(const uint32_t frame) const noexcept
 
 void ImageSequence::set_cached_at_frame(const uint32_t frame, const bool cached) noexcept
 {
-    spdlog::debug("{}, {}", frame, cached);
-
     if(cached) 
     {
         this->m_is_cached.set(frame - this->m_start);

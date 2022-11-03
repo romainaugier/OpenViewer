@@ -15,13 +15,13 @@ LOV_NAMESPACE_BEGIN
 // For now, we declare them here and define them in input.cpp src file. Later,
 // we'll make a proper per input func dll with an interface for custom dll loading
 
-void exr_input_func(void* __restrict buffer, const std::string& path) noexcept;
-void png_input_func(void* __restrict buffer, const std::string& path) noexcept;
-void jpg_input_func(void* __restrict buffer, const std::string& path) noexcept;
+LOV_DLL void exr_input_func(void* __restrict buffer, const std::string& path) noexcept;
+LOV_DLL void png_input_func(void* __restrict buffer, const std::string& path) noexcept;
+LOV_DLL void jpg_input_func(void* __restrict buffer, const std::string& path) noexcept;
 
 // The any prefix means that this function will be returned when the given extension cannot be found in
 // the registered functions
-void any_input_func(void* __restrict buffer, const std::string& path) noexcept;
+LOV_DLL void any_input_func(void* __restrict buffer, const std::string& path) noexcept;
 
 // To load images inside memory, we use a system of function pointers registered inside a map 
 // with the key being the image format extension, and the value being the function pointer
@@ -38,7 +38,7 @@ using image_input_func = void(*)(void*, const std::string&);
 class LOV_DLL InputFuncs
 {
 public:
-    // Returns an instance of the settings
+    // Returns an instance of the input funcs class
     static InputFuncs& get_instance() noexcept { static InputFuncs s; return s; }
 
     InputFuncs(const InputFuncs&) = delete;
@@ -83,6 +83,7 @@ private:
     tsl::robin_map<std::string, image_input_func> m_funcs;
 };
 
-
+// A little macro to have cleaner and more understandable code
+#define input_funcs InputFuncs::get_instance()
 
 LOV_NAMESPACE_END
