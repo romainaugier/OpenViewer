@@ -5,10 +5,13 @@
 #include "OpenViewer/ocio.h"
 #include "OpenViewerUtils/filesystem.h"
 
+
 LOV_NAMESPACE_BEGIN
 
 Ocio::Ocio()
 {
+    this->m_use_gpu = false;
+
     spdlog::debug("[OCIO] : Initializing OCIO");
 
     const char* ocio_env_var_path = std::getenv("OCIO");
@@ -43,7 +46,7 @@ void Ocio::set_config(const std::string& config_path) noexcept
     try
     {
         this->m_config = OCIO::Config::CreateFromFile(this->m_config_path.c_str());
-        spdlog::debug("[OCIO] : Set config from \"{}\"", this->m_config);
+        spdlog::debug("[OCIO] : Set config from \"{}\"", this->m_config_path);
     }
     catch(const std::exception& e)
     {
@@ -91,15 +94,72 @@ void Ocio::set_config(const std::string& config_path) noexcept
 
 void Ocio::update_processor() noexcept
 {
+    spdlog::debug("[OCIO] : Updating processors");
+    
+    const char* role = this->m_config->getRoleColorSpace(this->m_current_role);
+    const char* display = this->m_config->getDisplay(this->m_current_display);
+    const char* view = this->m_config->getView(display, this->m_current_view);
 
+    spdlog::debug("[OCIO] : Current role : {}", role);
+    spdlog::debug("[OCIO] : Current display : {}", display);
+    spdlog::debug("[OCIO] : Current view : {}", view);
+
+    const OCIO::DisplayViewTransformRcPtr transform = OCIO::DisplayViewTransform::Create();
+    transform->setSrc(role);
+    transform->setDisplay(display);
+    transform->setView(view);
+    transform->setDirection(OCIO::TRANSFORM_DIR_FORWARD);
+
+    const OCIO::LegacyViewingPipelineRcPtr vp = OCIO::LegacyViewingPipeline::Create();
+    vp->setDisplayViewTransform(transform);
+
+    if(this->m_current_look != 0)
+    {
+        vp->setLooksOverrideEnabled(true);
+        vp->setLooksOverride(this->get_current_look().c_str());
+    }
+    else
+    {
+        vp->setLooksOverrideEnabled(false);
+    }
+
+    this->m_processor = vp->getProcessor(this->m_config, this->m_config->getCurrentContext());
+
+    spdlog::debug("[OCIO] : Updated Processor");
 }
 
-void Ocio::process_cpu(const uint16_t img_width, const uint16_t img_height) noexcept
+void Ocio::update_cpu_processor(const OCIO::BitDepth bit_depth) noexcept
 {
-
+    this->m_cpu_processor = this->m_processor->getOptimizedCPUProcessor(bit_depth, bit_depth, OCIO::OPTIMIZATION_ALL);
 }
 
-void Ocio::process_gpu(const uint16_t img_width, const uint16_t img_height) noexcept
+void Ocio::process_cpu(void* pixels, 
+                       const uint16_t width, 
+                       const uint16_t height, 
+                       const uint8_t nchannels, 
+                       const uint8_t type) noexcept
+{
+    try
+    {
+        const OCIO::BitDepth bit_depth = TYPE_TO_OCIO_BIT_DEPTH(type);
+
+        const OCIO::ChannelOrdering chan_ord = nchannels > 3 ? OCIO::CHANNEL_ORDERING_RGBA : OCIO::CHANNEL_ORDERING_RGB;
+
+        OCIO::PackedImageDesc img(pixels, width, height, chan_ord, bit_depth, OCIO::AutoStride, OCIO::AutoStride, OCIO::AutoStride);
+
+
+        if(this->m_cpu_processor != nullptr)
+        {
+            this->m_cpu_processor->apply(img);
+        }
+    }
+    catch(const std::exception& e)
+    {
+        spdlog::error("[OCIO] : Exception catched during cpu processing : {}", e.what());
+    }
+}
+
+void Ocio::process_gpu(void* __restrict pixels, const bool has_alpha) noexcept
 {
 
 }
@@ -122,6 +182,34 @@ void Ocio::update_views() noexcept
 
         ++i;
     }
+}
+
+void Ocio::debug() const noexcept
+{
+    spdlog::debug("************************");
+
+    spdlog::debug("[OCIO] : Debugging current OCIO State");
+
+    spdlog::debug("Current OCIO configuration path : {}", this->m_config_path);
+
+    spdlog::debug("Roles : ");
+    for(const auto& role : this->m_roles) spdlog::debug("  - {}", role);
+
+    spdlog::debug("Displays : ");
+    for(const auto& display : this->m_displays) spdlog::debug("  - {}", display);
+
+    spdlog::debug("Views : ");
+    for(const auto& view : this->m_views) spdlog::debug("  - {}", view);
+
+    spdlog::debug("Looks : ");
+    for(const auto& look : this->m_looks) spdlog::debug("  - {}", look);
+
+    spdlog::debug("Current role : {}", this->m_roles[this->m_current_role]);
+    spdlog::debug("Current display : {}", this->m_displays[this->m_current_display]);
+    spdlog::debug("Current view : {}", this->m_views[this->m_current_view]);
+    spdlog::debug("Current look : {}", this->m_looks[this->m_current_look]);
+
+    spdlog::debug("************************");
 }
 
 LOV_NAMESPACE_END

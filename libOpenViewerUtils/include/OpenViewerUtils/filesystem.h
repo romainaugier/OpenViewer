@@ -70,8 +70,14 @@ LOVU_DLL std::string get_documents_folder_path() noexcept;
 // Returns true if the given path exists, whether it is a directory or a file
 LOVU_DLL bool exists(const std::string& path) noexcept;
 
+// Makes the needed directory of the path if they do not exist
+LOVU_DLL void makedirs(const std::string& path) noexcept;
+
 // Returns the extension of the given file path
 LOVU_FORCEINLINE std::string get_extension(const std::string& path) noexcept { return std::filesystem::path(path).extension().string(); }
+
+// Returns the parent dir of the given path
+LOVU_FORCEINLINE std::string get_parent_dir(const std::string& path) noexcept { return std::filesystem::path(path).parent_path().string(); }
 
 FS_NAMESPACE_END
 

@@ -5,14 +5,11 @@
 #pragma once
 
 #include "OpenViewer/openviewer.h"
-
-#include "OpenColorIO/OpenColorIO.h"
-
-namespace OCIO = OCIO_NAMESPACE;
+#include "OpenViewer/media.h"
 
 LOV_NAMESPACE_BEGIN
 
-class Ocio
+class LOV_DLL Ocio
 {
     std::vector<std::string> m_views;
     std::vector<std::string> m_displays;
@@ -25,11 +22,14 @@ class Ocio
 
     OCIO::ConstCPUProcessorRcPtr m_cpu_processor = nullptr;
     OCIO::ConstGPUProcessorRcPtr m_gpu_processor = nullptr;
+    OCIO::ConstProcessorRcPtr m_processor = nullptr;
 
     uint16_t m_current_view = 0;
     uint16_t m_current_display = 0;
     uint16_t m_current_role = 0;
     uint16_t m_current_look = 0;
+
+    bool m_use_gpu : 1;
 
 public:
     Ocio();
@@ -41,12 +41,19 @@ public:
 
     //
     void update_processor() noexcept;
+
+    // 
+    void update_cpu_processor(const OCIO::BitDepth bit_depth) noexcept;
     
     //
-    void process_cpu(const uint16_t img_width, const uint16_t img_height) noexcept;
+    void process_cpu(void* pixels, 
+                     const uint16_t width, 
+                     const uint16_t height, 
+                     const uint8_t nchannels, 
+                     const uint8_t type) noexcept;
 
     //
-    void process_gpu(const uint16_t img_width, const uint16_t img_height) noexcept;
+    void process_gpu(void* __restrict pixels, const bool has_alpha) noexcept;
 
     //
     void update_views() noexcept;
@@ -68,6 +75,13 @@ public:
     LOV_FORCEINLINE std::vector<std::string> get_displays() const noexcept { return this->m_displays; }
     LOV_FORCEINLINE std::vector<std::string> get_roles() const noexcept { return this->m_roles; }
     LOV_FORCEINLINE std::vector<std::string> get_looks() const noexcept { return this->m_looks; }
+
+    //
+    LOV_FORCEINLINE void set_use_cpu() noexcept { this->m_use_gpu = false; }
+    LOV_FORCEINLINE void set_use_gpu() noexcept { this->m_use_gpu = true; }
+
+    //
+    void debug() const noexcept;
 };
 
 LOV_NAMESPACE_END

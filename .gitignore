@@ -8,3 +8,4 @@ conanbuildinfo.cmake
 py_env
 graph_info.json
 .vscode
+test

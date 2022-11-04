@@ -447,6 +447,18 @@ LOVU_DLL bool exists(const std::string& path) noexcept
     return std::filesystem::exists(std::filesystem::path(path));
 }
 
+LOVU_DLL void makedirs(const std::string& path) noexcept
+{
+    std::string dir_path = path;
+
+    if(!std::filesystem::is_directory(dir_path))
+    {
+        dir_path = get_parent_dir(dir_path);
+    }
+
+    std::filesystem::create_directories(dir_path);
+}
+
 FS_NAMESPACE_END
 
 LOVU_NAMESPACE_END
