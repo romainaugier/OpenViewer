@@ -55,17 +55,18 @@ void Ocio::set_config(const std::string& config_path) noexcept
     }
 
     // Gettings the roles
-    this->m_roles.clear();
+    this->m_role_names.clear();
+    this->m_role_colorspaces.clear();
 
     const uint16_t num_roles = this->m_config->getNumRoles();
-    this->m_roles.reserve(num_roles);
+    this->m_role_names.reserve(num_roles);
+    this->m_role_colorspaces.reserve(num_roles);
 
     for(uint16_t i = 0; i < num_roles; i++)
     {
-        this->m_roles.emplace_back(fmt::format("{} : {}",
-                                               this->m_config->getRoleColorSpace(i),
-                                               this->m_config->getRoleName(i)));
-    }
+        this->m_role_names.emplace_back(this->m_config->getRoleName(i));
+        this->m_role_colorspaces.emplace_back(this->m_config->getRoleColorSpace(i));
+    }            
 
     // Getting the displays
     this->m_displays.clear();
@@ -96,18 +97,18 @@ void Ocio::update_processor() noexcept
 {
     spdlog::debug("[OCIO] : Updating processors");
     
-    const char* role = this->m_config->getRoleColorSpace(this->m_current_role);
-    const char* display = this->m_config->getDisplay(this->m_current_display);
-    const char* view = this->m_config->getView(display, this->m_current_view);
+    const char* _role = this->m_config->getRoleColorSpace(this->m_current_role);
+    const char* _display = this->m_config->getDisplay(this->m_current_display);
+    const char* _view = this->m_config->getView(_display, this->m_current_view);
 
-    spdlog::debug("[OCIO] : Current role : {}", role);
-    spdlog::debug("[OCIO] : Current display : {}", display);
-    spdlog::debug("[OCIO] : Current view : {}", view);
+    spdlog::debug("[OCIO] : Current role : {}", _role);
+    spdlog::debug("[OCIO] : Current display : {}", _display);
+    spdlog::debug("[OCIO] : Current view : {}", _view);
 
     const OCIO::DisplayViewTransformRcPtr transform = OCIO::DisplayViewTransform::Create();
-    transform->setSrc(role);
-    transform->setDisplay(display);
-    transform->setView(view);
+    transform->setSrc(_role);
+    transform->setDisplay(_display);
+    transform->setView(_view);
     transform->setDirection(OCIO::TRANSFORM_DIR_FORWARD);
 
     const OCIO::LegacyViewingPipelineRcPtr vp = OCIO::LegacyViewingPipeline::Create();
@@ -131,6 +132,8 @@ void Ocio::update_processor() noexcept
 void Ocio::update_cpu_processor(const OCIO::BitDepth bit_depth) noexcept
 {
     this->m_cpu_processor = this->m_processor->getOptimizedCPUProcessor(bit_depth, bit_depth, OCIO::OPTIMIZATION_ALL);
+
+    spdlog::debug("[OCIO] : Updated CPU Processor");
 }
 
 void Ocio::process_cpu(void* pixels, 
@@ -184,8 +187,74 @@ void Ocio::update_views() noexcept
     }
 }
 
+void Ocio::set_view_from_str(const char* view) noexcept
+{
+    const auto it = std::find(this->m_views.begin(), this->m_views.end(), view);
+
+    if(it == this->m_views.end())
+    {
+        spdlog::warn("[OCIO] : Can't find view \"{}\". Keeping previous settings", view);
+        return;
+    }
+
+    this->m_current_view = it - this->m_views.begin();
+}
+
+void Ocio::set_display_from_str(const char* display) noexcept
+{
+    const auto it = std::find(this->m_displays.begin(), this->m_displays.end(), display);
+
+    if(it == this->m_displays.end())
+    {
+        spdlog::warn("[OCIO] : Can't find display \"{}\". Keeping previous settings", display);
+        return;
+    }
+
+    this->m_current_display = it - this->m_displays.begin();
+
+    this->update_views();
+}
+
+void Ocio::set_role_from_str(const char* role) noexcept
+{
+    auto it = std::find(this->m_role_names.begin(), this->m_role_names.end(), role);
+
+    if(it == this->m_role_names.end())
+    {
+        it = std::find(this->m_role_colorspaces.begin(), this->m_role_colorspaces.end(), role);
+
+        if(it == this->m_role_colorspaces.end())
+        {
+            spdlog::warn("[OCIO] : Can't find role \"{}\". Keeping previous settings \"{}\"", role, this->get_current_role_name());
+            return;
+        }
+        
+        this->m_current_role = it - this->m_role_colorspaces.begin();
+    }
+    else
+    {
+        this->m_current_role = it - this->m_role_names.begin();
+    }
+}
+
+void Ocio::set_look_from_str(const char* look) noexcept
+{
+    const auto it = std::find(this->m_looks.begin(), this->m_looks.end(), look);
+
+    if(it == this->m_looks.end())
+    {
+        spdlog::warn("[OCIO] : Can't find look \"{}\". Keeping previous settings", look);
+        return;
+    }
+
+    this->m_current_look = it - this->m_looks.begin();
+
+}
+
+
 void Ocio::debug() const noexcept
 {
+    
     spdlog::debug("************************");
 
     spdlog::debug("[OCIO] : Debugging current OCIO State");
@@ -193,7 +262,11 @@ void Ocio::debug() const noexcept
     spdlog::debug("Current OCIO configuration path : {}", this->m_config_path);
 
     spdlog::debug("Roles : ");
-    for(const auto& role : this->m_roles) spdlog::debug("  - {}", role);
+    
+    for(size_t i = 0; i < this->m_role_names.size(); i++)
+    {
+        spdlog::debug("  - {} : {}", this->m_role_names[i], this->m_role_colorspaces[i]);
+    }
 
     spdlog::debug("Displays : ");
     for(const auto& display : this->m_displays) spdlog::debug("  - {}", display);
@@ -204,7 +277,10 @@ void Ocio::debug() const noexcept
     spdlog::debug("Looks : ");
     for(const auto& look : this->m_looks) spdlog::debug("  - {}", look);
 
-    spdlog::debug("Current role : {}", this->m_roles[this->m_current_role]);
+    spdlog::debug("Current role : {} : {}", 
+                  this->m_role_names[this->m_current_role], 
+                  this->m_role_colorspaces[this->m_current_role]);
+
     spdlog::debug("Current display : {}", this->m_displays[this->m_current_display]);
     spdlog::debug("Current view : {}", this->m_views[this->m_current_view]);
     spdlog::debug("Current look : {}", this->m_looks[this->m_current_look]);

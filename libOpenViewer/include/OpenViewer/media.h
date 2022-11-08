@@ -95,6 +95,8 @@ public:
     // Destructs a media
     virtual ~Media() {}
 
+    virtual std::string make_path_at_frame(const uint32_t frame) const noexcept = 0;
+
     // Returns the hashed filename corresponding to the current frame
     virtual uint32_t get_hash_at_frame(const uint32_t frame) const noexcept = 0;
 
@@ -208,6 +210,8 @@ public:
 
     virtual ~Image() override;
 
+    virtual std::string make_path_at_frame(const uint32_t frame) const noexcept override;
+
     virtual uint32_t get_hash_at_frame(const uint32_t frame) const noexcept override;
 
     virtual void load_frame_to_cache(void* cache_address, const uint32_t frame) const noexcept override;
@@ -237,7 +241,7 @@ public:
 
     virtual ~ImageSequence() override;
 
-    std::string make_path_at_frame(const uint32_t frame) const noexcept;
+    virtual std::string make_path_at_frame(const uint32_t frame) const noexcept override;
 
     virtual uint32_t get_hash_at_frame(const uint32_t frame) const noexcept override;
 
@@ -264,6 +268,8 @@ public:
     Video(const std::string& path);
 
     virtual ~Video() override;
+
+    virtual std::string make_path_at_frame(const uint32_t frame) const noexcept override;
 
     virtual uint32_t get_hash_at_frame(const uint32_t frame) const noexcept override;
 

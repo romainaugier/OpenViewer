@@ -31,8 +31,8 @@ Image::Image(const std::string& path)
 
     const OIIO::ImageSpec& spec = input->spec();
 
-    this->set_width(spec.width);
-    this->set_height(spec.height);
+    this->set_width(spec.full_width);
+    this->set_height(spec.full_height);
 
     const uint8_t type = OIIO_TYPEDESC_TO_TYPE(spec.format);
     this->set_type(type);
@@ -49,6 +49,11 @@ Image::Image(const std::string& path)
 Image::~Image() 
 {
 
+}
+
+std::string Image::make_path_at_frame(const uint32_t frame) const noexcept
+{
+    return this->m_path;
 }
 
 uint32_t Image::get_hash_at_frame(const uint32_t frame) const noexcept
@@ -106,14 +111,14 @@ ImageSequence::ImageSequence(const std::string& path)
 
     const OIIO::ImageSpec& spec = input->spec();
 
-    this->set_width(spec.width);
-    this->set_height(spec.height);
+    this->set_width(spec.full_width);
+    this->set_height(spec.full_height);
 
     const uint8_t type = OIIO_TYPEDESC_TO_TYPE(spec.format);
     this->set_type(type);
     
     const bool has_alpha = spec.alpha_channel > -1;
-    this->set_nchannels(spec.nchannels > 4 ? 4 : spec.nchannels);
+    this->set_nchannels(spec.nchannels > 4 ? 4 : spec.nchannels < 3 ? spec.nchannels : 3);
 
     input->close();
 
@@ -220,6 +225,11 @@ Video::Video(const std::string& path)
 Video::~Video()
 {
     
+}
+
+std::string Video::make_path_at_frame(const uint32_t frame) const noexcept
+{
+    return this->m_path;
 }
 
 uint32_t Video::get_hash_at_frame(const uint32_t frame) const noexcept

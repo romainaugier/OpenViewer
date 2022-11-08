@@ -2,6 +2,8 @@
 // Copyright (c) 2022 - Present Romain Augier
 // All rights reserved.
 
+#pragma once
+
 #include "media.h"
 
 LOV_NAMESPACE_BEGIN

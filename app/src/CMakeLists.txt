@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2022 - Present Romain Augier
+# All rights reserved.
+
+# libOpenViewer library #
+
+add_executable(${OPENVIEWER_APP} openviewer.cpp)
+target_link_libraries(${OPENVIEWER_APP} ${CONAN_LIBS} ${OPENVIEWER_LIBS})
+
+add_custom_command(
+    TARGET ${OPENVIEWER_APP}
+    POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy
+    $<TARGET_FILE:${OPENVIEWER_APP}> ${CMAKE_SOURCE_DIR}/bin
+)

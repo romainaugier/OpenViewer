@@ -12,7 +12,7 @@ LOV_DLL void exr_input_func(void* __restrict buffer, const std::string& path) no
 {
     auto in = OIIO::ImageInput::open(path);
     const OIIO::ImageSpec& spec = in->spec();
-    in->read_image(0, -1, spec.format, buffer);
+    in->read_image(0, spec.nchannels > 4 ? 4 : spec.nchannels < 3 ? spec.nchannels : 3, spec.format, buffer);
     in->close();
 
 }
@@ -21,7 +21,7 @@ LOV_DLL void png_input_func(void* __restrict buffer, const std::string& path) no
 {
     auto in = OIIO::ImageInput::open(path);
     const OIIO::ImageSpec& spec = in->spec();
-    in->read_image(0, -1, spec.format, buffer);
+    in->read_image(spec.format, buffer);
     in->close();
 }
 
@@ -29,7 +29,7 @@ LOV_DLL void jpg_input_func(void* __restrict buffer, const std::string& path) no
 {
     auto in = OIIO::ImageInput::open(path);
     const OIIO::ImageSpec& spec = in->spec();
-    in->read_image(0, -1, spec.format, buffer);
+    in->read_image(spec.format, buffer);
     in->close();
 }
 
@@ -37,7 +37,7 @@ LOV_DLL void any_input_func(void* __restrict buffer, const std::string& path) no
 {
     auto in = OIIO::ImageInput::open(path);
     const OIIO::ImageSpec& spec = in->spec();
-    in->read_image(0, -1, spec.format, buffer);
+    in->read_image(spec.format, buffer);
     in->close();
 }
 

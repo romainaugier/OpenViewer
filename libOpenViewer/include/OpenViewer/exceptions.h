@@ -2,6 +2,8 @@
 // Copyright (c) 2022 - Present Romain Augier
 // All rights reserved.
 
+#pragma once
+
 #include <iostream>
 
 class MediaInputError : public std::exception

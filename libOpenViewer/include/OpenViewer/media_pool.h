@@ -2,6 +2,8 @@
 // Copyright (c) 2022 - Present Romain Augier
 // All rights reserved.
 
+#pragma once
+
 #include "OpenViewer/media.h"
 
 #include "tsl/ordered_map.h"

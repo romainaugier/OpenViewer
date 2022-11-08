@@ -53,6 +53,7 @@ endif()
 # Set libraries names
 set(OPENVIEWERUTILS_LIBS libOpenViewerUtils)
 set(OPENVIEWER_LIBS libOpenViewer)
+set(OPENVIEWER_APP OpenViewer)
 
 if(DEFINED RUN_TESTS)
     message(STATUS "RUN_TESTS defined, building and running tests")
@@ -73,3 +74,6 @@ add_subdirectory(libOpenViewerUtils)
 # Library OpenViewer
 include_directories(libOpenViewer/include)
 add_subdirectory(libOpenViewer)
+
+# OpenViewer App
+add_subdirectory(app)
