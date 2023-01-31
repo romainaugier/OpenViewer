@@ -79,6 +79,9 @@ LOVU_FORCEINLINE std::string get_extension(const std::string& path) noexcept { r
 // Returns the parent dir of the given path
 LOVU_FORCEINLINE std::string get_parent_dir(const std::string& path) noexcept { return std::filesystem::path(path).parent_path().string(); }
 
+// Returns the filname without the extension
+LOVU_FORCEINLINE std::string get_filename_no_ext(const std::string& path) noexcept { return std::filesystem::path(path).stem().string(); }
+
 FS_NAMESPACE_END
 
 LOVU_NAMESPACE_END

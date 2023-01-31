@@ -10,6 +10,7 @@
 
 #include "OpenImageIO/argparse.h"
 #include "OpenImageIO/imagebuf.h"
+#include "OpenImageIO/imagebufalgo.h"
 #include "tbb/parallel_for.h"
 
 LOV_NAMESPACE_BEGIN
@@ -24,17 +25,20 @@ void LOV_DLL process_command_line_args(int argc, char** argv) noexcept
     static std::string ocio_role = "";
     static std::string ocio_display = "";
     static std::string ocio_view = "";
+    static int thumbnail_size = 128;
 
     static bool help = false;
 
     static OIIO::ArgParse parser;
     
     parser.options("OpenViewer command line tools -- \n"
-                   "  Usage : openviewer <command> [options]\n"
+                   "  Usage : openviewer -command <command> [options]\n"
                    "\n"
                    "  Available commands : \n"
                    "    - ocio_convert : copy images with colorimetric space conversion using OpenColorIO\n"
                    "      > usage : openviewer ocio_convert --file C:/path/to/image_0100_001.exr\n"
+                   "    - make_thumbnail : creates a thumbnail of the given image and size\n"
+                   "      > usage : openviewer make_thumbnail --file C:/path/to/image_00.exr --size 256\n"
                    "\n",
                    "-command %s", &command, "Command to execute",
                    "--help", &help, "Print help message",
@@ -42,6 +46,7 @@ void LOV_DLL process_command_line_args(int argc, char** argv) noexcept
                    "--ocio_role %s", &ocio_role, "Ocio role",
                    "--ocio_display %s", &ocio_display, "Ocio display",
                    "--ocio_view %s", &ocio_view, "Ocio view",
+                   "--size %d", &thumbnail_size, "Thumbnail Size",
                    nullptr);
 
     if(parser.parse_args(argc, (const char**)argv) < 0)
@@ -84,6 +89,17 @@ void LOV_DLL process_command_line_args(int argc, char** argv) noexcept
         }
 
         ocio_convert(file, ocio_role, ocio_display, ocio_view, true);
+    }
+    else if(command == "make_thumbnail")
+    {
+        if(file == "")
+        {
+            spdlog::error("Error during command line parsing. Specified command <make_thumbnail>"
+                          "but an argument \"file\" is missing.");
+            std::exit(EXIT_FAILURE);
+        }
+
+        make_thumbnail(file, thumbnail_size);
     }
 }
 
@@ -170,12 +186,47 @@ void LOV_DLL ocio_convert(std::string& filename,
             }
             catch(const std::exception& e)
             {
-                spdlog::error("OIIO Exception catched : {}", e.what());
+                spdlog::error("Exception catched : {}", e.what());
             }
         }
     }, partitioner);
 
     spdlog::debug("Finished OCIO Convert command");
+}
+
+void LOV_DLL make_thumbnail(std::string& filename,
+                            const uint16_t thumbnail_size) noexcept
+{
+    spdlog::debug("Starting Make Thumbnail command");
+
+    try
+    {
+        OIIO::ImageBuf source(filename);
+
+
+        OIIO::ROI roi(0, thumbnail_size, 0, thumbnail_size);
+
+        OIIO::ImageBuf dest = OIIO::ImageBufAlgo::fit(source, "", 0, true, roi);
+
+        const std::string out_file_path = fmt::format("{}/{}_thumbnail.png",
+                                                      lovu::fs::get_parent_dir(filename),
+                                                      lovu::fs::get_filename_no_ext(filename));
+
+        if(!dest.write(out_file_path))
+        {
+            spdlog::error("Error during thumbnail write : {}", dest.geterror());
+        }
+        else
+        {
+            spdlog::info("Wrote thumbnail file to : \"{}\"", out_file_path);
+        }
+    }
+    catch(const std::exception& e)
+    {
+        spdlog::error("Exception catched : {}", e.what());
+    }
+
+    spdlog::debug("Finished Make Thumbnail command");
 }
 
 LOV_NAMESPACE_END

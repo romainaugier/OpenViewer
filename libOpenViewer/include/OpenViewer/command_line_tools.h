@@ -17,4 +17,7 @@ void LOV_DLL ocio_convert(std::string& filename,
                           const std::string& ocio_view,
                           const bool autodetect_sequence = true) noexcept;
 
+void LOV_DLL make_thumbnail(std::string& filename,
+                            const uint16_t thumbnail_size) noexcept;
+
 LOV_NAMESPACE_END
