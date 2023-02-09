@@ -25,8 +25,8 @@ LOV_NAMESPACE_BEGIN
 // All single channel media (for example, an exr file with only the R channel) will be treated as an rgb media
 enum Format_
 {
-    Format_RGB = BIT(0),
-    Format_RGBA = BIT(1)
+    Format_RGB = LOVU_BIT(0),
+    Format_RGBA = LOVU_BIT(1)
 };
 
 // Helper macro the deduce the format given the number of channels
@@ -36,12 +36,22 @@ enum Format_
 // If the type cannot be deduced, it will be half float by default
 enum Type_
 {
-    Type_HALF = BIT(0),
-    Type_FLOAT = BIT(1),
-    Type_U8 = BIT(2),
-    Type_U16 = BIT(3),
-    Type_U32 = BIT(4)
+    Type_HALF = LOVU_BIT(0),
+    Type_FLOAT = LOVU_BIT(1),
+    Type_U8 = LOVU_BIT(2),
+    Type_U16 = LOVU_BIT(3),
+    Type_U32 = LOVU_BIT(4)
 };
+
+static inline std::string type_to_string(const Type_ type) noexcept
+{
+    if(type & Type_FLOAT) return "Float";
+    else if(type & Type_HALF) return "Half";
+    else if(type & Type_U8) return "8 Bits Int";
+    else if(type & Type_U16) return "16 Bits Int";
+    else if(type & Type_U32) return "32 Bits Int";
+    else return "Unknown";
+}
 
 // Helper macro to convert the OIIO:TypeDesc to our internal type description and vice-versa, same for ocio
 #define OIIO_TYPEDESC_TO_TYPE(t) t == OIIO::TypeDesc::FLOAT ? Type_FLOAT : \
@@ -116,16 +126,28 @@ public:
     
     // Returns the width of the media in pixels
     LOV_FORCEINLINE uint32_t get_width() const noexcept { return this->m_width; }
-    
+
+    // Returns the data width of the media in pixels (for some file formats the data window is smaller than the display window)
+    LOV_FORCEINLINE uint32_t get_data_width() const noexcept { return this->m_data_width; }
+
     // Sets the width of the media in pixels
     LOV_FORCEINLINE void set_width(const uint32_t width) noexcept { this->m_width = width; }
     
+    // Sets the data width of the media in pixels (for some file formats the data window is smaller than the display window)
+    LOV_FORCEINLINE void set_data_width(const uint32_t width) noexcept { this->m_data_width = width; }
+
     // Returns the height of the media in pixels
     LOV_FORCEINLINE uint32_t get_height() const noexcept { return this->m_height; }
     
+    // Returns the data height of the media in pixels (for some file formats the data window is smaller than the display window)
+    LOV_FORCEINLINE uint32_t get_data_height() const noexcept { return this->m_data_height; }
+
     // Sets the width of the media in pixels
     LOV_FORCEINLINE void set_height(const uint32_t height) noexcept { this->m_height = height; }
     
+    // Sets the data height of the media in pixels (for some file formats the data window is smaller than the display window)
+    LOV_FORCEINLINE void set_data_height(const uint32_t height) noexcept { this->m_data_height = height; }
+
     // Returns the number of channels of the media (usually 3 for rgb images, 4 for rgba images)
     LOV_FORCEINLINE uint32_t get_nchannels() const noexcept { return this->m_nchannels; }
     
@@ -154,11 +176,11 @@ public:
     LOV_FORCEINLINE uint64_t get_byte_size() const noexcept { return this->m_width * 
                                                                      this->m_height * 
                                                                      this->m_nchannels * 
-                                                                     CAST(uint64_t, TYPE_BYTE_SIZE(this->m_type)); }
+                                                                     LOVU_CAST(uint64_t, TYPE_BYTE_SIZE(this->m_type)); }
     
     // Returns the whole media byte size, i.e if its a video or a sequence, returns get_byte_size() * number of frames
     LOV_FORCEINLINE uint64_t get_media_byte_size() const noexcept { return this->get_byte_size() * 
-                                                                    CAST(uint64_t, (this->m_end - this->m_start)); }
+                                                                    LOVU_CAST(uint64_t, (this->m_end - this->m_start + 1)); }
 
     // ** Media path **
 
@@ -185,6 +207,21 @@ public:
     // Returns a layer given its id
     LOV_FORCEINLINE layer get_layer(const uint32_t id) const noexcept { return this->m_layers.value()[id]; }
 
+    LOV_FORCEINLINE InputSpecs make_input_specs() const noexcept 
+    { 
+        InputSpecs specs; 
+    
+        specs.width = this->m_width;
+        specs.height = this->m_height;
+        specs.data_width = this->m_data_width;
+        specs.data_height = this->m_data_height;
+        specs.type = this->m_type;
+        specs.n_channels = this->m_nchannels;
+        specs.byte_size = this->get_type_size();
+
+        return specs;
+    }
+
 protected:
     std::optional<std::vector<layer>> m_layers;
 
@@ -195,6 +232,10 @@ protected:
 private:
     uint32_t m_width = 0;
     uint32_t m_height = 0;
+
+    uint32_t m_data_width = 0;
+    uint32_t m_data_height = 0;
+
     uint32_t m_nchannels = 0;
 
     uint16_t m_current_layer_id = 0;

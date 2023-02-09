@@ -34,6 +34,13 @@
 #ifndef LOVU_PLATFORM_STR
 #ifdef _WIN32
 #define LOVU_WIN 1
+
+#include "windows.h"
+#define BOOST_STACKTRACE_USE_WINDBG
+
+#undef min
+#undef max
+
 #ifdef LOVU_X64
 #define LOVU_PLATFORM_STR "WIN64"
 #else
@@ -102,11 +109,43 @@ template<class T> T& classMacroImpl(const T* t);
 #define LOVUARRAYSIZE(array) ((sizeof(array)/sizeof(0[array])) / ((size_t)(!(sizeof(array) % sizeof(0[array])))))
 
 // Cast utils
-#define CAST(type, var) static_cast<type>(var)
+#define LOVU_CAST(type, var) static_cast<type>(var)
 
 // Bits utils
-#define BIT(bit) 1 << bit
+#define LOVU_BIT(bit) 1 << bit
 
 // Namespace
 #define LOVU_NAMESPACE_BEGIN namespace lovu {
 #define LOVU_NAMESPACE_END }
+
+LOVU_NAMESPACE_BEGIN
+
+// Simple exception handler
+
+#include "boost/stacktrace.hpp"
+
+#define BOOST_STACKTRACE_USE_ADDR2LINE
+
+#ifdef LOVU_WIN
+
+inline static LONG WINAPI exception_handler(PEXCEPTION_POINTERS p_exception_info)
+{
+    spdlog::error("Unhandled exception trapped (Code {}) : \n>>>>>>>>>>\n{}\n<<<<<<<<<<\nProgram will exit.",
+                  p_exception_info->ExceptionRecord->ExceptionCode,
+                  boost::stacktrace::to_string(boost::stacktrace::stacktrace()));
+
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
+#else
+
+inline static void exception_handler() 
+{
+
+}
+
+#endif
+
+
+
+LOVU_NAMESPACE_END

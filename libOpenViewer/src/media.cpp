@@ -38,7 +38,7 @@ Image::Image(const std::string& path)
     this->set_type(type);
     
     const bool has_alpha = spec.alpha_channel > -1;
-    this->set_nchannels(spec.nchannels > 4 ? 4 : spec.nchannels);
+    this->set_nchannels(spec.nchannels > 4 ? 4 : spec.nchannels < 3 ? 3 : spec.nchannels);
 
     input->close();
 
@@ -63,7 +63,9 @@ uint32_t Image::get_hash_at_frame(const uint32_t frame) const noexcept
 
 void Image::load_frame_to_cache(void* cache_address, const uint32_t frame) const noexcept
 {
-    this->m_input_func(cache_address, this->m_path);
+    const InputSpecs& specs = this->make_input_specs();
+
+    this->m_input_func(cache_address, this->m_path, specs);
 }
 
 bool Image::is_cached_at_frame(const uint32_t frame) const noexcept
@@ -116,9 +118,14 @@ ImageSequence::ImageSequence(const std::string& path)
 
     const uint8_t type = OIIO_TYPEDESC_TO_TYPE(spec.format);
     this->set_type(type);
-    
+
     const bool has_alpha = spec.alpha_channel > -1;
-    this->set_nchannels(spec.nchannels > 4 ? 4 : spec.nchannels < 3 ? spec.nchannels : 3);
+
+    uint8_t n_channels = spec.nchannels < 3 ? spec.nchannels : 
+                         spec.nchannels == 3 ? 3 :
+                         spec.nchannels > 3 && has_alpha ? 4 : 3;
+
+    this->set_nchannels(n_channels);
 
     input->close();
 
@@ -157,8 +164,10 @@ uint32_t ImageSequence::get_hash_at_frame(const uint32_t frame) const noexcept
 void ImageSequence::load_frame_to_cache(void* cache_address, const uint32_t frame) const noexcept
 {
     const std::string path_at_frame = this->make_path_at_frame(frame);
+
+    const InputSpecs& specs = this->make_input_specs();
     
-    this->m_input_func(cache_address, path_at_frame);
+    this->m_input_func(cache_address, path_at_frame, specs);
 }
 
 bool ImageSequence::is_cached_at_frame(const uint32_t frame) const noexcept
@@ -188,7 +197,7 @@ void ImageSequence::debug() const noexcept
     spdlog::debug("Height : {} px", this->get_height());
     spdlog::debug("Channels : {}", this->get_nchannels());
     spdlog::debug("Depth : {} bits", this->get_type_size() * 8);
-    spdlog::debug("Size : {} bits", this->get_size());
+    spdlog::debug("Size : {} px", this->get_size());
     spdlog::debug("Bytes Size : {} bits", this->get_byte_size());
     
     std::string cached;

@@ -69,15 +69,15 @@ LOVU_DLL size_t get_peak_rss() noexcept;
 #endif 
 
 // Converts the size from bytes to megabytes
-LOVU_FORCEINLINE float to_mb(size_t size_in_bytes) noexcept { return float(size_in_bytes) / float(BIT(20)); }
+LOVU_FORCEINLINE float to_mb(size_t size_in_bytes) noexcept { return float(size_in_bytes) / float(LOVU_BIT(20)); }
 
 // Converts the size from megabytes to bytes
-LOVU_FORCEINLINE float from_mb(size_t size_in_mbytes) noexcept { return float(size_in_mbytes) * float(BIT(20)); }
+LOVU_FORCEINLINE float from_mb(size_t size_in_mbytes) noexcept { return float(size_in_mbytes) * float(LOVU_BIT(20)); }
 
 // Converts the size from bytes to gigabytes
-LOVU_FORCEINLINE float to_gb(size_t size_in_bytes) noexcept { return float(size_in_bytes) / float(BIT(30)); }
+LOVU_FORCEINLINE float to_gb(size_t size_in_bytes) noexcept { return float(size_in_bytes) / float(LOVU_BIT(30)); }
 
 // Converts the size from gigabytes to bytes
-LOVU_FORCEINLINE float from_gb(size_t size_in_gbytes) noexcept { return float(size_in_gbytes) * float(BIT(30)); }
+LOVU_FORCEINLINE float from_gb(size_t size_in_gbytes) noexcept { return float(size_in_gbytes) * float(LOVU_BIT(30)); }
 
 LOVU_NAMESPACE_END

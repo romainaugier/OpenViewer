@@ -4,7 +4,7 @@ rem Little utility batch script to build the library
 
 echo Building OpenViewer
 
-set BUILDTYPE=Release
+set BUILDTYPE=RelWithDebInfo
 set RUNTESTS=0
 set REMOVEOLDDIR=0
 

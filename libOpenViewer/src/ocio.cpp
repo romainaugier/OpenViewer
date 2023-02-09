@@ -150,7 +150,6 @@ void Ocio::process_cpu(void* pixels,
 
         OCIO::PackedImageDesc img(pixels, width, height, chan_ord, bit_depth, OCIO::AutoStride, OCIO::AutoStride, OCIO::AutoStride);
 
-
         if(this->m_cpu_processor != nullptr)
         {
             this->m_cpu_processor->apply(img);

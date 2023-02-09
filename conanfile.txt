@@ -1,6 +1,7 @@
 [requires]
 spdlog/1.10.0
 openexr/3.1.5
+imath/3.1.5
 opencolorio/2.1.0@openviewer/1.0
 openimageio/2.4@openviewer/1.0
 tsl-robin-map/1.0.1

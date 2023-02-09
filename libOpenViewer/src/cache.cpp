@@ -51,11 +51,11 @@ Cache::Cache()
 
     if(cache_mode == 1)
     {
-        this->m_max_capacity = CAST(uint64_t, lovu::from_mb(lov::settings.get<uint32_t>("cache_max_size")));
+        this->m_max_capacity = LOVU_CAST(uint64_t, lovu::from_mb(lov::settings.get<uint32_t>("cache_max_size")));
     }
     else if(cache_mode == 2)
     {
-        this->m_max_capacity = CAST(uint64_t, lovu::from_mb(lov::settings.get<uint32_t>("cache_max_ram_usage"))) / 100.0f * max_ram_capacity;
+        this->m_max_capacity = LOVU_CAST(uint64_t, lovu::from_mb(lov::settings.get<uint32_t>("cache_max_ram_usage"))) / 100.0f * max_ram_capacity;
     }
 }
 
@@ -69,11 +69,11 @@ Cache::Cache(uint64_t size)
 
     if(cache_mode == 1)
     {
-        this->m_max_capacity = CAST(uint64_t, lovu::from_mb(lov::settings.get<uint32_t>("cache_max_size")));
+        this->m_max_capacity = LOVU_CAST(uint64_t, lovu::from_mb(lov::settings.get<uint32_t>("cache_max_size")));
     }
     else if(cache_mode == 2)
     {
-        this->m_max_capacity = CAST(uint64_t, max_ram_capacity * lov::settings.get<uint32_t>("cache_max_ram_usage"));
+        this->m_max_capacity = LOVU_CAST(uint64_t, max_ram_capacity * lov::settings.get<uint32_t>("cache_max_ram_usage"));
     }
 
     if(size >= max_ram_capacity || size >= this->m_max_capacity)
@@ -318,6 +318,8 @@ void Cache::resize(size_t new_size) noexcept
 
     this->m_memory_arena = lovu::mem_alloc(new_size, 32);
     this->m_bytes_capacity = new_size;
+
+    spdlog::debug("[CACHE] : New memory address : {}", fmt::ptr(this->m_memory_arena));
 
     this->flush();
 

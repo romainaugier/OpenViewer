@@ -124,17 +124,81 @@ void LOV_DLL ocio_convert(std::string& filename,
     media_pool.add_media(filename);
 
     Media* media = media_pool.get_media(0);
+    media->debug();
     
     ocio.update_cpu_processor(media->get_ocio_bitdepth());
 
     Cache cache;
     cache.resize(media->get_media_byte_size());
 
-    static tbb::affinity_partitioner partitioner;
+    const bool multithread = true;
 
-    tbb::parallel_for(tbb::blocked_range<size_t>(media->get_start_frame(), (media->get_end_frame() + 1)), [&](const tbb::blocked_range<size_t>& r)
+    if(multithread)
     {
-        for(size_t i = r.begin(), i_end = r.end(); i < i_end; i++)
+        static tbb::affinity_partitioner partitioner;
+
+        tbb::parallel_for(tbb::blocked_range<size_t>(media->get_start_frame(), (media->get_end_frame() + 1)), [&](const tbb::blocked_range<size_t>& r)
+        {
+            for(size_t i = r.begin(), i_end = r.end(); i < i_end; i++)
+            {
+                try
+                {
+                    const std::string origin_path = media->make_path_at_frame(i);
+
+                    if(!lovu::fs::exists(origin_path))
+                    {
+                        continue;
+                    }
+
+                    if(!lovu::str::ends_with(origin_path, ".exr"))
+                    {
+                        spdlog::warn("File \"{}\" is not an OpenEXR file, discarding it", origin_path);
+                        continue;
+                    }
+
+                    void* cache_address = cache.add(media, i);
+
+                    media->load_frame_to_cache(cache_address, i);
+
+                    ocio.process_cpu(cache_address, 
+                                    media->get_width(), 
+                                    media->get_height(), 
+                                    media->get_nchannels(), 
+                                    media->get_type());
+
+                    OIIO::ImageSpec specs(media->get_width(), 
+                                        media->get_height(), 
+                                        media->get_nchannels(),
+                                        media->get_oiio_typedesc());
+
+                    OIIO::ImageBuf buffer(specs, cache_address);
+
+                    std::string file_name = std::filesystem::path(origin_path).filename().string();
+
+                    lovu::str::re_replace(file_name, std::regex("\\.exr"), ".png");
+
+                    const std::string output_path = fmt::format("{}/aces_convert/{}", lovu::fs::get_parent_dir(origin_path), file_name);
+
+                    if(!lovu::fs::exists(output_path))
+                    {
+                        lovu::fs::makedirs(output_path);
+                    }
+
+                    if(!buffer.write(output_path))
+                    {
+                        spdlog::error("OIIO Error during file write : {}", buffer.geterror());
+                    }
+                }
+                catch(const std::exception& e)
+                {
+                    spdlog::error("Exception catched : {}", e.what());
+                }
+            }
+        }, partitioner);
+    }
+    else
+    {
+        for(size_t i = media->get_start_frame(); i < (media->get_end_frame() + 1); i++)
         {
             try
             {
@@ -155,16 +219,15 @@ void LOV_DLL ocio_convert(std::string& filename,
                 media->load_frame_to_cache(cache_address, i);
 
                 ocio.process_cpu(cache_address, 
-                                media->get_width(), 
-                                media->get_height(), 
-                                media->get_nchannels(), 
-                                media->get_type());
-
+                                 media->get_width(), 
+                                 media->get_height(), 
+                                 media->get_nchannels(), 
+                                 media->get_type());
 
                 OIIO::ImageSpec specs(media->get_width(), 
-                                    media->get_height(), 
-                                    media->get_nchannels(),
-                                    media->get_oiio_typedesc());
+                                      media->get_height(), 
+                                      media->get_nchannels(),
+                                      media->get_oiio_typedesc());
 
                 OIIO::ImageBuf buffer(specs, cache_address);
 
@@ -181,7 +244,7 @@ void LOV_DLL ocio_convert(std::string& filename,
 
                 if(!buffer.write(output_path))
                 {
-                    spdlog::error("OIIO Error during file write : {}", OIIO::geterror());
+                    spdlog::error("OIIO Error during file write : {}", buffer.geterror());
                 }
             }
             catch(const std::exception& e)
@@ -189,7 +252,7 @@ void LOV_DLL ocio_convert(std::string& filename,
                 spdlog::error("Exception catched : {}", e.what());
             }
         }
-    }, partitioner);
+    }
 
     spdlog::debug("Finished OCIO Convert command");
 }

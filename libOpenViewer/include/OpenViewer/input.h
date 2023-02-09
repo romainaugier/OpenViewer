@@ -12,16 +12,31 @@ LOV_NAMESPACE_BEGIN
 
 // ** Image input functions **
 
+struct InputSpecs
+{
+    uint16_t width;
+    uint16_t height;
+
+    uint16_t data_width;
+    uint16_t data_height;
+
+    uint8_t n_channels;
+
+    uint8_t type;
+
+    uint8_t byte_size;
+};
+
 // For now, we declare them here and define them in input.cpp src file. Later,
 // we'll make a proper per input func dll with an interface for custom dll loading
 
-LOV_DLL void exr_input_func(void* __restrict buffer, const std::string& path) noexcept;
-LOV_DLL void png_input_func(void* __restrict buffer, const std::string& path) noexcept;
-LOV_DLL void jpg_input_func(void* __restrict buffer, const std::string& path) noexcept;
+LOV_DLL void exr_input_func(void* __restrict buffer, const std::string& path, const InputSpecs& specs) noexcept;
+LOV_DLL void png_input_func(void* __restrict buffer, const std::string& path, const InputSpecs& specs) noexcept;
+LOV_DLL void jpg_input_func(void* __restrict buffer, const std::string& path, const InputSpecs& specs) noexcept;
 
 // The any prefix means that this function will be returned when the given extension cannot be found in
 // the registered functions
-LOV_DLL void any_input_func(void* __restrict buffer, const std::string& path) noexcept;
+LOV_DLL void any_input_func(void* __restrict buffer, const std::string& path, const InputSpecs& specs) noexcept;
 
 // To load images inside memory, we use a system of function pointers registered inside a map 
 // with the key being the image format extension, and the value being the function pointer
@@ -33,7 +48,7 @@ LOV_DLL void any_input_func(void* __restrict buffer, const std::string& path) no
 // for example for layers in exr files, we format the filepath like this :
 // /path/to/image.exr#layer_name#r,g,b,a
 
-using image_input_func = void(*)(void*, const std::string&);
+using image_input_func = void(*)(void*, const std::string&, const InputSpecs& specs);
 
 class LOV_DLL InputFuncs
 {
