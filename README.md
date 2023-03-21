@@ -4,6 +4,8 @@ sudo pacman -S libxvmc
 
 Fixes for opencolorio : pystring include directory missing, and <cstring> missing in utils/StringUtils.h
 
+Fixes for conan on linux : conan profile update settings.compiler.libcxx=libstdc++11 default
+
 ```bat
 cd conan/recipes/opencolorio
 conan create . opencolorio/2.1.0@openviewer/1.0
