@@ -10,14 +10,14 @@
 LOVU_NAMESPACE_BEGIN 
 
 // Aligned memory allocation function
-LOVU_DLL void* _mem_alloc(const size_t size, const size_t align) noexcept;
+LOVU_API void* _mem_alloc(const size_t size, const size_t align) noexcept;
 
 // Aligned memory free function
-LOVU_DLL void _mem_free(void* ptr) noexcept;
+LOVU_API void _mem_free(void* ptr) noexcept;
 
 // Helper macros to find where memory is allocated and freed
 // To use them, define LOVU_MEM_DEBUG
-#ifdef LOVU_MEM_DEBUG
+#if defined(LOVU_MEM_DEBUG)
 
 #define mem_alloc(size, align) do { \
     _mem_alloc(size, align); \
@@ -38,33 +38,33 @@ LOVU_DLL void _mem_free(void* ptr) noexcept;
 #endif
 
 // Returns the total amount of physical ram available
-LOVU_DLL uint64_t get_total_system_memory() noexcept;
+LOVU_API uint64_t get_total_system_memory() noexcept;
 
 // utilities to track memory usage
 // by Max Liani Blog Post : https://maxliani.wordpress.com/2020/05/02/dev-tracking-memory-usage-part-1/
 
-#ifdef LOVU_WIN
+#if defined(LOVU_WIN)
 
 #include <windows.h>
 #include <psapi.h>
 
 // Get current memory usage of the application
-LOVU_DLL size_t get_current_rss() noexcept;
+LOVU_API size_t get_current_rss() noexcept;
 
 // Get peak memory usage of the application
-LOVU_DLL size_t get_peak_rss() noexcept;
+LOVU_API size_t get_peak_rss() noexcept;
 
-#elif OV_LINUX
+#elif defined(LOVU_LINUX)
 
 #include <sys/resource.h>
 #include <unistd.h>
 #include <stdio.h>
 
 // Get current memory usage of the application
-LOVU_DLL size_t get_current_rss() noexcept;
+LOVU_API size_t get_current_rss() noexcept;
 
 // Get peak memory usage of the application
-LOVU_DLL size_t get_peak_rss() noexcept;
+LOVU_API size_t get_peak_rss() noexcept;
 
 #endif 
 

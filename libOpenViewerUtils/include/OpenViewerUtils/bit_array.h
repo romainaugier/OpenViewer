@@ -15,7 +15,7 @@ LOVU_NAMESPACE_BEGIN
 
 // bit_array is a simple class that holds a bit field consisting of unsigned 64 bits integers
 // and a few methods to set, clear, test and resize the array
-class LOVU_DLL bit_array
+class LOVU_API bit_array
 {
 public:
     // Default constructor with a size of 64 bits
@@ -29,14 +29,14 @@ public:
 
     // Sets a bit at the given position. If the position is greater than the bit_array size, 
     // bit_array will grow to reach the position
-    LOVU_FORCEINLINE void set(const size_t& position) noexcept;
+    void set(const size_t& position) noexcept;
 
     // Clears a bit at the given position. If the position is greater than the bit_array size, 
     // bit_array will grow to reach the position
-    LOVU_FORCEINLINE void clear(const size_t& position) noexcept;
+    void clear(const size_t& position) noexcept;
 
     // Tests a bit at the given position
-    LOVU_FORCEINLINE bool test(const size_t& position) const noexcept;
+    bool test(const size_t& position) const noexcept;
 
     // Returns the size of the array
     size_t get_size() const noexcept;

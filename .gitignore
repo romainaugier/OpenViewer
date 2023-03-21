@@ -9,3 +9,5 @@ py_env
 graph_info.json
 .vscode
 test
+env
+compile_flags.txt

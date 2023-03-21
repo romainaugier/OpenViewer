@@ -15,7 +15,7 @@
 
 LOV_NAMESPACE_BEGIN
 
-LOV_DLL void exr_input_func(void* __restrict buffer, 
+LOV_API void exr_input_func(void* __restrict buffer, 
                             const std::string& path, 
                             const InputSpecs& specs) noexcept
 {
@@ -68,7 +68,7 @@ LOV_DLL void exr_input_func(void* __restrict buffer,
     }
 }
 
-LOV_DLL void png_input_func(void* __restrict buffer, 
+LOV_API void png_input_func(void* __restrict buffer, 
                             const std::string& path, 
                             const InputSpecs& specs) noexcept
 {
@@ -78,7 +78,7 @@ LOV_DLL void png_input_func(void* __restrict buffer,
     in->close();
 }
 
-LOV_DLL void jpg_input_func(void* __restrict buffer, 
+LOV_API void jpg_input_func(void* __restrict buffer, 
                             const std::string& path, 
                             const InputSpecs& specs) noexcept
 {
@@ -88,7 +88,7 @@ LOV_DLL void jpg_input_func(void* __restrict buffer,
     in->close();
 }
 
-LOV_DLL void any_input_func(void* __restrict buffer, 
+LOV_API void any_input_func(void* __restrict buffer, 
                             const std::string& path, 
                             const InputSpecs& specs) noexcept
 {

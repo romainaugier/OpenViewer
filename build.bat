@@ -39,32 +39,9 @@ rem //////////////////////////////////
 rem Little function to process args
 :ParseArg
 
-if "%~1" equ "Debug" (
-    set BUILDTYPE=Debug
-)
-
-if "%~1" equ "debug" (
-    set BUILDTYPE=Debug
-)
-
-if "%~1" equ "dbg" (
-    set BUILDTYPE=Debug
-)
-
-rem Build and run tests
-if "%~1" equ "RunTests" set RUNTESTS=1
-if "%~1" equ "Tests" set RUNTESTS=1
-if "%~1" equ "Test" set RUNTESTS=1
-if "%~1" equ "runtests" set RUNTESTS=1
-if "%~1" equ "tests" set RUNTESTS=1
-if "%~1" equ "test" set RUNTESTS=1
-
-if "%~1" equ "RemoveDir" set REMOVEOLDDIR=1
-if "%~1" equ "Remove" set REMOVEOLDDIR=1
-if "%~1" equ "remove" set REMOVEOLDDIR=1
-if "%~1" equ "removedir" set REMOVEOLDDIR=1
-if "%~1" equ "rmdir" set REMOVEOLDDIR=1
-if "%~1" equ "rdir" set REMOVEOLDDIR=1
+if "%~1" equ "--debug" set BUILDTYPE=Debug
+if "%~1" equ "--tests" set RUNTESTS=1
+if "%~1" equ "--clean" set REMOVEOLDDIR=1
 
 exit /B 0
 

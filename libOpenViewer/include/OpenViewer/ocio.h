@@ -9,7 +9,7 @@
 
 LOV_NAMESPACE_BEGIN
 
-class LOV_DLL Ocio
+class LOV_API Ocio
 {
     std::vector<std::string> m_views;
     std::vector<std::string> m_displays;

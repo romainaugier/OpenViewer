@@ -112,11 +112,47 @@ include_directories(
 
             print("Patched includes")
 
+    def _patch_pystring(self):
+        # change includes #include "pystring/pystring.h" to #include "pystring.h"
+        files = [
+            "{0}/OpenColorIO-2.1.2/src/OpenColorIO/Context.cpp".format(self._source_subfolder),
+            "{0}/OpenColorIO-2.1.2/src/OpenColorIO/OCIOYaml.cpp".format(self._source_subfolder),
+            "{0}/OpenColorIO-2.1.2/src/OpenColorIO/Op.cpp".format(self._source_subfolder),
+            "{0}/OpenColorIO-2.1.2/src/OpenColorIO/PathUtils.cpp".format(self._source_subfolder),
+            "{0}/OpenColorIO-2.1.2/src/OpenColorIO/fileformats/FileFormatCTF.cpp".format(self._source_subfolder),
+            "{0}/OpenColorIO-2.1.2/src/OpenColorIO/fileformats/FileFormatICC.cpp".format(self._source_subfolder),
+            "{0}/OpenColorIO-2.1.2/src/OpenColorIO/fileformats/FileFormatIridasLook.cpp".format(self._source_subfolder),
+            "{0}/OpenColorIO-2.1.2/src/OpenColorIO/transforms/FileTransform.cpp".format(self._source_subfolder),
+            "{0}/OpenColorIO-2.1.2/src/OpenColorIO/fileformats/FileFormatDiscreet1DL.cpp".format(self._source_subfolder),
+        ]
+
+        for file in files:
+            with open(file, "r") as f:
+                content = f.read()
+
+            content = content.replace("#include \"pystring/pystring.h\"", "#include \"pystring.h\"")
+
+            with open(file, "w") as f:
+                f.write(content)
+
+    def _patch_missing_strlen(self):
+        file = "{0}/OpenColorIO-2.1.2/src/OpenColorIO/FileRules.cpp".format(self._source_subfolder)
+
+        with open(file, "r") as f:
+            content = f.read()
+
+        content = content.replace("#include <map>", "#include <cstring>\n#include <map>")
+
+        with open(file, "w") as f:
+            f.write(content)
+
     def source(self):
         tools.get("https://github.com/AcademySoftwareFoundation/OpenColorIO/archive/refs/tags/v2.1.2.zip", destination=self._source_subfolder)
 
         self._patch_expat()
         self._patch_includes()
+        self._patch_pystring()
+        self._patch_missing_strlen()
 
     @functools.lru_cache(1)
     def _configure_cmake(self):

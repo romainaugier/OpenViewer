@@ -12,7 +12,7 @@ LOV_NAMESPACE_BEGIN
 
 using media_map = tsl::ordered_map<std::string, Media*>;
 
-class LOV_DLL MediaPool
+class LOV_API MediaPool
 {
 public:
     MediaPool();

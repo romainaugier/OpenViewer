@@ -96,7 +96,7 @@ static const std::basic_regex re_seq_pattern("^seq\\?");
 // A media represents anything that OpenViewer can read, i.e a video, an image or an image sequence
 // It holds informations such as the dimensions, the number of channels, the start/end frames, the pixel type
 // We assume those informations will be consistent for image sequences
-class LOV_DLL Media
+class LOV_API Media
 {
 public:
     // Constructs an empty media
@@ -244,7 +244,7 @@ private:
 };
 
 // Single image
-class LOV_DLL Image : public Media
+class LOV_API Image : public Media
 {
 public:
     Image(const std::string& path);
@@ -275,7 +275,7 @@ private:
 // The path will be specific for a sequence, and formatted like this
 // seq#D:/path/to/image_sequence_#.exr 100-150 
 // There must the same amount of # as there is of padding in the frame number
-class LOV_DLL ImageSequence : public Media
+class LOV_API ImageSequence : public Media
 {
 public:
     ImageSequence(const std::string& path);
@@ -303,7 +303,7 @@ private:
 };
 
 // Any video
-class LOV_DLL Video : public Media
+class LOV_API Video : public Media
 {
 public:
     Video(const std::string& path);
@@ -327,7 +327,7 @@ private:
 };  
 
 // Not implemented for now
-// class LOV_DLL Audio : public Media
+// class LOV_API Audio : public Media
 // {
 //public:
 //     Audio(const std::string& path);

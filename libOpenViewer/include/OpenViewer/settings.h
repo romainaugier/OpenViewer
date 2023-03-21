@@ -17,7 +17,7 @@ using json = nlohmann::json;
 
 #define SETTINGS_FILE_PATH "OpenViewer/settings.json"
 
-class LOV_DLL Settings
+class LOV_API Settings
 {
 public:
     // Returns an instance of the settings

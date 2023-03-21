@@ -8,7 +8,7 @@
 
 LOV_NAMESPACE_BEGIN
 
-class LOV_DLL TimelineItem
+class LOV_API TimelineItem
 {
 public:
     TimelineItem(Media* media);
@@ -24,7 +24,7 @@ private:
     uint32_t m_end;
 };
 
-class LOV_DLL Timeline
+class LOV_API Timeline
 {
 
 };

@@ -7,6 +7,16 @@
 #include <locale>
 #include <codecvt>
 
+#if defined(LOVU_WIN)
+#include "windows.h"
+#include "ShlObj_core.h"
+#elif defined(LOVU_LINUX)
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
+#include <limits.h>
+#endif
+
 LOVU_NAMESPACE_BEGIN
 
 FS_NAMESPACE_BEGIN
@@ -21,7 +31,7 @@ LOVU_FORCEINLINE size_t file_count_in_directory(const std::string_view& director
     return static_cast<size_t>(std::distance(std::filesystem::directory_iterator(directory_path), std::filesystem::directory_iterator{}));
 }
 
-LOVU_DLL std::string get_file_sequence_from_file(const std::string& file_path) noexcept
+LOVU_API std::string get_file_sequence_from_file(const std::string& file_path) noexcept
 {
     const std::regex num_pattern("\\d+");
 
@@ -163,7 +173,7 @@ LOVU_DLL std::string get_file_sequence_from_file(const std::string& file_path) n
     return "";
 }
 
-LOVU_DLL void get_filenames_from_dir(std::vector<std::string>& file_names, 
+LOVU_API void get_filenames_from_dir(std::vector<std::string>& file_names, 
                                      const std::string& directory_path) noexcept
 {
     const std::regex num_pattern("\\d+");
@@ -352,7 +362,7 @@ LOVU_DLL void get_filenames_from_dir(std::vector<std::string>& file_names,
     file_names = std::move(files);
 }
 
-LOVU_DLL bool is_image(const std::string& path) noexcept
+LOVU_API bool is_image(const std::string& path) noexcept
 {
     for (uint8_t i = 0; i < LOVUARRAYSIZE(image_extensions); i++)
     {
@@ -362,7 +372,7 @@ LOVU_DLL bool is_image(const std::string& path) noexcept
     return false;
 }
 
-LOVU_DLL bool is_image(const std::string_view& path) noexcept
+LOVU_API bool is_image(const std::string_view& path) noexcept
 {
     for (uint8_t i = 0; i < LOVUARRAYSIZE(image_extensions); i++)
     {
@@ -372,7 +382,7 @@ LOVU_DLL bool is_image(const std::string_view& path) noexcept
     return false;
 }
 
-LOVU_DLL bool is_video(const std::string& path) noexcept
+LOVU_API bool is_video(const std::string& path) noexcept
 {
     for (uint8_t i = 0; i < LOVUARRAYSIZE(video_extensions); i++)
     {
@@ -382,7 +392,7 @@ LOVU_DLL bool is_video(const std::string& path) noexcept
     return false;
 }
 
-LOVU_DLL bool is_video(const std::string_view& path) noexcept
+LOVU_API bool is_video(const std::string_view& path) noexcept
 {
     for (uint8_t i = 0; i < LOVUARRAYSIZE(video_extensions); i++)
     {
@@ -392,12 +402,12 @@ LOVU_DLL bool is_video(const std::string_view& path) noexcept
     return false;
 }
 
-LOVU_DLL std::string expand_from_executable_dir(const std::string& path_to_expand) noexcept
+LOVU_API std::string expand_from_executable_dir(const std::string& path_to_expand) noexcept
 {
-#ifdef LOVU_WIN
+#if defined(LOVU_WIN)
     wchar_t sz_path[MAX_PATH];
     GetModuleFileNameW(nullptr, sz_path, MAX_PATH);
-#else if LOVU_LINUX
+#elif defined(LOVU_LINUX)
     char sz_path[PATH_MAX];
     ssize_t count = readlink("/proc/self/exe", sz_path, PATH_MAX);
     if (count < 0 || count >= PATH_MAX) return "";
@@ -408,9 +418,9 @@ LOVU_DLL std::string expand_from_executable_dir(const std::string& path_to_expan
     return cwd + path_to_expand;
 }
 
-LOVU_DLL std::string get_documents_folder_path() noexcept
+LOVU_API std::string get_documents_folder_path() noexcept
 {
-#ifdef LOVU_WIN
+#if defined(LOVU_WIN)
     PWSTR ppsz_path;
 
     HRESULT hr = SHGetKnownFolderPath(FOLDERID_Documents, 0, NULL, &ppsz_path);
@@ -430,7 +440,7 @@ LOVU_DLL std::string get_documents_folder_path() noexcept
     {
         return "";
     }
-#else if LOVU_LINUX
+#elif defined(LOVU_LINUX)
 // https://stackoverflow.com/questions/2910377/get-home-directory-in-linux
     const char* homedir;
 
@@ -442,12 +452,12 @@ LOVU_DLL std::string get_documents_folder_path() noexcept
 #endif
 }
 
-LOVU_DLL bool exists(const std::string& path) noexcept
+LOVU_API bool exists(const std::string& path) noexcept
 {
     return std::filesystem::exists(std::filesystem::path(path));
 }
 
-LOVU_DLL void makedirs(const std::string& path) noexcept
+LOVU_API void makedirs(const std::string& path) noexcept
 {
     std::string dir_path = path;
 

@@ -6,23 +6,24 @@
 
 #include "spdlog/spdlog.h"
 
-// Few macro utilities
+#if defined(_MSC_VER)
+#define LOVU_MSVC
+#elif defined(__GNUC__)
+#define LOVU_GCC
+#elif defined(__clang__)
+#define LOVU_CLANG
+#endif
 
-// Compiler detection
-#ifdef _MSC_VER
-#define LOVU_MSVC 1
+#if defined(LOVU_MSVC)
 #define LOVU_FORCEINLINE __forceinline
-#elif __GNUC__
-#define LOVU_GCC 1
+#elif defined(LOVU_GCC) || defined(LOVU_CLANG)
 #define LOVU_FORCEINLINE __attribute__((always_inline)) inline
 #endif
 
-// Version
-#ifndef LOVU_VERSION_STR
+#if !defined(LOVU_VERSION_STR)
 #define LOVU_VERSION_STR "Debug"
 #endif
 
-// Platform detection
 #include <cstdint>
 
 #if INTPTR_MAX == INT64_MAX
@@ -31,24 +32,17 @@
 #define LOVU_X86 1
 #endif
 
-#ifndef LOVU_PLATFORM_STR
-#ifdef _WIN32
+#if !defined(LOVU_PLATFORM_STR)
+#if defined(_WIN32)
 #define LOVU_WIN 1
-
-#include "windows.h"
-#define BOOST_STACKTRACE_USE_WINDBG
-
-#undef min
-#undef max
-
-#ifdef LOVU_X64
+#if defined(LOVU_X64)
 #define LOVU_PLATFORM_STR "WIN64"
 #else
 #define LOVU_PLATFORM_STR "WIN32"
 #endif
-#elif __linux__
+#elif defined(__linux__)
 #define LOVU_LINUX 1
-#ifdef LOVU_X64
+#if defined(LOVU_X64)
 #define LOVU_PLATFORM_STR "LINUX64"
 #else
 #define LOVU_PLATFORM_STR "LINUX32"
@@ -56,25 +50,33 @@
 #endif
 #endif
 
-// Class / Functions utils
 #define LOVU_STATIC_FUNC static
 
-#define LOVU_DLL_EXPORT __declspec(dllexport)
-#define LOVU_DLL_IMPORT __declspec(dllimport)
+#if defined(LOVU_WIN)
+#if defined(LOVU_MSVC)
+#define LOVU_EXPORT __declspec(dllexport)
+#define LOVU_IMPORT __declspec(dllimport)
+#elif defined(LOVU_GCC) || defined(LOVU_CLANG)
+#define LOVU_EXPORT __attribute__((dllexport))
+#define LOVU_IMPORT __attribute__((dllimport))
+#endif 
+#elif defined(LOVU_LINUX)
+#define LOVU_EXPORT __attribute__((visibility("default")))
+#define LOVU_IMPORT
+#endif 
 
-#ifdef LOVU_BUILD_DLL
-#define LOVU_DLL LOVU_DLL_EXPORT
+#if defined(LOVU_BUILD_EXPORT)
+#define LOVU_API LOVU_EXPORT
 #else
-#define LOVU_DLL LOVU_DLL_IMPORT
+#define LOVU_API LOVU_IMPORT
 #endif
 
-#ifdef LOVU_MSVC 
+#if defined(LOVU_MSVC) 
 #define LOVU_FORCEINLINE __forceinline
-#elif LOVU_GCC
+#elif defined(LOVU_GCC)
 #define LOVU_FORCEINLINE __attribute__((always_inline)) inline
 #endif
 
-// String / Debug / Logging utils
 #define STRINGIFY(x) #x
 
 #define GET_VARNAME(var) (#var)
@@ -83,51 +85,37 @@
 
 #define SET_SPDLOG_FMT spdlog::set_pattern("[%l] %H:%M:%S:%e : %v")
 
-// Class and function pretty names
-#ifdef LOVU_MSVC
+#if defined(LOVU_MSVC)
 #define __LOVUFUNCTION__ __FUNCSIG__
-#else if LOVU_GCC
+#elif defined(LOVU_GCC) || defined(LOVU_CLANG)
 #define __LOVUFUNCTION__ __PRETTY_FUNCTION__
 #endif
 
-// https://stackoverflow.com/questions/1666802/is-there-a-class-macro-in-c
 #define __CLASS__ STRINGIFY(std::remove_reference<decltype(classMacroImpl(this))>::type)
 
 template<class T> T& classMacroImpl(const T* t);
 
-// Assertions
 #include <assert.h>
 
-#ifdef _DEBUG
+#if defined(_DEBUG)
 #define LOVU_ASSERT(expression) if (!(expression)) { spdlog::critical("Assertion failed : \nFunction : %s\nFile : %s\nLine : %d\n", __LOVUFUNCTION__, __FILE__, __LINE__); abort(); }
 #else
 #define LOVU_ASSERT(expression)
 #endif
 
-// Array utils
-// https://stackLOVUerflow.com/questions/4415524/common-array-length-macro-for-c
 #define LOVUARRAYSIZE(array) ((sizeof(array)/sizeof(0[array])) / ((size_t)(!(sizeof(array) % sizeof(0[array])))))
 
-// Cast utils
 #define LOVU_CAST(type, var) static_cast<type>(var)
 
-// Bits utils
 #define LOVU_BIT(bit) 1 << bit
 
-// Namespace
 #define LOVU_NAMESPACE_BEGIN namespace lovu {
 #define LOVU_NAMESPACE_END }
 
 LOVU_NAMESPACE_BEGIN
 
-// Simple exception handler
-
+#if defined(LOVU_WIN)
 #include "boost/stacktrace.hpp"
-
-#define BOOST_STACKTRACE_USE_ADDR2LINE
-
-#ifdef LOVU_WIN
-
 inline static LONG WINAPI exception_handler(PEXCEPTION_POINTERS p_exception_info)
 {
     spdlog::error("Unhandled exception trapped (Code {}) : \n>>>>>>>>>>\n{}\n<<<<<<<<<<\nProgram will exit.",
@@ -136,16 +124,11 @@ inline static LONG WINAPI exception_handler(PEXCEPTION_POINTERS p_exception_info
 
     return EXCEPTION_CONTINUE_SEARCH;
 }
-
 #else
-
 inline static void exception_handler() 
 {
 
 }
-
 #endif
-
-
 
 LOVU_NAMESPACE_END

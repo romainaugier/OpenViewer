@@ -9,9 +9,10 @@ file(GLOB_RECURSE TEST_FILES *.cpp)
 foreach(test_file ${TEST_FILES})
     get_filename_component(TESTNAME ${test_file} NAME_WLE)
     message(STATUS "Adding libOpenViewerUtils test : ${TESTNAME}")
+    message(STATUS ${CONAN_LIBS})
 
     add_executable(${TESTNAME} ${test_file})
-    target_link_libraries(${TESTNAME} ${OPENVIEWER_LIBS})
+    target_link_libraries(${TESTNAME} ${CONAN_LIBS} ${OPENVIEWERUTILS_LIBS})
 
     add_test(${TESTNAME} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TESTNAME})
 endforeach()

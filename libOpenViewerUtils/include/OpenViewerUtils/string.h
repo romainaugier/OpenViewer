@@ -14,10 +14,10 @@
 
 #include "fmt/core.h"
 
-#ifdef LOVU_MSVC
+#if defined(LOVU_MSVC)
 #include <string_view>
-#elif LOVU_GCC
-#include "string_view"
+#elif defined(LOVU_GCC)
+#include <string_view>
 #endif
 
 #define STR_NAMESPACE_BEGIN namespace str {
@@ -50,7 +50,7 @@ LOVU_FORCEINLINE bool starts_with(const std::string_view& str, const std::string
 }
 
 // Removes the trailing spaces within a string
-LOVU_DLL void strip(std::string& s) noexcept;
+LOVU_API void strip(std::string& s) noexcept;
 
 // Replaces a char occurence with another char within a string
 LOVU_FORCEINLINE void replace(std::string& string, char substr, char replace) noexcept
@@ -79,7 +79,7 @@ LOVU_FORCEINLINE std::string clean_os_path(const std::string& string) noexcept
 }
 
 // Splits a string and returns a vector containing each string separated by the specified delimiter
-LOVU_FORCEINLINE LOVU_DLL void split(std::vector<std::string>& output_strings, const std::string& input_string, char delimiter) noexcept;
+LOVU_API void split(std::vector<std::string>& output_strings, const std::string& input_string, char delimiter) noexcept;
 
 STR_NAMESPACE_END
 

@@ -7,7 +7,7 @@
 
 LOVU_NAMESPACE_BEGIN
 
-LOVU_DLL void* _mem_alloc(const size_t size, const size_t align) noexcept
+LOVU_API void* _mem_alloc(const size_t size, const size_t align) noexcept
 {
     if(size == 0) return nullptr;
 
@@ -24,12 +24,12 @@ LOVU_DLL void* _mem_alloc(const size_t size, const size_t align) noexcept
     }
 }
 
-LOVU_DLL void _mem_free(void* ptr) noexcept
+LOVU_API void _mem_free(void* ptr) noexcept
 {
     if(ptr) _mm_free(ptr);
 }
 
-LOVU_DLL uint64_t get_total_system_memory() noexcept
+LOVU_API uint64_t get_total_system_memory() noexcept
 {
 #ifdef LOVU_WIN
     MEMORYSTATUSEX status;
@@ -44,7 +44,7 @@ LOVU_DLL uint64_t get_total_system_memory() noexcept
 }
 
 #ifdef LOVU_WIN
-LOVU_DLL size_t get_current_rss() noexcept
+LOVU_API size_t get_current_rss() noexcept
 {
     // Obtain a handle to the current process, which is what we want to measure.
     // The process handle is not going to change, so we only do it once.
@@ -55,7 +55,7 @@ LOVU_DLL size_t get_current_rss() noexcept
     return counters.WorkingSetSize;
 }
 
-LOVU_DLL size_t get_peak_rss() noexcept
+LOVU_API size_t get_peak_rss() noexcept
 {
     // Obtain a handle to the current process...
     static HANDLE process = GetCurrentProcess();
@@ -67,7 +67,7 @@ LOVU_DLL size_t get_peak_rss() noexcept
 
 #elif LOVU_LINUX
 
-LOVU_DLL size_t get_current_rss() noexcept
+LOVU_API size_t get_current_rss() noexcept
 {
     // The value we query later on is measured in number of pages. Query the size
     // of a page in bytes. This is typically 4KB, but pages could be also configured
@@ -87,7 +87,7 @@ LOVU_DLL size_t get_current_rss() noexcept
     return pages_count * page_size;
 }
 
-LOVU_DLL size_t get_peak_rss() noexcept
+LOVU_API size_t get_peak_rss() noexcept
 {
     rusage usage_data;
     getrusage(RUSAGE_SELF, &usage_data);

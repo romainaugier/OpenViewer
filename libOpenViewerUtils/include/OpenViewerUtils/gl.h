@@ -35,7 +35,7 @@ void check_opengl_error(const char* stmt, const char* fname, int line)
 #endif
 
 // Utility struct to ease the construction and use of an opengl shader
-struct LOVU_DLL Shader
+struct LOVU_API Shader
 {
     uint32_t m_ID;
 

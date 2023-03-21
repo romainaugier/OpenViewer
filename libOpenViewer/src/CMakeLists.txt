@@ -6,7 +6,7 @@
 
 file(GLOB_RECURSE src_files *.cpp)
 
-add_definitions(-DLOV_BUILD_DLL -DSPDLOG_FMT_EXTERNAL)
+add_definitions(-DLOV_BUILD_EXPORT -DSPDLOG_FMT_EXTERNAL)
 
 add_library(${OPENVIEWER_LIBS} SHARED ${src_files} ${h_files})
 target_link_libraries(${OPENVIEWER_LIBS} ${CONAN_LIBS} ${OPENVIEWERUTILS_LIBS})

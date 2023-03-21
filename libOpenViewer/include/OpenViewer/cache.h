@@ -25,7 +25,7 @@ LOV_NAMESPACE_BEGIN
 
 // Holds information about the image it is caching. 
 // Used internally by the image cache
-struct LOV_DLL cache_item
+struct LOV_API cache_item
 {
     Media* m_media;
     void* m_data_ptr;
@@ -40,7 +40,7 @@ struct LOV_DLL cache_item
     ~cache_item();
 };
 
-class LOV_DLL Cache
+class LOV_API Cache
 {
 public:
     // Constructs the cache from the settings
