@@ -14,14 +14,9 @@ LOVU_NAMESPACE_BEGIN
 
 FS_NAMESPACE_BEGIN
 
-constexpr char* image_extensions[] = { "exr", "jpg", "jpeg", "bmp", "tif", "tiff", "png",
-                                       "raw", "cr2", "arw", "sr2", "nef", "orf", "psd",
-                                       "bmp", "ppm", "cin", "dds", "dcm", "dpx", "fits",
-                                       "hdr", "heic", "avif", "ico", "iff", "jp2", "j2k",
-                                       "pbm", "pgm", "ptex", "rla", "pic", "tga", "tpic",
-                                       "zfile", "tex" };
+static const char* const image_extensions[] = { "exr", "jpg", "jpeg", "bmp", "tif", "tiff", "png", "raw", "cr2", "arw", "sr2", "nef", "orf", "psd", "bmp", "ppm", "cin", "dds", "dcm", "dpx", "fits", "hdr", "heic", "avif", "ico", "iff", "jp2", "j2k", "pbm", "pgm", "ptex", "rla", "pic", "tga", "tpic", "zfile", "tex" };
 
-constexpr char* video_extensions[] = { "mp4", "m4p", "m4v", "mov", "qt", "avi", "yuv", "mkv" };
+static const char* const video_extensions[] = { "mp4", "m4p", "m4v", "mov", "qt", "avi", "yuv", "mkv" };
 
 // Returns the number of files in a directory
 LOVU_FORCEINLINE size_t file_count_in_directory(const std::string& directory_path) noexcept;

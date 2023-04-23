@@ -11,3 +11,5 @@ graph_info.json
 test
 env
 compile_flags.txt
+settings.json
+.cache

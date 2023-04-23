@@ -20,7 +20,7 @@ public:
     ~MediaPool();
 
     // This method does the heavy lifting
-    void add_media(std::string& media_path) noexcept;
+    void add_media(std::string media_path) noexcept;
 
     void remove_media(const std::string& media_path) noexcept;
 

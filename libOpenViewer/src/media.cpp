@@ -204,7 +204,7 @@ void ImageSequence::debug() const noexcept
     cached.reserve(this->get_length() + 2);
     cached += "[";
 
-    for(int i = this->m_start; i < this->m_end; i++)
+    for(uint32_t i = this->m_start; i < this->m_end; i++)
     {
         if(this->is_cached_at_frame(i))
         {

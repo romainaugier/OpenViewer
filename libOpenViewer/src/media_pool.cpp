@@ -18,7 +18,7 @@ MediaPool::~MediaPool()
     spdlog::debug("[MEDIA POOL] : Released Media Pool");
 }
 
-void MediaPool::add_media(std::string& media_path) noexcept
+void MediaPool::add_media(std::string media_path) noexcept
 {
     if(lovu::fs::is_image(media_path))
     {

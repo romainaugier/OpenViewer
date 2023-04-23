@@ -62,6 +62,8 @@ if(DEFINED RUN_TESTS)
     set(TEST_DATA_DIR ${CMAKE_SOURCE_DIR}/test)
 
     add_definitions(-DTEST_DATA_DIR="${TEST_DATA_DIR}")
+else()
+	add_definitions(-DTEST_DATA_DIR="")
 endif()
 
 include(${CMAKE_SOURCE_DIR}/conanbuildinfo.cmake)

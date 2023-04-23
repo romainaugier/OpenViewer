@@ -19,7 +19,8 @@ int main(int argc, char** argv)
 
         lov::MediaPool media_pool;
 
-        media_pool.add_media(fmt::format("{}/exr/sequence/compo_0500.0100.exr", TEST_DATA_DIR));
+        const std::string path = fmt::format("{}/exr/sequence/compo_0500.0100.exr", TEST_DATA_DIR);
+        media_pool.add_media(path);
 
         lov::Media* img_seq = media_pool.get_media(0);
 

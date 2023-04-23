@@ -411,7 +411,7 @@ LOVU_API std::string expand_from_executable_dir(const std::string& path_to_expan
     char sz_path[PATH_MAX];
     ssize_t count = readlink("/proc/self/exe", sz_path, PATH_MAX);
     if (count < 0 || count >= PATH_MAX) return "";
-    sz_path[count] = "\0";
+    sz_path[count] = '\0';
 #endif
     std::string cwd = std::filesystem::path(sz_path).parent_path().string();
     str::clean_os_path(cwd);

@@ -12,6 +12,10 @@
 #define LOV_VERSION_STR "Debug"
 #endif
 
+#if !defined(LOV_PLATFORM_STR)
+#define LOV_PLATFORM_STR ""
+#endif
+
 #include <cstdint>
 
 #if defined(LOV_BUILD_EXPORT)
