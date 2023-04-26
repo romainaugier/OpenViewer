@@ -6,6 +6,7 @@
 
 #include "spdlog/spdlog.h"
 
+// Compiler detection helper macro
 #if defined(_MSC_VER)
 #define LOVU_MSVC
 #elif defined(__GNUC__)
@@ -14,12 +15,7 @@
 #define LOVU_CLANG
 #endif
 
-#if defined(LOVU_MSVC)
-#define LOVU_FORCEINLINE __forceinline
-#elif defined(LOVU_GCC) || defined(LOVU_CLANG)
-#define LOVU_FORCEINLINE __attribute__((always_inline)) inline
-#endif
-
+// Version and platform macro helpers
 #if !defined(LOVU_VERSION_STR)
 #define LOVU_VERSION_STR "Debug"
 #endif
@@ -50,6 +46,7 @@
 #endif
 #endif
 
+// Function helper macros
 #define LOVU_STATIC_FUNC static
 
 #if defined(LOVU_WIN)
@@ -77,6 +74,7 @@
 #define LOVU_FORCEINLINE __attribute__((always_inline)) inline
 #endif
 
+// Logging helper macro
 #define STRINGIFY(x) #x
 
 #define GET_VARNAME(var) (#var)
@@ -95,6 +93,7 @@
 
 template<class T> T& classMacroImpl(const T* t);
 
+// Assertion helper macro
 #include <assert.h>
 
 #if defined(_DEBUG)
@@ -103,17 +102,22 @@ template<class T> T& classMacroImpl(const T* t);
 #define LOVU_ASSERT(expression)
 #endif
 
+// Array size helper macro
 #define LOVUARRAYSIZE(array) ((sizeof(array)/sizeof(0[array])) / ((size_t)(!(sizeof(array) % sizeof(0[array])))))
 
+// Static cast helper macro
 #define LOVU_CAST(type, var) static_cast<type>(var)
 
+// Bit set helper macro
 #define LOVU_BIT(bit) 1 << bit
 
+// lovu namespace helper macro
 #define LOVU_NAMESPACE_BEGIN namespace lovu {
 #define LOVU_NAMESPACE_END }
 
 LOVU_NAMESPACE_BEGIN
 
+// Exception handler helper
 #if defined(LOVU_WIN)
 #include "boost/stacktrace.hpp"
 inline static LONG WINAPI exception_handler(PEXCEPTION_POINTERS p_exception_info)
