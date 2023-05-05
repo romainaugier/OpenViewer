@@ -29,7 +29,7 @@ else (
 )
 
 cd build
-cmake --build . --config %BUILDTYPE%
+cmake --build . --config %BUILDTYPE% -- -j %NUMBER_OF_PROCESSORS%
 
 if %RUNTESTS% equ 1 ctest
 

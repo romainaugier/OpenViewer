@@ -29,7 +29,7 @@ cmake -S . -B build -DRUN_TESTS=$RUNTESTS -DCMAKE_EXPORT_COMPILE_COMMANDS=$EXPOR
 
 cd build
 
-cmake --build . --config "$BUILDTYPE" 
+cmake --build . --config "$BUILDTYPE" -- -j $(numproc)
 
 if [[ $RUNTESTS -eq 1 ]]
 then
