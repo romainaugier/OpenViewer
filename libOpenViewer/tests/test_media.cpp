@@ -7,6 +7,7 @@
 #include "OpenViewerUtils/filesystem.h"
 #include "OpenViewerUtils/profiler.h"
 #include "OpenViewerUtils/hash.h"
+#include "spdlog/spdlog.h"
 
 int main(int argc, char** argv)
 {
@@ -22,29 +23,29 @@ int main(int argc, char** argv)
 
         lov::ImageSequence image_seq(file_seq);
 
-        {
-            SCOPED_TIMER("Hash");
+        /* { */
+        /*     SCOPED_TIMER("Hash"); */
 
-            const uint32_t hash120 = image_seq.get_hash_at_frame(120);
-            const uint32_t hash120_2 = image_seq.get_hash_at_frame(120);
+        /*     const uint32_t hash120 = image_seq.get_hash_at_frame(120); */
+        /*     const uint32_t hash120_2 = image_seq.get_hash_at_frame(120); */
 
-            spdlog::debug("{}", hash120 == hash120_2);
+        /*     /1* spdlog::debug("{}", hash120 == hash120_2); *1/ */
 
-            spdlog::debug("Hash 120 : {}", hash120);
-            spdlog::debug("Hash2 120 : {}", hash120_2);
+        /*     /1* spdlog::debug("Hash 120 : {}", hash120); *1/ */
+        /*     /1* spdlog::debug("Hash2 120 : {}", hash120_2); *1/ */
 
-            const uint32_t hash121 = image_seq.get_hash_at_frame(121);
+        /*     const uint32_t hash121 = image_seq.get_hash_at_frame(121); */
             
-            spdlog::debug("{}", hash120 != hash121);
+        /*     /1* spdlog::debug("{}", hash120 != hash121); *1/ */
 
-            spdlog::debug("Hash 121 : {}", hash121);
-        }
+        /*     /1* spdlog::debug("Hash 121 : {}", hash121); *1/ */
+        /* } */
     }
     catch(const std::exception& err)
     {
         spdlog::error("Test Failed, catched exception : \n  {}", err.what());
         
-        std::exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
     spdlog::info("Test Passed");

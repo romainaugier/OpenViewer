@@ -83,7 +83,7 @@ public:
     }
 
     // [] operator
-    auto operator [] (const std::string& key) noexcept { return this->m_funcs[key]; }
+    auto operator [] (const std::string& key) noexcept { return this->get_image_input_func(key); }
 
 private:
     InputFuncs() 

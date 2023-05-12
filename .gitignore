@@ -13,3 +13,5 @@ env
 compile_flags.txt
 settings.json
 .cache
+conan_env
+compile_commands.json

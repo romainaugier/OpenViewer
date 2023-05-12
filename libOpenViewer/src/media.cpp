@@ -89,7 +89,7 @@ void Image::debug() const noexcept
 
 ImageSequence::ImageSequence(const std::string& path) 
 {
-    this->m_path = std::move(path);
+    this->m_path = path;
     
     std::smatch match;
     std::regex_search(this->m_path, match, re_frames_getter_pattern);

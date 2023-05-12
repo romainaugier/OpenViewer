@@ -27,19 +27,23 @@ public:
     // Destructs a bit_array
     ~bit_array();
 
-    // Sets a bit at the given position. If the position is greater than the bit_array size, 
-    // bit_array will grow to reach the position
+    // Sets a bit at the given position
     void set(const size_t& position) noexcept;
 
-    // Clears a bit at the given position. If the position is greater than the bit_array size, 
-    // bit_array will grow to reach the position
+    // Clears a bit at the given position
     void clear(const size_t& position) noexcept;
+
+    // Clears all bits 
+    void clear_all() noexcept;
 
     // Tests a bit at the given position
     bool test(const size_t& position) const noexcept;
 
     // Returns the size of the array
     size_t get_size() const noexcept;
+
+    // Returns the size of the array in bytes
+    size_t get_byte_size() const noexcept;
     
     // Resizes the array
     void resize(const size_t& new_size) noexcept;
@@ -48,5 +52,28 @@ private:
     uint64_t* m_array = nullptr;
     uint32_t m_size = 0;
 };
+
+LOVU_FORCEINLINE uint32_t round_u32_to_next_pow2(uint32_t x) noexcept 
+{
+    x--;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    return x++;
+}
+
+LOVU_FORCEINLINE uint64_t round_u64_to_next_pow2(uint64_t x) noexcept 
+{
+    x--;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    x |= x >> 32;
+    return x++;
+}
 
 LOVU_NAMESPACE_END

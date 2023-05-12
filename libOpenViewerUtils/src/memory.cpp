@@ -31,19 +31,19 @@ LOVU_API void _mem_free(void* ptr) noexcept
 
 LOVU_API uint64_t get_total_system_memory() noexcept
 {
-#ifdef LOVU_WIN
+#if defined(LOVU_WIN)
     MEMORYSTATUSEX status;
     status.dwLength = sizeof(status);
     GlobalMemoryStatusEx(&status);
     return status.ullTotalPhys;
-#else if LOVU_LINUX
+#elif defined(LOVU_LINUX)
     int64_t pages = sysconf(_SC_PHYS_PAGES);
     int64_t page_size = sysconf(_SC_PAGE_SIZE);
     return pages * page_size;
 #endif
 }
 
-#ifdef LOVU_WIN
+#if defined(LOVU_WIN)
 LOVU_API size_t get_current_rss() noexcept
 {
     // Obtain a handle to the current process, which is what we want to measure.
@@ -65,7 +65,7 @@ LOVU_API size_t get_peak_rss() noexcept
     return counters.PeakWorkingSetSize;
 }
 
-#elif LOVU_LINUX
+#elif defined(LOVU_LINUX)
 
 LOVU_API size_t get_current_rss() noexcept
 {
@@ -80,7 +80,7 @@ LOVU_API size_t get_current_rss() noexcept
     // Attempt to read the value we need, it this won't succeed, size will be left
     // at zero.
     size_t pages_count = 0;
-    fscanf(stat_file, "%ld %ld", &pages_count);
+    fscanf(stat_file, "%ld", &pages_count);
     fclose(stat_file);
 
     // Compute the size in bytes.

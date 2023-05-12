@@ -22,7 +22,7 @@ int main(int argc, char** argv)
     {
         spdlog::error("Test Failed, catched exception : \n  {}", err.what());
         
-        std::exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
     spdlog::info("Test Passed");
