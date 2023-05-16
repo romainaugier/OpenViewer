@@ -28,14 +28,34 @@ private:
     uint32_t m_end;
 };
 
+
+// Timeline events, used to call callback function when they are happening
+enum TimelineEventType
+{
+    TimelineEventType_FrameChanged = LOVU_BIT(1),
+    TimelineEventType_Paused = LOVU_BIT(2),
+    TimelineEventType_Played = LOVU_BIT(3)
+};
+
+using TimelineEventCallbackFunc = void(*)(void*, const uint32_t frame, TimelineItem& timeline_item);
+
+struct LOV_API TimelineEventCallback
+{
+    TimelineEventCallbackFunc m_func_ptr;
+    TimelineEventType m_event_type;
+
+    TimelineEventCallback(const TimelineEventCallbackFunc func,
+                          const TimelineEventType event);
+};
+
+// Flags to set various properties of the timeline
 enum TimelineFlag
 {
-    TimelineFlag_PlayOnce = LOVU_BIT(1),
-    TimelineFlag_PlayLoop = LOVU_BIT(2),
+    TimelineFlag_PlayLoop = LOVU_BIT(1),
+    TimelineFlag_PlayOnce = LOVU_BIT(2),
     TimelineFlag_PlayPingPong = LOVU_BIT(3)
 };
 
-using timeline_on_play_callback_func = void(*)(void*, const uint32_t frame, TimelineItem& timeline_item);
 
 class LOV_API Timeline
 {
@@ -47,7 +67,7 @@ public:
     ~Timeline();
 
     // Adds a new item to the timeline
-    void add_item(const TimelineItem& item) noexcept;
+    void add_item(const TimelineItem item) noexcept;
 
     // Plays the timeline
     void play() noexcept;
@@ -79,8 +99,17 @@ public:
     // Set the fps
     void set_fps(const uint8_t fps) noexcept;
 
+    // Push an event callback to the event callbacks stack
+    void push_event_callback(const TimelineEventType event_type,
+                             TimelineEventCallbackFunc callback_func) noexcept;
+
+    // Pop an event callback from the event callbacks stack
+    void pop_event_callback() noexcept;
+
 private:
     std::vector<TimelineItem> m_items;
+
+    std::stack<TimelineEventCallback> m_event_callbacks;
 
     std::thread m_play_thread;
     std::mutex m_lock;

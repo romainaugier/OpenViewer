@@ -7,17 +7,29 @@
 
 LOV_NAMESPACE_BEGIN
 
+TimelineEventCallback::TimelineEventCallback(const TimelineEventCallbackFunc func,
+                                             const TimelineEventType event)
+{
+    this->m_func_ptr = std::move(func);
+    this->m_event_type = std::move(event);
+}
+
 Timeline::Timeline()
 {
 
 }
 
-Timeline::Timeline(const uint8_t fps)
-{
-    this->m_fps = fps;
+Timeline::Timeline(const uint8_t fps) : Timeline()
+{ 
+    this->set_fps(fps);
 }
 
-void Timeline::add_item(const TimelineItem& item) noexcept
+Timeline::~Timeline()
+{
+
+}
+
+void Timeline::add_item(const TimelineItem item) noexcept
 {
     this->m_items.push_back(std::move(item));
 }
@@ -60,6 +72,17 @@ void Timeline::set_focus_range(const uint32_t start, const uint32_t end) noexcep
 void Timeline::set_fps(const uint8_t fps) noexcept
 {
 
+}
+
+void Timeline::push_event_callback(const TimelineEventType event_type,
+                                   TimelineEventCallbackFunc callback_func) noexcept
+{
+    this->m_event_callbacks.emplace(callback_func, event_type);
+}
+
+void Timeline::pop_event_callback() noexcept
+{
+    this->m_event_callbacks.pop();
 }
 
 LOV_NAMESPACE_END
