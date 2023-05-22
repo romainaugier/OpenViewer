@@ -10,7 +10,6 @@
 
 #include <vector>
 #include <thread>
-#include <stack>
 
 LOV_NAMESPACE_BEGIN
 
@@ -18,6 +17,9 @@ class LOV_API TimelineItem
 {
 public:
     TimelineItem(Media* media);
+
+    // Returns true if the media is valid at the current frame
+    bool in_range(const uint32_t frame) const noexcept { return frame >= m_start && frame < m_end; }
 
     ~TimelineItem();
 
@@ -37,7 +39,7 @@ enum TimelineEventType
     TimelineEventType_Played = LOVU_BIT(3)
 };
 
-using TimelineEventCallbackFunc = void(*)(void*, const uint32_t frame, TimelineItem& timeline_item);
+using TimelineEventCallbackFunc = void(*)(const uint32_t frame, TimelineItem* timeline_item);
 
 struct LOV_API TimelineEventCallback
 {
@@ -51,9 +53,8 @@ struct LOV_API TimelineEventCallback
 // Flags to set various properties of the timeline
 enum TimelineFlag
 {
-    TimelineFlag_PlayLoop = LOVU_BIT(1),
-    TimelineFlag_PlayOnce = LOVU_BIT(2),
-    TimelineFlag_PlayPingPong = LOVU_BIT(3)
+    TimelineFlag_Play = LOVU_BIT(1), // Set wether the timeline is playing or not
+    TimelineFlag_Stop = LOVU_BIT(2), // Set to true when the timeline is destructed
 };
 
 
@@ -68,6 +69,9 @@ public:
 
     // Adds a new item to the timeline
     void add_item(const TimelineItem item) noexcept;
+
+    // Returns the item at the given frame
+    TimelineItem* get_item_at_frame(const uint32_t frame) const noexcept;
 
     // Plays the timeline
     void play() noexcept;
@@ -85,10 +89,12 @@ public:
     void go_to_last_frame() noexcept;
 
     // Check if the timeline has a specific flag set
-    LOVU_FORCEINLINE bool has_flag(TimelineFlag flag) { return this->m_flags & flag; }
+    LOVU_FORCEINLINE bool has_flag(TimelineFlag flag) const noexcept { return this->m_flags & flag; }
 
     // Set a specific flag on the timeline
-    LOVU_FORCEINLINE void set_flag(TimelineFlag flag) { this->m_flags &= flag; }
+    LOVU_FORCEINLINE void set_flag(TimelineFlag flag) noexcept { this->m_flags &= flag; }
+
+    LOVU_FORCEINLINE void unset_flag(TimelineFlag flag) noexcept { this->m_flags |= flag; }
 
     // Set the global frame range
     void set_global_range(const uint32_t start, const uint32_t end) noexcept;
@@ -99,6 +105,9 @@ public:
     // Set the fps
     void set_fps(const uint8_t fps) noexcept;
 
+    // Set the frame of the timeline
+    void set_frame(const uint32_t frame) noexcept;
+
     // Push an event callback to the event callbacks stack
     void push_event_callback(const TimelineEventType event_type,
                              TimelineEventCallbackFunc callback_func) noexcept;
@@ -107,13 +116,16 @@ public:
     void pop_event_callback() noexcept;
 
 private:
+    void main_loop() noexcept;    
+
     std::vector<TimelineItem> m_items;
 
-    std::stack<TimelineEventCallback> m_event_callbacks;
+    std::vector<TimelineEventCallback> m_event_callbacks;
 
     std::thread m_play_thread;
     std::mutex m_lock;
 
+    uint32_t m_frame = 0;
     uint32_t m_global_start;
     uint32_t m_global_end;
     uint32_t m_focus_start;
