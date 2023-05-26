@@ -15,7 +15,7 @@ LOV_NAMESPACE_BEGIN
 // Single Image Media
 ////////////////////////////////////////////////////////////////////////////////
 
-Image::Image(const std::string& path) 
+Image::Image(const std::string path) 
 {
     this->m_path = std::move(path);
 
@@ -37,7 +37,7 @@ Image::Image(const std::string& path)
     const uint8_t type = OIIO_TYPEDESC_TO_TYPE(spec.format);
     this->set_type(type);
     
-    const bool has_alpha = spec.alpha_channel > -1;
+    // const bool has_alpha = spec.alpha_channel > -1;
     this->set_nchannels(spec.nchannels > 4 ? 4 : spec.nchannels < 3 ? 3 : spec.nchannels);
 
     input->close();
@@ -63,6 +63,8 @@ uint32_t Image::get_hash_at_frame(const uint32_t frame) const noexcept
 
 void Image::load_frame_to_cache(void* cache_address, const uint32_t frame) const noexcept
 {
+    assert(this->m_input_func != nullptr);
+
     const InputSpecs& specs = this->make_input_specs();
 
     this->m_input_func(cache_address, this->m_path, specs);
@@ -87,9 +89,9 @@ void Image::debug() const noexcept
 // Image Sequence Media
 ////////////////////////////////////////////////////////////////////////////////
 
-ImageSequence::ImageSequence(const std::string& path) 
+ImageSequence::ImageSequence(const std::string path) 
 {
-    this->m_path = path;
+    this->m_path = std::move(path);
     
     std::smatch match;
     std::regex_search(this->m_path, match, re_frames_getter_pattern);
@@ -132,7 +134,7 @@ ImageSequence::ImageSequence(const std::string& path)
     this->m_is_cached.resize(this->get_length());
 
     const std::string ext = lovu::fs::get_extension(path_at_first_frame);
-    this->set_image_input_func(input_funcs[&ext.c_str()[1]]);
+    this->set_image_input_func(input_funcs[ext]);
 }
 
 ImageSequence::~ImageSequence()

@@ -71,7 +71,7 @@ public:
     void add_item(const TimelineItem item) noexcept;
 
     // Returns the item at the given frame
-    TimelineItem* get_item_at_frame(const uint32_t frame) const noexcept;
+    TimelineItem* get_item_at_frame(const uint32_t frame) noexcept;
 
     // Plays the timeline
     void play() noexcept;
@@ -92,9 +92,10 @@ public:
     LOVU_FORCEINLINE bool has_flag(TimelineFlag flag) const noexcept { return this->m_flags & flag; }
 
     // Set a specific flag on the timeline
-    LOVU_FORCEINLINE void set_flag(TimelineFlag flag) noexcept { this->m_flags &= flag; }
+    LOVU_FORCEINLINE void set_flag(TimelineFlag flag) noexcept { this->m_flags |= flag; }
 
-    LOVU_FORCEINLINE void unset_flag(TimelineFlag flag) noexcept { this->m_flags |= flag; }
+    // Unset a specific flag on the timeline
+    LOVU_FORCEINLINE void unset_flag(TimelineFlag flag) noexcept { this->m_flags &= ~flag; }
 
     // Set the global frame range
     void set_global_range(const uint32_t start, const uint32_t end) noexcept;

@@ -53,7 +53,7 @@ LOVU_API bool exists(const std::string& path) noexcept;
 LOVU_API void makedirs(const std::string& path) noexcept;
 
 // Returns the extension of the given file path
-LOVU_FORCEINLINE std::string get_extension(const std::string& path) noexcept { return std::filesystem::path(path).extension().string(); }
+LOVU_FORCEINLINE std::string get_extension(const std::string& path) noexcept { return &std::filesystem::path(path).extension().string()[1]; }
 
 // Returns the parent dir of the given path
 LOVU_FORCEINLINE std::string get_parent_dir(const std::string& path) noexcept { return std::filesystem::path(path).parent_path().string(); }

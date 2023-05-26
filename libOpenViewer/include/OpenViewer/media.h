@@ -247,7 +247,7 @@ private:
 class LOV_API Image : public Media
 {
 public:
-    Image(const std::string& path);
+    Image(const std::string path);
 
     virtual ~Image() override;
 
@@ -278,7 +278,7 @@ private:
 class LOV_API ImageSequence : public Media
 {
 public:
-    ImageSequence(const std::string& path);
+    ImageSequence(const std::string path);
 
     virtual ~ImageSequence() override;
 

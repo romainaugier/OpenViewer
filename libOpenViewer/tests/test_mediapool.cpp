@@ -32,7 +32,7 @@ int main(int argc, char** argv)
     }
     catch(const std::exception& err)
     {
-        spdlog::error("Test Failed, catched exception : \n  {}", err.what());
+        spdlog::error("Test Failed, caught exception : \n  {}", err.what());
         
         std::exit(EXIT_FAILURE);
     }
