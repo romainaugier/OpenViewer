@@ -21,10 +21,26 @@ public:
     // Returns true if the media is valid at the current frame
     bool in_range(const uint32_t frame) const noexcept { return frame >= m_start && frame < m_end; }
 
+    LOVU_FORCEINLINE uint32_t get_start_frame() const noexcept { return this->m_start; }
+
+    LOVU_FORCEINLINE uint32_t get_end_frame() const noexcept { return this->m_end; }
+
+    LOVU_FORCEINLINE void set_start_frame(const uint32_t frame) noexcept { this->m_start = frame; }
+
+    LOVU_FORCEINLINE void set_end_frame(const uint32_t frame) noexcept { this->m_end = frame < this->m_start ? this->m_start : frame; }
+
+    LOVU_FORCEINLINE void set_active() noexcept { this->m_active = true; }
+
+    LOVU_FORCEINLINE void set_inactive() noexcept { this->m_active = false; }
+
+    LOVU_FORCEINLINE Media* get_media() const noexcept { return this->m_media; }
+
     ~TimelineItem();
 
 private:
     Media* m_media = nullptr;
+
+    bool m_active = true;
 
     uint32_t m_start;
     uint32_t m_end;
@@ -70,7 +86,7 @@ public:
     // Adds a new item to the timeline
     void add_item(const TimelineItem item) noexcept;
 
-    // Returns the item at the given frame
+    // Returns the item at the given frame, if no item is found return nullptr
     TimelineItem* get_item_at_frame(const uint32_t frame) noexcept;
 
     // Plays the timeline
@@ -92,7 +108,7 @@ public:
     LOVU_FORCEINLINE bool has_flag(TimelineFlag flag) const noexcept { return this->m_flags & flag; }
 
     // Set a specific flag on the timeline
-    LOVU_FORCEINLINE void set_flag(TimelineFlag flag) noexcept { this->m_flags |= flag; }
+    LOVU_FORCEINLINE void set_flag(TimelineFlag flag) noexcept { std::unique_lock<std::mutex> lock(this->m_lock); this->m_flags |= flag; }
 
     // Unset a specific flag on the timeline
     LOVU_FORCEINLINE void unset_flag(TimelineFlag flag) noexcept { this->m_flags &= ~flag; }
@@ -102,6 +118,9 @@ public:
 
     // Set the focus frame range
     void set_focus_range(const uint32_t start, const uint32_t end) noexcept;
+
+    // Set both global and focus ranges to fit all items present in the timeline
+    void fit_ranges_to_items() noexcept;
 
     // Set the fps
     void set_fps(const uint8_t fps) noexcept;
@@ -132,7 +151,7 @@ private:
     uint32_t m_focus_start;
     uint32_t m_focus_end;
 
-    uint32_t m_flags;
+    uint32_t m_flags = 0;
 
     uint8_t m_fps = 24;
 };

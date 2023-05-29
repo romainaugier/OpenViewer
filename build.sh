@@ -2,7 +2,7 @@
 
 echo Building OpenViewer
 
-BUILDTYPE="Release"
+BUILDTYPE="RelWithDebInfo"
 RUNTESTS=0
 REMOVEOLDDIR=0
 EXPORTCOMPILECOMMANDS=0
@@ -25,11 +25,11 @@ then
     rm -rf build
 fi
 
-cmake -S . -B build -DRUN_TESTS=$RUNTESTS -DCMAKE_EXPORT_COMPILE_COMMANDS=$EXPORTCOMPILECOMMANDS 
+cmake -S . -B build -DRUN_TESTS=$RUNTESTS -DCMAKE_EXPORT_COMPILE_COMMANDS=$EXPORTCOMPILECOMMANDS -DCMAKE_BUILD_TYPE=$BUILDTYPE
 
 cd build
 
-cmake --build . --config "$BUILDTYPE" -- -j $(nproc)
+cmake --build . -- -j $(nproc)
 
 if [[ $RUNTESTS -eq 1 ]]
 then

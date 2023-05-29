@@ -43,6 +43,7 @@ Image::Image(const std::string path)
     input->close();
 
     const std::string ext = lovu::fs::get_extension(this->m_path);
+
     this->set_image_input_func(input_funcs[ext]);
 }
 
