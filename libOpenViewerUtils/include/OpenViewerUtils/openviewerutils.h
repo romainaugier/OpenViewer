@@ -135,4 +135,27 @@ inline static void exception_handler()
 }
 #endif
 
+LOVU_FORCEINLINE uint32_t round_u32_to_next_pow2(uint32_t x) noexcept 
+{
+    x--;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    return x++;
+}
+
+LOVU_FORCEINLINE uint64_t round_u64_to_next_pow2(uint64_t x) noexcept 
+{
+    x--;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    x |= x >> 32;
+    return x++;
+}
+
 LOVU_NAMESPACE_END

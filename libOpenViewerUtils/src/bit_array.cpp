@@ -69,6 +69,9 @@ size_t bit_array::get_byte_size() const noexcept
 void bit_array::resize(const size_t& new_size) noexcept
 {
     const size_t alloc_size = RESERVE_BITS(new_size) * sizeof(BITARRAY_INT_TYPE);
+
+    if(alloc_size < this->get_byte_size()) return;
+
     void* new_ptr = mem_alloc(alloc_size, 32);
 
     memcpy(new_ptr, this->m_array, this->get_byte_size());

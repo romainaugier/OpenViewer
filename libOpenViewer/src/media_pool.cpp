@@ -15,6 +15,13 @@ MediaPool::MediaPool()
 
 MediaPool::~MediaPool() 
 {
+    for(auto it = this->m_medias.begin(); it != this->m_medias.end(); it++)
+    {
+        delete it.value();
+    }
+
+    this->m_medias.clear();
+
     spdlog::debug("[MEDIA POOL] : Released Media Pool");
 }
 
@@ -56,6 +63,8 @@ void MediaPool::add_media(std::string media_path) noexcept
     {
         spdlog::error("Media \"{}\" not supported", media_path);
     }
+
+    spdlog::debug("New media added");
 }
 
 void MediaPool::remove_media(const std::string& media_path) noexcept
