@@ -22,8 +22,8 @@ TimelineItem::~TimelineItem()
 TimelineEventCallback::TimelineEventCallback(const TimelineEventCallbackFunc func,
                                              const TimelineEventType event)
 {
-    this->m_func_ptr = std::move(func);
-    this->m_event_type = std::move(event);
+    this->m_func_ptr = func;
+    this->m_event_type = event;
 }
 
 Timeline::Timeline()
