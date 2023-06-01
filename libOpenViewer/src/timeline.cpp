@@ -65,16 +65,16 @@ TimelineItem* Timeline::get_item_at_frame(const uint32_t frame) noexcept
 
 void Timeline::play() noexcept
 {
-    std::unique_lock<std::mutex> lock(this->m_lock);
+    spdlog::debug("[TIMELINE] : Playing");
 
     this->set_flag(TimelineFlag_Play);
 }
 
 void Timeline::pause() noexcept
 {
-    std::unique_lock<std::mutex> lock(this->m_lock);
-
     this->unset_flag(TimelineFlag_Play);
+
+    spdlog::debug("[TIMELINE] : Pausing");
 }
 
 void Timeline::go_to_frame(const uint32_t frame) noexcept
@@ -179,13 +179,15 @@ void Timeline::main_loop() noexcept
             this->set_frame(this->m_frame + 1);
         }
 
+        spdlog::debug("Flags : {}", this->m_flags);
+
         const auto end = std::chrono::steady_clock::now();
         const uint32_t elapsed = static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::microseconds>(end  - start).count());
 
-        const uint32_t loop_time = 1000 / this->m_fps;
+        const uint32_t loop_time = (uint32_t)1000 / (uint32_t)this->m_fps;
+        const uint32_t sleep_time = elapsed > loop_time ? 0 : loop_time - elapsed;
         
-        spdlog::debug("Sleeping for {} ms", (loop_time - elapsed));
-        std::this_thread::sleep_for(std::chrono::milliseconds(loop_time - elapsed));
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
     }
 }
 

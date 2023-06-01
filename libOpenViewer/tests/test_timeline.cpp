@@ -69,9 +69,9 @@ int main(int argc, char** argv)
 
         timeline.fit_ranges_to_items();
 
-        // timeline.play();
+        timeline.play();
 
-        // std::this_thread::sleep_for(std::chrono::seconds(10));
+        std::this_thread::sleep_for(std::chrono::seconds(10));
     }
     catch(const std::exception& err)
     {

@@ -111,7 +111,7 @@ public:
     LOVU_FORCEINLINE void set_flag(TimelineFlag flag) noexcept { std::unique_lock<std::mutex> lock(this->m_lock); this->m_flags |= flag; }
 
     // Unset a specific flag on the timeline
-    LOVU_FORCEINLINE void unset_flag(TimelineFlag flag) noexcept { this->m_flags &= ~flag; }
+    LOVU_FORCEINLINE void unset_flag(TimelineFlag flag) noexcept { std::unique_lock<std::mutex> lock(this->m_lock); this->m_flags &= ~flag; }
 
     // Set the global frame range
     void set_global_range(const uint32_t start, const uint32_t end) noexcept;
