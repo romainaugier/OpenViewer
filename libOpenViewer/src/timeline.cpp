@@ -29,6 +29,8 @@ TimelineEventCallback::TimelineEventCallback(const TimelineEventCallbackFunc fun
 Timeline::Timeline()
 {
     this->m_play_thread = std::thread(&Timeline::main_loop, this);
+
+    this->set_flag(DEFAULT_TIMELINE_FLAGS);
 }
 
 Timeline::Timeline(const uint8_t fps) : Timeline()
@@ -38,14 +40,14 @@ Timeline::Timeline(const uint8_t fps) : Timeline()
 
 Timeline::~Timeline()
 {
-    this->set_flag(TimelineFlag_Stop);
+    this->set_flag(TimelineFlag_AboutToQuit);
 
     this->m_play_thread.join();
 }
 
 void Timeline::add_item(const TimelineItem item) noexcept
 {
-    spdlog::debug("Added a new item to the timeline : {}", item.get_media()->make_path_at_frame(item.get_start_frame()));    
+    spdlog::debug("[TIMELINE] : Added a new item : {}", item.get_media()->make_path_at_frame(item.get_start_frame()));    
 
     this->m_items.push_back(std::move(item));
 }
@@ -98,6 +100,8 @@ void Timeline::set_global_range(const uint32_t start, const uint32_t end) noexce
 
     this->m_global_start = start;
     this->m_global_end = end;
+
+    spdlog::debug("[TIMELINE] : Setting global range : {}-{}", start, end);
 }
 
 void Timeline::set_focus_range(const uint32_t start, const uint32_t end) noexcept
@@ -106,6 +110,8 @@ void Timeline::set_focus_range(const uint32_t start, const uint32_t end) noexcep
 
     this->m_focus_start = start;
     this->m_focus_end = end;
+    
+    spdlog::debug("[TIMELINE] : Setting focus range : {}-{}", start, end);
 }
 
 void Timeline::fit_ranges_to_items() noexcept
@@ -121,6 +127,8 @@ void Timeline::fit_ranges_to_items() noexcept
 
     this->set_focus_range(start_frame, end_frame);
     this->set_global_range(start_frame, end_frame);
+
+    this->set_frame(start_frame);
 }
 
 void Timeline::set_fps(const uint8_t fps) noexcept
@@ -128,6 +136,8 @@ void Timeline::set_fps(const uint8_t fps) noexcept
     std::unique_lock<std::mutex> lock(this->m_lock);
 
     this->m_fps = fps;
+
+    spdlog::debug("[TIMELINE] : Setting FPS : {}", fps);
 }
 
 void Timeline::set_frame(const uint32_t frame) noexcept
@@ -160,33 +170,93 @@ void Timeline::pop_event_callback() noexcept
     this->m_event_callbacks.erase(this->m_event_callbacks.end());
 }
 
+LOVU_FORCEINLINE uint32_t Timeline::calculate_new_frame() noexcept
+{
+    const uint32_t frame = this->m_frame;
+    const uint32_t start = this->m_focus_start;
+    const uint32_t end = this->m_focus_end;
+
+    uint32_t new_frame;
+
+    if(this->has_flag(TimelineFlag_PlayModeReversed))
+    {
+        new_frame = this->has_flag(TimelineFlag_PlayModeOnce) ? 
+                    frame == start ? 0xffffffff : frame - 1 : 
+                    new_frame;          
+
+        new_frame = this->has_flag(TimelineFlag_PlayModeLoop) ?
+                    frame == start ? end : frame - 1 :
+                    new_frame;
+    }
+    else if(this->has_flag(TimelineFlag_PlayModePingPong))
+    {
+        if(this->has_flag(TimelineFlag_PlayModePingPongGoingForward))
+        {
+            if(frame == end)
+            {
+                new_frame = frame - 1;
+                this->unset_flag(TimelineFlag_PlayModePingPongGoingForward);
+            }
+            else new_frame = frame + 1;
+        }
+        else
+        {
+            if(frame == start)
+            {
+                new_frame = frame + 1;
+                this->set_flag(TimelineFlag_PlayModePingPongGoingForward);
+            }
+            else new_frame = frame - 1;
+        }
+    }
+    else
+    {
+        new_frame = this->has_flag(TimelineFlag_PlayModeOnce) ? 
+                    frame == end ? 0xffffffff : frame + 1 : 
+                    new_frame;          
+
+        new_frame = this->has_flag(TimelineFlag_PlayModeLoop) ?
+                    frame == end ? start : frame + 1 :
+                    new_frame;
+    }
+
+    return new_frame;
+}
+
 void Timeline::main_loop() noexcept
 {
-    spdlog::debug("Starting Timeline main thread");
+    spdlog::debug("[TIMELINE] : Starting main thread");
 
     while(true)
     {
         const auto start = std::chrono::steady_clock::now();
 
-        if(this->has_flag(TimelineFlag_Stop))
+        if(this->has_flag(TimelineFlag_AboutToQuit))
         {
-            spdlog::debug("Releasing Timeline main thread");
+            spdlog::debug("[TIMELINE] : Releasing main thread");
             break;
         }
 
         if(this->has_flag(TimelineFlag_Play))
         {
-            this->set_frame(this->m_frame + 1);
+            const uint32_t new_frame = this->calculate_new_frame();
+
+            if(new_frame == 0xffffffff)
+            {
+                this->pause();
+            }
+            else
+            {
+                this->set_frame(new_frame);
+            }
         }
 
-        spdlog::debug("Flags : {}", this->m_flags);
-
         const auto end = std::chrono::steady_clock::now();
-        const uint32_t elapsed = static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::microseconds>(end  - start).count());
+        const int32_t elapsed = static_cast<int32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(end  - start).count());
 
-        const uint32_t loop_time = (uint32_t)1000 / (uint32_t)this->m_fps;
-        const uint32_t sleep_time = elapsed > loop_time ? 0 : loop_time - elapsed;
-        
+        const int32_t loop_time = (int32_t)1000 / (int32_t)this->m_fps;
+        const int32_t sleep_time = elapsed > loop_time ? 0 : loop_time - elapsed;
+
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_time));
     }
 }

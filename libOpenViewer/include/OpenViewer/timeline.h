@@ -70,8 +70,16 @@ struct LOV_API TimelineEventCallback
 enum TimelineFlag
 {
     TimelineFlag_Play = LOVU_BIT(1), // Set wether the timeline is playing or not
-    TimelineFlag_Stop = LOVU_BIT(2), // Set to true when the timeline is destructed
+    TimelineFlag_AboutToQuit = LOVU_BIT(2), // Set to true when the timeline is destructed
+
+    TimelineFlag_PlayModeOnce = LOVU_BIT(3),
+    TimelineFlag_PlayModeLoop = LOVU_BIT(4),
+    TimelineFlag_PlayModePingPong = LOVU_BIT(5),
+    TimelineFlag_PlayModeReversed = LOVU_BIT(6),
+    TimelineFlag_PlayModePingPongGoingForward = LOVU_BIT(7)
 };
+
+#define DEFAULT_TIMELINE_FLAGS TimelineFlag_PlayModeLoop
 
 
 class LOV_API Timeline
@@ -105,19 +113,23 @@ public:
     void go_to_last_frame() noexcept;
 
     // Check if the timeline has a specific flag set
-    LOVU_FORCEINLINE bool has_flag(TimelineFlag flag) const noexcept { return this->m_flags & flag; }
+    LOVU_FORCEINLINE bool has_flag(TimelineFlag flag) const noexcept { return LOVU_HAS_FLAG(this->m_flags, flag); }
 
     // Set a specific flag on the timeline
-    LOVU_FORCEINLINE void set_flag(TimelineFlag flag) noexcept { std::unique_lock<std::mutex> lock(this->m_lock); this->m_flags |= flag; }
+    LOVU_FORCEINLINE void set_flag(TimelineFlag flag) noexcept { std::unique_lock<std::mutex> lock(this->m_lock); LOVU_SET_FLAG(this->m_flags, flag); }
 
     // Unset a specific flag on the timeline
-    LOVU_FORCEINLINE void unset_flag(TimelineFlag flag) noexcept { std::unique_lock<std::mutex> lock(this->m_lock); this->m_flags &= ~flag; }
+    LOVU_FORCEINLINE void unset_flag(TimelineFlag flag) noexcept { std::unique_lock<std::mutex> lock(this->m_lock); LOVU_UNSET_FLAG(this->m_flags, flag); }
 
     // Set the global frame range
     void set_global_range(const uint32_t start, const uint32_t end) noexcept;
 
+    LOVU_FORCEINLINE void get_global_range(uint32_t& start, uint32_t& end) const noexcept { start = this->m_global_start; end = this->m_global_end; }
+
     // Set the focus frame range
     void set_focus_range(const uint32_t start, const uint32_t end) noexcept;
+
+    LOVU_FORCEINLINE void get_focus_range(uint32_t& start, uint32_t& end) const noexcept { start = this->m_focus_start; end = this->m_focus_end; }
 
     // Set both global and focus ranges to fit all items present in the timeline
     void fit_ranges_to_items() noexcept;
@@ -137,6 +149,8 @@ public:
 
 private:
     void main_loop() noexcept;    
+
+    uint32_t calculate_new_frame() noexcept;
 
     std::vector<TimelineItem> m_items;
 

@@ -111,6 +111,12 @@ template<class T> T& classMacroImpl(const T* t);
 // Bit set helper macro
 #define LOVU_BIT(bit) 1 << bit
 
+#define LOVU_HAS_FLAG(flag, bit) flag & bit
+
+#define LOVU_SET_FLAG(flag, bit) flag |= bit 
+
+#define LOVU_UNSET_FLAG(flag, bit) flag &= ~bit
+
 // lovu namespace helper macro
 #define LOVU_NAMESPACE_BEGIN namespace lovu {
 #define LOVU_NAMESPACE_END }
