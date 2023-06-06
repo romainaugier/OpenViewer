@@ -19,7 +19,7 @@ public:
     TimelineItem(Media* media);
 
     // Returns true if the media is valid at the current frame
-    bool in_range(const uint32_t frame) const noexcept { return frame >= m_start && frame < m_end; }
+    bool in_range(const uint32_t frame) const noexcept { return frame >= m_start && frame <= m_end; }
 
     LOVU_FORCEINLINE uint32_t get_start_frame() const noexcept { return this->m_start; }
 

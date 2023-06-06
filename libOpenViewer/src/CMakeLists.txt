@@ -9,6 +9,7 @@ file(GLOB_RECURSE src_files *.cpp)
 add_definitions(-DLOV_BUILD_EXPORT -DSPDLOG_FMT_EXTERNAL)
 
 add_library(${OPENVIEWER_LIBS} SHARED ${src_files} ${h_files})
+set_target_properties(${OPENVIEWER_LIBS} PROPERTIES PREFIX "")
 target_link_libraries(${OPENVIEWER_LIBS} ${CONAN_LIBS} ${OPENVIEWERUTILS_LIBS})
 
 add_custom_command(

@@ -176,7 +176,7 @@ LOVU_FORCEINLINE uint32_t Timeline::calculate_new_frame() noexcept
     const uint32_t start = this->m_focus_start;
     const uint32_t end = this->m_focus_end;
 
-    uint32_t new_frame;
+    uint32_t new_frame = 0xffffffff;
 
     if(this->has_flag(TimelineFlag_PlayModeReversed))
     {
