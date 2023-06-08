@@ -34,8 +34,8 @@ enum DisplayFlag
 
 enum DisplayDataType
 {
-    DisplayDataType_RBGHalfFloat  = 0,
-    DisplayDataType_RBGAHalfFloat = 1,
+    DisplayDataType_RGBHalfFloat  = 0,
+    DisplayDataType_RGBAHalfFloat = 1,
     DisplayDataType_RGBFloat      = 2,
     DisplayDataType_RGBAFloat     = 3,
     DisplayDataType_RGBUByte      = 4,
@@ -46,6 +46,27 @@ enum DisplayDataType
     DisplayDataType_RGBAUInteger  = 9
 };
 
+#define DISPLAY_DATA_TYPE_TO_GL_INTERNAL_FMT(data_type)              \
+        data_type == DisplayDataType_RGBHalfFloat ? GL_RGB16F :      \
+        data_type == DisplayDataType_RGBAHalfFloat ? GL_RGBA16F :    \
+        data_type == DisplayDataType_RGBFloat ? GL_RGB32F :          \
+        data_type == DisplayDataType_RGBAFloat ? GL_RGBA32F :        \
+        data_type == DisplayDataType_RGBUByte ? GL_RGB8UI :          \
+        data_type == DisplayDataType_RGBAUByte ? GL_RGBA8UI :        \
+        data_type == DisplayDataType_RGBUShort ? GL_RGB16UI :        \
+        data_type == DisplayDataType_RGBAUShort ? GL_RGBA16UI :      \
+        data_type == DisplayDataType_RGBUInteger ? GL_RGB32UI :      \
+        data_type == DisplayDataType_RGBAUInteger ? GL_RGBA32UI : 10 \
+
+#define DISPLAY_DATA_TYPE_TO_GL_FMT(data_type) data_type % 2 == 0 ? GL_RGB : GL_RGBA
+
+#define DISPLAY_DATA_TYPE_TO_GL_TYPE(data_type)                             \
+        data_type >= 0 && data_type < 2 ? GL_HALF_FLOAT :                   \
+        data_type >= 2 && data_type < 4 ? GL_FLOAT :                        \
+        data_type >= 4 && data_type < 6 ? GL_UNSIGNED_BYTE :                \
+        data_type >= 6 && data_type < 8 ? GL_UNSIGNED_SHORT :               \
+        data_type >= 8 && data_type < 10 ? GL_UNSIGNED_INT : GL_HALF_FLOAT  \
+
 class LOV_API Display
 {
     void set_data(void* data_ptr, const uint32_t data_width, const uint32_t data_height, const DisplayDataType data_type);
@@ -55,7 +76,7 @@ class LOV_API Display
 private:
     void* m_data = nullptr;
 
-    GLuint m_gl_texture = 0xffffffff;
+    GLuint m_gl_texture = GL_INVALID_VALUE;
 
     uint32_t m_width = 0xffffffff;
     uint32_t m_height = 0xffffffff;
