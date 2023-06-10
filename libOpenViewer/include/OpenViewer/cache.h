@@ -78,7 +78,7 @@ private:
 
     // Store the pointers to associated image cache item
     // The key is the path hash
-    tsl::robin_map<uint32_t, cache_item*> m_hash_to_items;
+    tsl::robin_map<uint32_t, uint32_t> m_hash_to_items;
 
     std::mutex m_mtx;
 

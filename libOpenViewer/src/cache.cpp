@@ -118,7 +118,7 @@ void* Cache::add(Media* media, const uint32_t frame) noexcept
     {
         spdlog::debug("[CACHE] : Image size is bigger than cache capacity, resizing cache");
 
-        this->resize(item_img_byte_size + 0xFF);
+        this->resize(item_img_byte_size + 0xff);
     }
 
     if((this->m_bytes_size + item_img_byte_size) <= this->m_bytes_capacity)
@@ -133,13 +133,13 @@ void* Cache::add(Media* media, const uint32_t frame) noexcept
 
         // Create the new cache item
         this->m_items.emplace(this->m_current_index, cache_item(media, 
-                                                     new_img_address, 
-                                                     item_img_byte_size, 
-                                                     item_img_size, 
-                                                     frame));
+                                                                new_img_address, 
+                                                                item_img_byte_size, 
+                                                                item_img_size, 
+                                                                frame));
 
         const uint32_t hash = media->get_hash_at_frame(frame);
-        this->m_hash_to_items[hash] = &this->m_items[this->m_current_index];
+        this->m_hash_to_items[hash] = this->m_current_index;
 
         spdlog::debug("[CACHE] : Loaded image \"{} - {}\" at index {}", 
                                   media->get_path_view(),
@@ -205,7 +205,7 @@ void* Cache::add(Media* media, const uint32_t frame) noexcept
                                                              frame);
 
                 const uint32_t hash = media->get_hash_at_frame(frame);
-                this->m_hash_to_items[hash] = &this->m_items[clean_index];
+                this->m_hash_to_items[hash] = traversing_index;
 
                 // Update cache infos
                 this->m_bytes_size += item_img_byte_size;
@@ -240,7 +240,7 @@ void* Cache::add(Media* media, const uint32_t frame) noexcept
                     this->m_items[clean_index] = cache_item(media, clean_address, item_img_byte_size, item_img_size, frame);
                     
                     const uint32_t hash = media->get_hash_at_frame(frame);
-                    this->m_hash_to_items[hash] = &this->m_items[clean_index];
+                    this->m_hash_to_items[hash] = clean_index;
 
                     this->m_current_traversing_index = clean_index;
                     this->m_current_index = traversing_index + 1;
@@ -352,7 +352,13 @@ cache_item* Cache::get_cache_item(const uint32_t hash) const noexcept
 
     if(it != this->m_hash_to_items.end())
     {
-        return it.value();
+        const uint32_t item_index = it.value();
+        auto item_it = this->m_items.find(item_index);
+
+        if(item_it != this->m_items.end())
+        {
+            return const_cast<cache_item*>(&item_it.value());
+        }
     }
 
     return nullptr;

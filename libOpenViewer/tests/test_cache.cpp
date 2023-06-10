@@ -30,7 +30,7 @@ int main(int argc, char** argv)
 
         cache.resize(seq_byte_size);
 
-        for(uint8_t i = 100; i < 220; i++)
+        for(uint32_t i = img_seq->get_start_frame(); i < img_seq->get_end_frame() - 40; i++)
         {
             cache.add(img_seq, i);
         }
@@ -39,7 +39,7 @@ int main(int argc, char** argv)
 
         img_seq->debug();
         
-        for(uint8_t i = 100; i < 244; i++)
+        for(uint32_t i = img_seq->get_start_frame(); i < img_seq->get_end_frame(); i++)
         {
             if(img_seq->is_cached_at_frame(i)) continue;
             
@@ -52,7 +52,7 @@ int main(int argc, char** argv)
     }
     catch(const std::exception& err)
     {
-        spdlog::error("Test Failed, catched exception : \n  {}", err.what());
+        spdlog::error("Test Failed, caught exception : \n {}", err.what());
         
         std::exit(EXIT_FAILURE);
     }

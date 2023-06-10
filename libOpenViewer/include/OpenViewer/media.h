@@ -74,6 +74,17 @@ static inline std::string type_to_string(const Type_ type) noexcept
                                      type & Type_U8 ? OCIO::BIT_DEPTH_UINT8 :   \
                                      OCIO::BIT_DEPTH_UNKNOWN
 
+#define  TYPE_AND_FMT_TO_DISPLAY_DATA_TYPE(type, format) type & Type_HALF && format & Format_RGB ? 0 :   \
+                                                         type & Type_HALF && format & Format_RGBA ? 1 :  \
+                                                         type & Type_FLOAT && format & Format_RGB ? 2 :  \
+                                                         type & Type_FLOAT && format & Format_RGBA ? 3 : \
+                                                         type & Type_U8 && format & Format_RGB ? 4 :     \
+                                                         type & Type_U8 && format & Format_RGBA ? 5 :    \
+                                                         type & Type_U16 && format & Format_RGB ? 6 :    \
+                                                         type & Type_U16 && format & Format_RGBA ? 7 :   \
+                                                         type & Type_U32 && format & Format_RGB ? 8 :    \
+                                                         type & Type_U32 && format & Format_RGBA ? 9 : 0 \
+
 // Helper macro to get the byte size of a type
 #define TYPE_BYTE_SIZE(type) (type & Type_FLOAT || type & Type_U32) ? 4 : (type & Type_HALF || type & Type_U16) ? 2 : (type & Type_U8) ? 1 : 0  
 

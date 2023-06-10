@@ -18,6 +18,13 @@ enum DisplayShaderType
     DisplayShaderType_OSL    = LOVU_BIT(6)
 };
 
+// The shader function should accept two arguments : 
+// - a void pointer to the data, depending on the shader type it will be different :
+//    - OpenGL : Pointer to the texture
+//    - OpenCL : Pointer to the OpenGL texture  
+//    - C      : Pointer to the data
+//    - Others are not implemented yet
+
 using display_shader_func = void(*)(void*, void*);
 
 struct DisplayShader
@@ -69,17 +76,31 @@ enum DisplayDataType
 
 class LOV_API Display
 {
-    void set_data(void* data_ptr, const uint32_t data_width, const uint32_t data_height, const DisplayDataType data_type);
+public:
+    Display();
+
+    ~Display();
+
+    void add_shader(const DisplayShader& shader) noexcept { this->m_shaders.emplace_back(std::move(shader)); }
+
+    void run_shaders() const noexcept;
+
+    void set_data(void* data_ptr,
+                  const uint32_t data_width,
+                  const uint32_t data_height,
+                  const uint8_t data_type) noexcept;
 
     LOV_FORCEINLINE bool has_flag(const DisplayFlag flag) const noexcept { return LOVU_HAS_FLAG(this->m_flags, flag); }
 
 private:
+    std::vector<DisplayShader> m_shaders;
+
     void* m_data = nullptr;
 
-    GLuint m_gl_texture = GL_INVALID_VALUE;
+    GLuint m_gl_texture;
 
-    uint32_t m_width = 0xffffffff;
-    uint32_t m_height = 0xffffffff;
+    uint32_t m_width = 0;
+    uint32_t m_height = 0;
     
     uint32_t m_flags = 0;
 
