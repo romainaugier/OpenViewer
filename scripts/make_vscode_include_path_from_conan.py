@@ -84,7 +84,11 @@ def main():
         {
             "name": "Win32",
             "includePath": [
-                "${default}"
+                "${default}",
+                "${workspaceFolder}/libOpenViewerUtils/include",
+                "${workspaceFolder}/libOpenViewer/include",
+                "${workspaceFolder}/libOpenViewerApp/include",
+                "${workspaceFolder}/imgui/include"
             ],
             "defines": [
                 "_DEBUG",
@@ -94,7 +98,6 @@ def main():
             ],
             "windowsSdkVersion": "10.0.19041.0",
             "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.29.30133/bin/Hostx64/x64/cl.exe",
-            "cStandard": "c17",
             "intelliSenseMode": "windows-msvc-x64"
         }
     ],

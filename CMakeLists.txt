@@ -36,7 +36,7 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
 elseif (CMAKE_C_COMPILER_ID STREQUAL "Intel")
 	set(ICC_FLAGS "")
 elseif (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
-    set(MSVC_FLAGS "/Wall /wd4710 /wd4577")
+    set(MSVC_FLAGS "/wd4710 /wd4577")
 
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         set(CMAKE_CXX_FLAGS "${MSVC_FLAGS} /O0 /fsanitize=address /fsanitize=leak")
@@ -48,13 +48,13 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
 	add_link_options("/LTCG")
 endif()
 
-# # Windows
-# SET(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 # Set libraries names
 set(OPENVIEWERUTILS_LIBS libOpenViewerUtils)
 set(OPENVIEWER_LIBS libOpenViewer)
 set(OPENVIEWER_APP OpenViewer)
+set(IMGUI_LIB imgui)
+set(OPENVIEWERAPP_LIBS libOpenViewerApp)
 
 if(DEFINED RUN_TESTS)
     message(STATUS "RUN_TESTS defined, building and running tests")
@@ -77,6 +77,14 @@ add_subdirectory(libOpenViewerUtils)
 # Library OpenViewer
 include_directories(libOpenViewer/include)
 add_subdirectory(libOpenViewer)
+
+# Imgui
+include_directories(imgui/include)
+add_subdirectory(imgui)
+
+# Library OpenViewerApp
+include_directories(libOpenViewerApp/include)
+add_subdirectory(libOpenViewerApp)
 
 # OpenViewer App
 add_subdirectory(app)

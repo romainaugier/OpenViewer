@@ -5,7 +5,7 @@
 # libOpenViewer library #
 
 add_executable(${OPENVIEWER_APP} openviewer.cpp)
-target_link_libraries(${OPENVIEWER_APP} ${CONAN_LIBS} ${OPENVIEWER_LIBS})
+target_link_libraries(${OPENVIEWER_APP} ${CONAN_LIBS} ${OPENVIEWERAPP_LIBS})
 
 add_custom_command(
     TARGET ${OPENVIEWER_APP}

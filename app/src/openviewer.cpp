@@ -4,6 +4,7 @@
 
 #include "OpenViewer/openviewer.h"
 #include "OpenViewer/command_line_tools.h"
+#include "OpenViewerApp/app.h"
 
 int main(int argc, char** argv)
 {
@@ -11,11 +12,7 @@ int main(int argc, char** argv)
     spdlog::set_level(spdlog::level::debug);
     spdlog::info("OpenViewer {} {}", LOV_VERSION_STR, LOV_PLATFORM_STR);
 
-#ifdef LOV_WIN
-    SetUnhandledExceptionFilter(lovu::exception_handler);
-#endif
-
     lov::process_command_line_args(argc, argv);
 
-    return EXIT_SUCCESS;
+    return lova::app(argc, argv);
 }
