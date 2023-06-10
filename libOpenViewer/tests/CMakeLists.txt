@@ -23,6 +23,8 @@ if(WIN32)
 
     file(GLOB_RECURSE CONAN_DLLS ${CONAN_DLL_DIR}/*.dll)
 
+    list(FILTER CONAN_DLLS EXCLUDE REGEX ".*(libOpenViewer.*|OpenViewer\\.exe)")
+
     foreach(dll_file ${CONAN_DLLS})
         add_custom_command(
             TARGET ${TESTNAME}
