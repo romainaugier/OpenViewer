@@ -10,8 +10,10 @@
 #include <stdio.h>
 #define GL_SILENCE_DEPRECATION
 #include <GLFW/glfw3.h> // Will drag system OpenGL headers
+#include "OpenColorIO/OpenColorABI.h"
+#include "OpenImageIO/oiioversion.h"
 
-namespace lova {
+LOVA_NAMESPACE_BEGIN
 
 static void glfw_error_callback(int error, const char* description)
 {
@@ -20,7 +22,13 @@ static void glfw_error_callback(int error, const char* description)
 
 LOVA_API int app(int argc, char** argv) noexcept
 {
+    spdlog::debug("OpenViewer App");
+    spdlog::debug("ImGui Version : {}", IMGUI_VERSION);
+    spdlog::debug("OCIO Version : {}", OCIO_VERSION);
+    spdlog::debug("OIIO Version : {}", OIIO_VERSION_STRING);
+
     glfwSetErrorCallback(glfw_error_callback);
+
     if (!glfwInit())
         return 1;
 
@@ -28,7 +36,7 @@ LOVA_API int app(int argc, char** argv) noexcept
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 example", nullptr, nullptr);
+    GLFWwindow* window = glfwCreateWindow(1280, 720, "OpenViewer", nullptr, nullptr);
     if (window == nullptr)
         return 1;
     glfwMakeContextCurrent(window);
@@ -112,4 +120,4 @@ LOVA_API int app(int argc, char** argv) noexcept
     return 0;
 }
 
-}
+LOVA_NAMESPACE_END
