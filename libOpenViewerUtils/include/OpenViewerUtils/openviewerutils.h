@@ -123,23 +123,10 @@ template<class T> T& classMacroImpl(const T* t);
 
 LOVU_NAMESPACE_BEGIN
 
-// Exception handler helper
-#if defined(LOVU_WIN)
-#include "boost/stacktrace.hpp"
-inline static LONG WINAPI exception_handler(PEXCEPTION_POINTERS p_exception_info)
-{
-    spdlog::error("Unhandled exception trapped (Code {}) : \n>>>>>>>>>>\n{}\n<<<<<<<<<<\nProgram will exit.",
-                  p_exception_info->ExceptionRecord->ExceptionCode,
-                  boost::stacktrace::to_string(boost::stacktrace::stacktrace()));
-
-    return EXCEPTION_CONTINUE_SEARCH;
-}
-#else
 inline static void exception_handler() 
 {
 
 }
-#endif
 
 LOVU_FORCEINLINE uint32_t round_u32_to_next_pow2(uint32_t x) noexcept 
 {

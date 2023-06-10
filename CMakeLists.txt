@@ -36,7 +36,7 @@ elseif (CMAKE_C_COMPILER_ID STREQUAL "GNU")
 elseif (CMAKE_C_COMPILER_ID STREQUAL "Intel")
 	set(ICC_FLAGS "")
 elseif (CMAKE_C_COMPILER_ID STREQUAL "MSVC")
-    set(MSVC_FLAGS "/Wall")
+    set(MSVC_FLAGS "/Wall /wd4710 /wd4577")
 
     if(CMAKE_BUILD_TYPE STREQUAL "Debug")
         set(CMAKE_CXX_FLAGS "${MSVC_FLAGS} /O0 /fsanitize=address /fsanitize=leak")
