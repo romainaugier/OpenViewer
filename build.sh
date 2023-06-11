@@ -6,6 +6,7 @@ BUILDTYPE="RelWithDebInfo"
 RUNTESTS=0
 REMOVEOLDDIR=0
 EXPORTCOMPILECOMMANDS=0
+SANITIZE=0
 
 parse_args()
 {
@@ -13,6 +14,7 @@ parse_args()
     [ "$1" == "--tests" ] && RUNTESTS=1
     [ "$1" == "--clean" ] && REMOVEOLDDIR=1
     [ "$1" == "--export-compile-commands" ] && EXPORTCOMPILECOMMANDS=1
+    [ "$1" == "--sanitize" ] && SANITIZE=1
 }
 
 for arg in "$@"
@@ -25,7 +27,7 @@ then
     rm -rf build
 fi
 
-cmake -S . -B build -DRUN_TESTS=$RUNTESTS -DCMAKE_EXPORT_COMPILE_COMMANDS=$EXPORTCOMPILECOMMANDS -DCMAKE_BUILD_TYPE=$BUILDTYPE
+cmake -S . -B build -DSANITIZE=$SANITIZE -DRUN_TESTS=$RUNTESTS -DCMAKE_EXPORT_COMPILE_COMMANDS=$EXPORTCOMPILECOMMANDS -DCMAKE_BUILD_TYPE=$BUILDTYPE
 
 cd build
 

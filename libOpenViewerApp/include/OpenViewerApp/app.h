@@ -6,6 +6,10 @@
 
 LOVA_NAMESPACE_BEGIN
 
+struct App {
+
+};
+
 LOVA_API int app(int argc, char** argv) noexcept;
 
 LOVA_NAMESPACE_END

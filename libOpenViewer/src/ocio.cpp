@@ -136,7 +136,7 @@ void Ocio::update_cpu_processor(const OCIO::BitDepth bit_depth) noexcept
     spdlog::debug("[OCIO] : Updated CPU Processor");
 }
 
-void Ocio::process_cpu(void* pixels, 
+void Ocio::process_cpu(void* __restrict pixels, 
                        const uint16_t width, 
                        const uint16_t height, 
                        const uint8_t nchannels, 

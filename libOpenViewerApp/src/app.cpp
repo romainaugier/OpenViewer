@@ -2,7 +2,11 @@
 // Copyright (c) 2022 - Present Romain Augier
 // All rights reserved.
 
+#include "GL/glew.h"
+
 #include "OpenViewerApp/app.h" 
+#include "OpenViewerApp/glfw_callbacks.h"
+#include "OpenViewerApp/media_pool.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -15,38 +19,57 @@
 
 LOVA_NAMESPACE_BEGIN
 
-static void glfw_error_callback(int error, const char* description)
-{
-    fprintf(stderr, "GLFW Error %d: %s\n", error, description);
-}
-
 LOVA_API int app(int argc, char** argv) noexcept
 {
-    spdlog::debug("OpenViewer App");
-    spdlog::debug("ImGui Version : {}", IMGUI_VERSION);
-    spdlog::debug("OCIO Version : {}", OCIO_VERSION);
-    spdlog::debug("OIIO Version : {}", OIIO_VERSION_STRING);
+    spdlog::info("OpenViewer App");
+    spdlog::info("ImGui Version : {}", IMGUI_VERSION);
+    spdlog::info("OCIO Version : {}", OCIO_VERSION);
+    spdlog::info("OIIO Version : {}", OIIO_VERSION_STRING);
 
     glfwSetErrorCallback(glfw_error_callback);
 
-    if (!glfwInit())
+    if(!glfwInit())
+    {
+        spdlog::error("[GLFW] : Failed to initialize glfw");
         return 1;
+    }
 
     const char* glsl_version = "#version 130";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
     GLFWwindow* window = glfwCreateWindow(1280, 720, "OpenViewer", nullptr, nullptr);
-    if (window == nullptr)
+
+    if(window == nullptr)
+    {
+        spdlog::error("[GLFW] : Failed to create window. Exiting application");
+        glfwTerminate();
         return 1;
+    }
+
+    glfwSetDropCallback(window, glfw_drop_event_callback);
+    glfwSetKeyCallback(window, glfw_key_event_callback);
+
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable vsync
+
+    GLenum err = glewInit();
+
+    if(err != GLEW_OK)
+    {
+        spdlog::error("[GLEW] : Failed to initialize glew : {}", glewGetErrorString(err));
+        glfwTerminate();
+        return 1;
+    }
+
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
     ImGui::StyleColorsDark();
 
@@ -57,6 +80,10 @@ LOVA_API int app(int argc, char** argv) noexcept
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
+    // OpenViewer widgets
+
+    MediaPoolWidget media_pool_widget;
+
     while (!glfwWindowShouldClose(window))
     {
         glfwPollEvents();
@@ -64,6 +91,9 @@ LOVA_API int app(int argc, char** argv) noexcept
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+
+        // Draw OpenViewer widgets
+        media_pool_widget.draw();
 
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);

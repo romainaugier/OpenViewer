@@ -4,7 +4,7 @@
 
 add_subdirectory(src)
 
-if(DEFINED RUN_TESTS)
+if(RUN_TESTS EQUAL 1)
     message(STATUS "Building libOpenViewer tests")
     add_subdirectory(tests)
 endif()

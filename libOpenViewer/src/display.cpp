@@ -30,50 +30,50 @@ void Display::set_data(void* data_ptr,
     this->m_height = data_height;
     this->m_data_type = data_type;
 
-	spdlog::debug("Ptr : {}", fmt::ptr(data_ptr));
+    if(need_update)
+    {
+		spdlog::debug("[DISPLAY] : Updating GL display");
 
-    // if(need_update)
-    // {
-    //     glGenTextures(1, &this->m_gl_texture);
-    //     glActiveTexture(GL_TEXTURE0);
-    //     glBindTexture(GL_TEXTURE_2D, this->m_gl_texture);
+        glGenTextures(1, &this->m_gl_texture);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, this->m_gl_texture);
 
-	// 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	// 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	// 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	// 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 
-	// 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	// 	glTexImage2D(GL_TEXTURE_2D, 
-	// 				 0, 
-	// 				 DISPLAY_DATA_TYPE_TO_GL_INTERNAL_FMT(this->m_data_type), 
-	// 				 this->m_width, 
-	// 				 this->m_height, 
-	// 				 0, 
-	// 				 DISPLAY_DATA_TYPE_TO_GL_FMT(this->m_data_type), 
-	// 				 DISPLAY_DATA_TYPE_TO_GL_TYPE(this->m_data_type), 
-	// 				 this->m_data);
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		glTexImage2D(GL_TEXTURE_2D, 
+					 0, 
+					 DISPLAY_DATA_TYPE_TO_GL_INTERNAL_FMT(this->m_data_type), 
+					 this->m_width, 
+					 this->m_height, 
+					 0, 
+					 DISPLAY_DATA_TYPE_TO_GL_FMT(this->m_data_type), 
+					 DISPLAY_DATA_TYPE_TO_GL_TYPE(this->m_data_type), 
+					 this->m_data);
 
-	// 	glBindTexture(GL_TEXTURE_2D, 0);
-    // }
-    // else
-    // {
-    //     glActiveTexture(GL_TEXTURE0);
-    //     glBindTexture(GL_TEXTURE_2D, this->m_gl_texture);
-	// 	glTexImage2D(GL_TEXTURE_2D, 
-	// 				 0, 
-	// 				 DISPLAY_DATA_TYPE_TO_GL_INTERNAL_FMT(this->m_data_type), 
-	// 				 this->m_width, 
-	// 				 this->m_height, 
-	// 				 0, 
-	// 				 DISPLAY_DATA_TYPE_TO_GL_FMT(this->m_data_type), 
-	// 				 DISPLAY_DATA_TYPE_TO_GL_TYPE(this->m_data_type), 
-	// 				 this->m_data);
+		glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    else
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, this->m_gl_texture);
+		glTexImage2D(GL_TEXTURE_2D, 
+					 0, 
+					 DISPLAY_DATA_TYPE_TO_GL_INTERNAL_FMT(this->m_data_type), 
+					 this->m_width, 
+					 this->m_height, 
+					 0, 
+					 DISPLAY_DATA_TYPE_TO_GL_FMT(this->m_data_type), 
+					 DISPLAY_DATA_TYPE_TO_GL_TYPE(this->m_data_type), 
+					 this->m_data);
 
-	// 	glBindTexture(GL_TEXTURE_2D, 0);
-    // }
+		glBindTexture(GL_TEXTURE_2D, 0);
+    }
 
-	spdlog::debug("[DISPLAY] : set data");
+	spdlog::debug("[DISPLAY] : Set data");
 }
 
 Display::~Display()

@@ -27,6 +27,12 @@ MediaPool::~MediaPool()
 
 void MediaPool::add_media(std::string media_path) noexcept
 {
+    if(this->m_medias.find(media_path) != this->m_medias.end())
+    {
+        spdlog::info("[MEDIA POOL] : Media \"{}\" is already loaded");
+        return;
+    }
+
     if(lovu::fs::is_image(media_path))
     {
         const bool autodetect_sequence = settings.get<bool>("autodetect_sequences");
@@ -57,14 +63,12 @@ void MediaPool::add_media(std::string media_path) noexcept
     }
     else if(lovu::fs::is_video(media_path))
     {
-        spdlog::error("Videos are not supported for now");
+        spdlog::error("[MEDIA POOL] : Videos are not supported for now");
     }
     else
     {
-        spdlog::error("Media \"{}\" not supported", media_path);
+        spdlog::error("[MEDIA POOL] : Media \"{}\" not supported", media_path);
     }
-
-    spdlog::debug("New media added");
 }
 
 void MediaPool::remove_media(const std::string& media_path) noexcept
