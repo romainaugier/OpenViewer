@@ -8,11 +8,5 @@ file(GLOB_RECURSE src_files *.cpp)
 
 add_library(${IMGUI_LIB} ${src_files})
 set_target_properties(${IMGUI_LIB} PROPERTIES PREFIX "")
+set_property(TARGET ${IMGUI_LIB} PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(${IMGUI_LIB} ${CONAN_LIBS})
-
-# add_custom_command(
-#     TARGET ${IMGUI_LIB}
-#     POST_BUILD 
-#     COMMAND ${CMAKE_COMMAND} -E copy
-#     $<TARGET_FILE:${IMGUI_LIB}> ${CMAKE_SOURCE_DIR}/bin
-# )

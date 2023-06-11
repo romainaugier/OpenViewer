@@ -30,6 +30,8 @@ void Display::set_data(void* data_ptr,
     this->m_height = data_height;
     this->m_data_type = data_type;
 
+	spdlog::debug("Ptr : {}", fmt::ptr(data_ptr));
+
     // if(need_update)
     // {
     //     glGenTextures(1, &this->m_gl_texture);

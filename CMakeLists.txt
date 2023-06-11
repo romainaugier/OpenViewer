@@ -70,6 +70,14 @@ endif()
 include(${CMAKE_SOURCE_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
+set(OUTPUT_BIN_DIR "${CMAKE_SOURCE_DIR}/bin")
+
+if(EXISTS ${OUTPUT_BIN_DIR})
+    file(REMOVE ${OUTPUT_BIN_DIR})
+endif()
+
+file(MAKE_DIRECTORY ${OUTPUT_BIN_DIR})
+
 # Library OpenViewerUtils
 include_directories(libOpenViewerUtils/include)
 add_subdirectory(libOpenViewerUtils)
