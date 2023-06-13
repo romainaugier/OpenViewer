@@ -15,3 +15,4 @@ settings.json
 .cache
 conan_env
 compile_commands.json
+imgui.ini
