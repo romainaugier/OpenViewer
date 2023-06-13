@@ -6,7 +6,7 @@
 
 LOVA_NAMESPACE_BEGIN
 
-class MediaPoolWidget 
+class LOVA_API MediaPoolWidget 
 {
 public:
     MediaPoolWidget();

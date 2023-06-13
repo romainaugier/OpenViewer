@@ -7,6 +7,7 @@
 #include "OpenViewerApp/app.h" 
 #include "OpenViewerApp/glfw_callbacks.h"
 #include "OpenViewerApp/media_pool.h"
+#include "OpenViewerApp/timeline.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -70,6 +71,7 @@ LOVA_API int app(int argc, char** argv) noexcept
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
     io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+    io.ConfigWindowsMoveFromTitleBarOnly = true;
 
     ImGui::StyleColorsDark();
 
@@ -83,6 +85,10 @@ LOVA_API int app(int argc, char** argv) noexcept
     // OpenViewer widgets
 
     MediaPoolWidget media_pool_widget;
+    TimelineWidget timeline_widget;
+
+    timeline_widget.internal_timeline.set_global_range(1, 400);
+    timeline_widget.internal_timeline.set_focus_range(100, 300);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -94,6 +100,7 @@ LOVA_API int app(int argc, char** argv) noexcept
 
         // Draw OpenViewer widgets
         media_pool_widget.draw();
+        timeline_widget.draw();
 
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
