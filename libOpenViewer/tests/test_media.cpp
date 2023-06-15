@@ -22,24 +22,25 @@ int main(int argc, char** argv)
                                                       TEST_DATA_DIR));
 
         lov::ImageSequence image_seq(file_seq);
+        image_seq.debug();
 
-        /* { */
-        /*     SCOPED_TIMER("Hash"); */
+        lov::Image jpg_image(fmt::format("{}/jpg/jpg_20K.jpg", TEST_DATA_DIR));
+        jpg_image.debug();
 
-        /*     const uint32_t hash120 = image_seq.get_hash_at_frame(120); */
-        /*     const uint32_t hash120_2 = image_seq.get_hash_at_frame(120); */
+        lov::Image png_image(fmt::format("{}/png/png_4K.png", TEST_DATA_DIR));
+        png_image.debug();
 
-        /*     /1* spdlog::debug("{}", hash120 == hash120_2); *1/ */
+        lov::Image png_image_rgb_8(fmt::format("{}/png/png_rgb8bits.png", TEST_DATA_DIR));
+        png_image_rgb_8.debug();
 
-        /*     /1* spdlog::debug("Hash 120 : {}", hash120); *1/ */
-        /*     /1* spdlog::debug("Hash2 120 : {}", hash120_2); *1/ */
+        lov::Image png_image_rgb_16(fmt::format("{}/png/png_rgb16bits.png", TEST_DATA_DIR));
+        png_image_rgb_16.debug();
 
-        /*     const uint32_t hash121 = image_seq.get_hash_at_frame(121); */
-            
-        /*     /1* spdlog::debug("{}", hash120 != hash121); *1/ */
+        lov::Image png_image_rgba_8(fmt::format("{}/png/png_rgba8bits.png", TEST_DATA_DIR));
+        png_image_rgba_8.debug();
 
-        /*     /1* spdlog::debug("Hash 121 : {}", hash121); *1/ */
-        /* } */
+        lov::Image png_image_rgba_16(fmt::format("{}/png/png_rgba16bits.png", TEST_DATA_DIR));
+        png_image_rgba_16.debug();
     }
     catch(const std::exception& err)
     {

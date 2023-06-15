@@ -7,9 +7,68 @@
 #include "OpenViewerUtils/hash.h"
 #include "OpenViewerUtils/filesystem.h"
 
-#include "OpenImageIO/imageio.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+#include "OpenEXR/ImfInputFile.h"
+#include "OpenEXR/ImfHeader.h"
+#include "OpenEXR/ImfChannelList.h"
+#include "Imath/ImathBox.h"
 
 LOV_NAMESPACE_BEGIN
+
+int get_image_infos(const char* path,
+                    int* width,
+                    int* height,
+                    int* channels,
+                    Type_* type) noexcept
+{
+    const std::string ext = lovu::fs::get_extension(path);
+
+    if(ext == "exr")
+    {
+        Imf::InputFile in(path);
+
+        const Imath::Box2i data_window = in.header().dataWindow();
+
+        const Imf::ChannelList &exr_channels = in.header().channels();
+
+        if(exr_channels.findChannel("R") && exr_channels.findChannel("G") && exr_channels.findChannel("B"))
+        {
+            *channels = 3;
+        }
+
+        if(exr_channels.findChannel("A"))
+        {
+            *channels += 1;
+        }
+
+        *type = in.header().channels()["R"].type == Imf::HALF ? Type_HALF : Type_FLOAT;
+
+        *width = data_window.max.x - data_window.min.x + 1;
+        *height = data_window.max.y - data_window.min.y + 1;
+    }
+    else
+    {
+        FILE* f = fopen(path, "rb");
+
+        if(!f)
+        {
+            return 0;
+        }
+
+        if(!stbi_info_from_file(f, width, height, channels))
+        {
+            return 0;
+        }
+
+        if(ext == "jpg") *type = Type_U8;
+        else if(ext == "png") *type = stbi_is_16_bit_from_file(f) == 1 ? Type_U16 : Type_U8;
+        else *type = Type_U8;
+    }
+
+    return 1;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Single Image Media
@@ -22,27 +81,18 @@ Image::Image(const std::string path)
     this->m_start = 0;
     this->m_end = 1;
 
-    const auto input = OIIO::ImageInput::open(this->m_path);
+    int width, height, channels;
+    Type_ type;
 
-    if(!input)
-    {
-        throw ImageInputError(fmt::format("[OIIO] : Cannot open input file \"{}\"\n{}", this->m_path, OIIO::geterror()));
-    }
-
-    const OIIO::ImageSpec& spec = input->spec();
-
-    this->set_width(spec.full_width);
-    this->set_height(spec.full_height);
-
-    const uint8_t type = OIIO_TYPEDESC_TO_TYPE(spec.format);
-    this->set_type(type);
+    get_image_infos(this->m_path.c_str(), &width, &height, &channels, &type);
     
-    // const bool has_alpha = spec.alpha_channel > -1;
-    this->set_nchannels(spec.nchannels > 4 ? 4 : spec.nchannels < 3 ? 3 : spec.nchannels);
-
-    input->close();
+    this->set_width(width);
+    this->set_height(height);
+    this->set_nchannels(channels);
+    this->set_type(type);
 
     const std::string ext = lovu::fs::get_extension(this->m_path);
+
 
     this->set_image_input_func(input_funcs[ext]);
 }
@@ -107,30 +157,15 @@ ImageSequence::ImageSequence(const std::string path)
     
     const std::string path_at_first_frame = this->make_path_at_frame(this->m_start);
 
-    const auto input = OIIO::ImageInput::open(path_at_first_frame);
+    int width, height, channels;
+    Type_ type;
 
-    if(!input)
-    {
-        throw ImageInputError(fmt::format("[OIIO] : Cannot open input file \"{}\"\n{}", path_at_first_frame, OIIO::geterror()));
-    }
-
-    const OIIO::ImageSpec& spec = input->spec();
-
-    this->set_width(spec.full_width);
-    this->set_height(spec.full_height);
-
-    const uint8_t type = OIIO_TYPEDESC_TO_TYPE(spec.format);
+    get_image_infos(path_at_first_frame.c_str(), &width, &height, &channels, &type);
+    
+    this->set_width(width);
+    this->set_height(height);
+    this->set_nchannels(channels);
     this->set_type(type);
-
-    const bool has_alpha = spec.alpha_channel > -1;
-
-    uint8_t n_channels = spec.nchannels < 3 ? spec.nchannels : 
-                         spec.nchannels == 3 ? 3 :
-                         spec.nchannels > 3 && has_alpha ? 4 : 3;
-
-    this->set_nchannels(n_channels);
-
-    input->close();
 
     this->m_is_cached.resize(this->get_length());
 

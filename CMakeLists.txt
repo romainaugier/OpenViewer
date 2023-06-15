@@ -90,6 +90,9 @@ endif()
 
 file(MAKE_DIRECTORY ${OUTPUT_BIN_DIR})
 
+# STB
+include_directories(stb/include)
+
 # Library OpenViewerUtils
 include_directories(libOpenViewerUtils/include)
 add_subdirectory(libOpenViewerUtils)
