@@ -11,6 +11,7 @@ boost/1.78.0
 onetbb/2021.9.0
 openexr/3.1.7
 pybind11/2.10.4
+libjpeg-turbo/2.1.5
 
 [generators]
 cmake
@@ -25,6 +26,7 @@ openimageio:with_ffmpeg=False
 boost:shared=True
 openjpeg:shared=True
 openexr:shared=True
+libtiff:jpeg=libjpeg-turbo
 
 [imports]
 bin, *.dll -> ./bin
