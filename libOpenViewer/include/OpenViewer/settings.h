@@ -34,6 +34,8 @@ public:
     // user home documents folder
     void load() noexcept;
     
+    json data() noexcept { return this->m_data; }
+    
     // Getter by return type
     template <class T>
     struct item_return { using type = T; };

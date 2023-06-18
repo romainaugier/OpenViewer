@@ -79,8 +79,18 @@ else()
 	add_definitions(-DTEST_DATA_DIR="")
 endif()
 
+# Python
+find_package(Python 3.11 COMPONENTS Interpreter Development REQUIRED)
+
+include_directories(${Python_INCLUDE_DIRS})
+
 include(${CMAKE_SOURCE_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
+
+# Pybind
+# include("${CONAN_PYBIND11_ROOT}/lib/cmake/pybind11/pybind11Tools.cmake")
+# include("${CONAN_PYBIND11_ROOT}/lib/cmake/pybind11/pybind11NewTools.cmake")
+include("${CONAN_PYBIND11_ROOT}/lib/cmake/pybind11/pybind11Common.cmake")
 
 set(OUTPUT_BIN_DIR "${CMAKE_SOURCE_DIR}/bin")
 
