@@ -88,9 +88,7 @@ include(${CMAKE_SOURCE_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
 # Pybind
-# include("${CONAN_PYBIND11_ROOT}/lib/cmake/pybind11/pybind11Tools.cmake")
-# include("${CONAN_PYBIND11_ROOT}/lib/cmake/pybind11/pybind11NewTools.cmake")
-include("${CONAN_PYBIND11_ROOT}/lib/cmake/pybind11/pybind11Common.cmake")
+add_subdirectory(extern/pybind11)
 
 set(OUTPUT_BIN_DIR "${CMAKE_SOURCE_DIR}/bin")
 

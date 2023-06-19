@@ -21,5 +21,14 @@ add_custom_command(
     $<TARGET_FILE:${OPENVIEWER_LIBS}> ${OUTPUT_BIN_DIR}
 )
 
+set(PYOPENVIEWER_MODULE PyOpenViewer)
 
-pybind11_add_module(Py${OPENVIEWER_LIBS} python.cpp)
+pybind11_add_module(${PYOPENVIEWER_MODULE} python.cpp)
+target_link_libraries(${PYOPENVIEWER_MODULE} PUBLIC ${OPENVIEWER_LIBS})
+
+add_custom_command(
+    TARGET ${PYOPENVIEWER_MODULE}
+    POST_BUILD 
+    COMMAND ${CMAKE_COMMAND} -E copy
+    $<TARGET_FILE:${PYOPENVIEWER_MODULE}> ${OUTPUT_BIN_DIR}
+)

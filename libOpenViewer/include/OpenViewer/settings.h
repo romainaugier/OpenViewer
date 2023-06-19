@@ -8,12 +8,12 @@
 
 #include "nlohmann/json.hpp"
 
+using json = nlohmann::json;
+
 LOV_NAMESPACE_BEGIN
 
 // To store settings, we use a simple singleton to ease access to settings at various 
 // places of the program
-
-using json = nlohmann::json;
 
 #define SETTINGS_FILE_PATH "OpenViewer/settings.json"
 
@@ -33,8 +33,6 @@ public:
     // Load the settings from the OpenViewer settings file that is located in the 
     // user home documents folder
     void load() noexcept;
-    
-    json data() noexcept { return this->m_data; }
     
     // Getter by return type
     template <class T>

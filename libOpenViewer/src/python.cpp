@@ -9,8 +9,6 @@
 
 namespace py = pybind11;
 
-LOV_NAMESPACE_BEGIN
-
 // Convert json to pyobject and vice versa
 // https://github.com/pybind/pybind11/issues/1627
 
@@ -58,6 +56,8 @@ py::object from_json(const json& j)
         }
         return obj;
     }
+
+    return py::none();
 }
 
 json to_json(py::handle obj)
@@ -100,20 +100,33 @@ json to_json(py::handle obj)
         }
         return out;
     }
-    throw std::runtime_error("to_json not implemented for this type of object: " + obj.cast<std::string>());
+
+    return nullptr;
 }
 
 
-PYBIND11_MODULE(openviewer, m)
+// For classes with a private destructor
+// See : https://github.com/pybind/pybind11/issues/114
+template < typename T>
+struct BlankDeleter
+{
+    void operator()(T * inst) const {}
+};
+
+
+PYBIND11_MODULE(PyOpenViewer, m)
 {
     m.doc() = "OpenViewer Python Module";
 
-    py::class_<Settings>(m, "Settings")
-        .def(py::init(&Settings::get_instance))
-        .def("save", &Settings::save)
-        .def("load", &Settings::load)
-        .def("__getitem__", [](Settings &self, const std::string& key) { return from_json(self.data()[key]); })
-        .def("__setitem__", [](Settings &self, const std::string& key, py::handle value) {self.data()[key] = to_json(value); });
-}
+    m.def("log_debug", [](const std::string& message) { spdlog::debug(message); });
+    m.def("log_info", [](const std::string& message) { spdlog::info(message); });
+    m.def("log_warning", [](const std::string& message) { spdlog::warn(message); });
+    m.def("log_error", [](const std::string& message) { spdlog::error(message); });
 
-LOV_NAMESPACE_END
+    py::class_<lov::Settings, std::unique_ptr<lov::Settings, BlankDeleter<lov::Settings>>>(m, "Settings")
+        .def_static("get_instance", &lov::Settings::get_instance, pybind11::return_value_policy::reference)
+        .def("save", &lov::Settings::save)
+        .def("load", &lov::Settings::load)
+        .def("__getitem__", [](lov::Settings* self, const std::string& key) { return from_json(self->operator[](key)); })
+        .def("__setitem__", [](lov::Settings* self, const std::string& key, py::handle value) { self->operator[](key) = to_json(value); });
+}
