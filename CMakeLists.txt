@@ -89,6 +89,7 @@ conan_basic_setup()
 
 # Pybind
 add_subdirectory(extern/pybind11)
+add_subdirectory(extern/pybind11_json)
 
 set(OUTPUT_BIN_DIR "${CMAKE_SOURCE_DIR}/bin")
 
