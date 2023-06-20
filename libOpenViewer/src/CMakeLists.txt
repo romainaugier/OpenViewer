@@ -24,7 +24,7 @@ add_custom_command(
 set(PYOPENVIEWER_MODULE PyOpenViewer)
 
 pybind11_add_module(${PYOPENVIEWER_MODULE} python.cpp)
-target_link_libraries(${PYOPENVIEWER_MODULE} PUBLIC ${OPENVIEWER_LIBS})
+target_link_libraries(${PYOPENVIEWER_MODULE} PUBLIC ${OPENVIEWER_LIBS} nlohmann_json::nlohmann_json)
 
 add_custom_command(
     TARGET ${PYOPENVIEWER_MODULE}

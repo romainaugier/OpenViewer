@@ -43,7 +43,7 @@ public:
 
     // [] operator
     auto operator [] (const std::string& key) const noexcept { return this->m_data[key]; }
-    auto operator [] (const std::string& key) noexcept { return this->m_data[key]; }
+    auto& operator [] (const std::string& key) noexcept { return this->m_data[key]; }
 
 private:
     Settings() { this->load(); }  

@@ -16,6 +16,7 @@ int main(int argc, char** argv)
         lov::settings.load();
 
         lov::settings["autodetect_sequences"] = true;
+        lov::settings["new_setting"] = "test";
 
         const std::string openexr_setting_name = "openexr_thread_count";
 

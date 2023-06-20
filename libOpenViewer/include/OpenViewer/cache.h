@@ -24,7 +24,6 @@ LOV_NAMESPACE_BEGIN
 // and allocate the necessary memory for this "big" image.
 
 // Holds information about the image it is caching. 
-// Used internally by the image cache
 struct LOV_API cache_item
 {
     Media* m_media;

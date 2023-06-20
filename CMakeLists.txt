@@ -87,9 +87,16 @@ include_directories(${Python_INCLUDE_DIRS})
 include(${CMAKE_SOURCE_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
+# NLohmann Json
+add_subdirectory(extern/nlohmann_json)
+include_directories(extern/nlohmann_json/include)
+
 # Pybind
 add_subdirectory(extern/pybind11)
+
+# Pybind Json
 add_subdirectory(extern/pybind11_json)
+include_directories(extern/pybind11_json/include)
 
 set(OUTPUT_BIN_DIR "${CMAKE_SOURCE_DIR}/bin")
 

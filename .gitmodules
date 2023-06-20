@@ -5,3 +5,6 @@
 [submodule "pybind11_json"]
     path = extern/pybind11_json
     url = git://github.com/pybind/pybind11_json.git
+[submodule "extern/nlohmann_json"]
+	path = extern/nlohmann_json
+	url = https://github.com/nlohmann/json

@@ -53,20 +53,6 @@ static inline std::string type_to_string(const Type_ type) noexcept
     else return "Unknown";
 }
 
-// Helper macro to convert the OIIO:TypeDesc to our internal type description and vice-versa, same for ocio
-#define OIIO_TYPEDESC_TO_TYPE(t) t == OIIO::TypeDesc::FLOAT ? Type_FLOAT : \
-                                 t == OIIO::TypeDesc::HALF ? Type_HALF :   \
-                                 t == OIIO::TypeDesc::UINT8 ? Type_U8 :    \
-                                 t == OIIO::TypeDesc::UINT16 ? Type_U16 :  \
-                                 t == OIIO::TypeDesc::UINT32 ? Type_U32 : 0
-
-#define TYPE_TO_OIIO_TYPEDESC(t) t & Type_FLOAT ? OIIO::TypeDesc::FLOAT : \
-                                 t & Type_HALF ? OIIO::TypeDesc::HALF :   \
-                                 t & Type_U8 ? OIIO::TypeDesc::UINT8 :    \
-                                 t & Type_U16 ? OIIO::TypeDesc::UINT16 :  \
-                                 t & Type_U32 ? OIIO::TypeDesc::UINT32 :  \
-                                 OIIO::TypeDesc::UNKNOWN
-
 #define TYPE_TO_OCIO_BIT_DEPTH(type) type & Type_FLOAT ? OCIO::BIT_DEPTH_F32 :  \
                                      type & Type_HALF ? OCIO::BIT_DEPTH_F16 :   \
                                      type & Type_U32 ? OCIO::BIT_DEPTH_UINT32 : \
@@ -167,9 +153,6 @@ public:
 
     // Returns the image type
     LOV_FORCEINLINE uint8_t get_type() const noexcept { return this->m_type; }
-
-    // Returns the image OIIO Typedesc 
-    LOV_FORCEINLINE OIIO::TypeDesc get_oiio_typedesc() const noexcept { return TYPE_TO_OIIO_TYPEDESC(this->m_type); }
 
     // Returns the bit OCIO bit depth
     LOV_FORCEINLINE OCIO::BitDepth get_ocio_bitdepth() const noexcept { return TYPE_TO_OCIO_BIT_DEPTH(this->m_type); }
