@@ -73,16 +73,14 @@ int main(int argc, char** argv)
 
         for(uint32_t i = img_seq->get_start_frame(); i < img_seq->get_end_frame(); i++)
         {
-            void* cache_address = cache.add(img_seq, i);
-            img_seq->load_frame_to_cache(cache_address, i);
+            cache.add(img_seq, i);
         }
         
         for(uint32_t i = img_seq->get_start_frame(); i < img_seq->get_end_frame(); i++)
         {
             if(!img_seq->is_cached_at_frame(i))
             {
-                void* cache_address = cache.add(img_seq, i);
-                img_seq->load_frame_to_cache(cache_address, i);
+                cache.add(img_seq, i);
             }
 
             const uint8_t img_fmt = FORMAT_FROM_NCHANNELS(img_seq->get_nchannels());

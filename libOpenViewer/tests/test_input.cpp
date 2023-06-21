@@ -37,8 +37,7 @@ int main(int argc, char** argv)
 
             for(uint8_t i = 100; i < 220; i++)
             {
-                void* cache_address = cache.add(img_seq, i);
-                img_seq->load_frame_to_cache(cache_address, i);
+                cache.add(img_seq, i);
 
                 const uint32_t hash = img_seq->get_hash_at_frame(i);
                 const lov::cache_item* cache_item = cache.get_cache_item(hash);

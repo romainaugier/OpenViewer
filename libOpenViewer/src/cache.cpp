@@ -141,6 +141,8 @@ void* Cache::add(Media* media, const uint32_t frame) noexcept
         const uint32_t hash = media->get_hash_at_frame(frame);
         this->m_hash_to_items[hash] = this->m_current_index;
 
+        media->load_frame_to_cache(new_img_address, frame);
+
         spdlog::debug("[CACHE] : Loaded image \"{} - {}\" at index {}", 
                                   media->get_path_view(),
                                   frame,
@@ -206,6 +208,7 @@ void* Cache::add(Media* media, const uint32_t frame) noexcept
 
                 const uint32_t hash = media->get_hash_at_frame(frame);
                 this->m_hash_to_items[hash] = traversing_index;
+                media->load_frame_to_cache(address, frame);
 
                 // Update cache infos
                 this->m_bytes_size += item_img_byte_size;
@@ -241,6 +244,8 @@ void* Cache::add(Media* media, const uint32_t frame) noexcept
                     
                     const uint32_t hash = media->get_hash_at_frame(frame);
                     this->m_hash_to_items[hash] = clean_index;
+
+                    media->load_frame_to_cache(clean_address, frame);
 
                     this->m_current_traversing_index = clean_index;
                     this->m_current_index = traversing_index + 1;

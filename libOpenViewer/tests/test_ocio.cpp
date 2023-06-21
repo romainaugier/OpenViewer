@@ -57,7 +57,6 @@ int main(int argc, char** argv)
                 for(size_t i = r.begin(), i_end = r.end(); i < i_end; i++)
                 {
                     void* cache_address = cache.add(img_seq, i);
-                    img_seq->load_frame_to_cache(cache_address, i);
 
                     ocio.process_cpu(cache_address, 
                                     img_seq->get_width(), 
@@ -67,9 +66,9 @@ int main(int argc, char** argv)
 
 
                     OIIO::ImageSpec specs(img_seq->get_width(), 
-                                        img_seq->get_height(), 
-                                        img_seq->get_nchannels(),
-                                        img_seq->get_oiio_typedesc());
+                                          img_seq->get_height(), 
+                                          img_seq->get_nchannels(),
+                                          nullptr);
 
                     OIIO::ImageBuf buffer(specs, cache_address);
 
