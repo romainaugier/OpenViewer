@@ -20,7 +20,7 @@ You'll need to first build the recipes for OpenColorIO and OpenImageIO (OpenImag
 ```bash
 source conan_env/bin/activate
 cd conan/recipes/opencolorio
-conan create . opencolorio/2.1.0@openviewer/1.0
+conan create . opencolorio/2.1.0@openviewer/1.0 --build missing
 ```
 
 ```bash
