@@ -16,7 +16,7 @@ void Display::run_shaders() const noexcept
 
 }
 
-void Display::set_data(void* data_ptr,
+void Display::set_data(const void* __restrict data_ptr,
                        const uint32_t data_width,
                        const uint32_t data_height,
                        const uint8_t data_type) noexcept
@@ -25,7 +25,7 @@ void Display::set_data(void* data_ptr,
                              this->m_height != data_height ? true :
                              this->m_data_type != data_type ? true : false;
 
-    this->m_data = data_ptr;
+    this->m_data = (void*)data_ptr;
     this->m_width = data_width;
     this->m_height = data_height;
     this->m_data_type = data_type;

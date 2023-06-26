@@ -5,6 +5,7 @@
 #include "OpenViewer/settings.h"
 #include "OpenViewer/media_pool.h"
 #include "OpenViewer/cache.h"
+#include "OpenViewer/display.h"
 
 #include "pybind11/pybind11.h"
 #include "pybind11/detail/common.h"
@@ -18,6 +19,44 @@ template < typename T>
 struct BlankDeleter
 {
     void operator()(T * inst) const {}
+};
+
+
+// Class with pure virtual functions
+class PyMedia : public lov::Media
+{
+public:
+    using lov::Media::Media;
+
+    std::string make_path_at_frame(const uint32_t frame) const noexcept 
+    {
+        PYBIND11_OVERRIDE_PURE(std::string, lov::Media, make_path_at_frame, frame);
+    }
+
+    uint32_t get_hash_at_frame(const uint32_t frame) const noexcept 
+    {
+        PYBIND11_OVERRIDE_PURE(uint32_t, lov::Media, get_hash_at_frame, frame);
+    }
+
+    void load_frame_to_memory(void* cache_address, const uint32_t frame) const noexcept 
+    {
+        PYBIND11_OVERRIDE_PURE(void, lov::Media, load_frame_to_memory, cache_address, frame);
+    }
+
+    bool is_cached_at_frame(const uint32_t frame) const noexcept 
+    {
+        PYBIND11_OVERRIDE_PURE(bool, lov::Media, is_cached_at_frame, frame);
+    }
+
+    void set_cached_at_frame(const uint32_t frame, const bool cached = true) noexcept 
+    {
+        PYBIND11_OVERRIDE_PURE(void, lov::Media, set_cached_at_frame, frame, cached);
+    }
+
+    void debug() const noexcept 
+    {
+        PYBIND11_OVERRIDE_PURE(void, lov::Media, debug);
+    }
 };
 
 
@@ -38,7 +77,7 @@ PYBIND11_MODULE(PyOpenViewer, m)
         .def("__getitem__", [](lov::Settings* self, const std::string& key) { return self->operator[](key); })
         .def("__setitem__", [](lov::Settings* self, const std::string& key, py::handle value) { self->operator[](key) = value; });
 
-    py::class_<lov::Media>(m, "Media")
+    py::class_<lov::Media, PyMedia>(m, "Media")
         .def(py::init<>())
         .def_property("width", &lov::Media::get_width, &lov::Media::set_width)
         .def_property("height", &lov::Media::get_height, &lov::Media::set_height)
@@ -48,19 +87,15 @@ PYBIND11_MODULE(PyOpenViewer, m)
         .def_property_readonly("length", &lov::Media::get_length)
         .def_property_readonly("start_frame", &lov::Media::get_start_frame)
         .def_property_readonly("end_frame", &lov::Media::get_end_frame)
-        .def("has_layers", &lov::Media::has_layers);
+        .def("has_layers", &lov::Media::has_layers)
+        .def("make_path_at_frame", &lov::Media::make_path_at_frame)
+        .def("is_cached_at_frame", &lov::Media::is_cached_at_frame);
 
-    py::class_<lov::Image, lov::Media>(m, "Image")
-        .def(py::init<const std::string>())
-        .def("make_path_at_frame", &lov::Image::make_path_at_frame)
-        .def("is_cached_at_frame", &lov::Image::is_cached_at_frame)
-        .def("get_hash_at_frame", &lov::Image::get_hash_at_frame)
-        .def("load_frame_to_cache", &lov::Image::load_frame_to_cache);
+    py::class_<lov::Media, lov::Image>(m, "Image")
+        .def(py::init<const std::string>());
 
-    py::class_<lov::ImageSequence, lov::Media>(m, "ImageSequence")
-        .def(py::init<const std::string>())
-        .def("make_path_at_frame", &lov::ImageSequence::make_path_at_frame)
-        .def("is_cached_at_frame", &lov::ImageSequence::is_cached_at_frame);
+    py::class_<lov::Media, lov::ImageSequence>(m, "ImageSequence")
+        .def(py::init<const std::string>());
 
     py::class_<lov::MediaPool>(m, "MediaPool")
         .def(py::init<>())
@@ -76,5 +111,12 @@ PYBIND11_MODULE(PyOpenViewer, m)
     py::class_<lov::Cache>(m, "Cache")
         .def(py::init<>())
         .def("add", &lov::Cache::add)
-        .def("resize", &lov::Cache::resize);
+        .def("resize", &lov::Cache::resize)
+        .def("get_data_ptr", &lov::Cache::get_data_ptr)
+        .def("flush", &lov::Cache::flush);
+
+    py::class_<lov::Display>(m, "Display")
+        .def(py::init<>())
+        .def("set_data", &lov::Display::set_data)
+        .def("get_gl_texture", &lov::Display::get_gl_texture);
 }

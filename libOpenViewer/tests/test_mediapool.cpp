@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 
         media_pool.add_media(fmt::format("{}/exr/sequence/compo_0500.0100.exr", TEST_DATA_DIR));
         media_pool.add_media(fmt::format("{}/exr/exr_multilayers.exr", TEST_DATA_DIR));
-        media_pool.add_media(fmt::format("{}/multisequence/png_4K.png", TEST_DATA_DIR));
+        media_pool.add_media(fmt::format("{}/png/png_4K.png", TEST_DATA_DIR));
         media_pool.add_media(fmt::format("{}/cc_skull_test_image/CCSkull_Linear709.exr", TEST_DATA_DIR));
 
         media_pool.debug_media();

@@ -85,15 +85,15 @@ int main(int argc, char** argv)
 
             const uint8_t img_fmt = FORMAT_FROM_NCHANNELS(img_seq->get_nchannels());
 
-            lov::cache_item* cache_item = cache.get_cache_item(img_seq->get_hash_at_frame(i));
+            const void* img_data_ptr = cache.get_data_ptr(img_seq->get_hash_at_frame(i));
 
-            if(cache_item == nullptr)
+            if(img_data_ptr == nullptr)
             {
                 spdlog::debug("Image not in cache at frame {}", i);
                 continue;
             }
 
-            display.set_data(cache_item->m_data_ptr,
+            display.set_data(img_data_ptr,
                              img_seq->get_width(),
                              img_seq->get_height(),
                              (uint8_t)TYPE_AND_FMT_TO_DISPLAY_DATA_TYPE(img_seq->get_type(),

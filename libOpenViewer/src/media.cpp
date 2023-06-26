@@ -112,7 +112,7 @@ uint32_t Image::get_hash_at_frame(const uint32_t frame) const noexcept
     return lovu::hash_string(this->m_path.c_str());
 }
 
-void Image::load_frame_to_cache(void* cache_address, const uint32_t frame) const noexcept
+void Image::load_frame_to_memory(void* cache_address, const uint32_t frame) const noexcept
 {
     assert(this->m_input_func != nullptr);
 
@@ -199,7 +199,7 @@ uint32_t ImageSequence::get_hash_at_frame(const uint32_t frame) const noexcept
     return lovu::hash_string(path_at_frame.c_str());
 }
 
-void ImageSequence::load_frame_to_cache(void* cache_address, const uint32_t frame) const noexcept
+void ImageSequence::load_frame_to_memory(void* cache_address, const uint32_t frame) const noexcept
 {
     const std::string path_at_frame = this->make_path_at_frame(frame);
 
@@ -284,7 +284,7 @@ uint32_t Video::get_hash_at_frame(const uint32_t frame) const noexcept
     return EMPTY_HASH;
 }
 
-void Video::load_frame_to_cache(void* cache_address, const uint32_t frame) const noexcept
+void Video::load_frame_to_memory(void* cache_address, const uint32_t frame) const noexcept
 {
 
 }

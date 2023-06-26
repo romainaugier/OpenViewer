@@ -15,7 +15,8 @@ enum DisplayShaderType
     DisplayShaderType_Cuda   = LOVU_BIT(3),
     DisplayShaderType_Metal  = LOVU_BIT(4),
     DisplayShaderType_Vulcan = LOVU_BIT(5),
-    DisplayShaderType_OSL    = LOVU_BIT(6)
+    DisplayShaderType_OSL    = LOVU_BIT(6),
+    DisplayShaderType_Python = LOVU_BIT(7)
 };
 
 // The shader function should accept two arguments : 
@@ -24,6 +25,7 @@ enum DisplayShaderType
 //    - OpenCL : Pointer to the OpenGL texture  
 //    - C      : Pointer to the data
 //    - Others are not implemented yet
+// - a void pointer to the parameters, which will be a struct in most cases
 
 using display_shader_func = void(*)(void*, void*);
 
@@ -53,26 +55,37 @@ enum DisplayDataType
     DisplayDataType_RGBAUInteger  = 9
 };
 
-#define DISPLAY_DATA_TYPE_TO_GL_INTERNAL_FMT(data_type)              \
-        data_type == DisplayDataType_RGBHalfFloat ? GL_RGB16F :      \
-        data_type == DisplayDataType_RGBAHalfFloat ? GL_RGBA16F :    \
-        data_type == DisplayDataType_RGBFloat ? GL_RGB32F :          \
-        data_type == DisplayDataType_RGBAFloat ? GL_RGBA32F :        \
-        data_type == DisplayDataType_RGBUByte ? GL_RGB8UI :          \
-        data_type == DisplayDataType_RGBAUByte ? GL_RGBA8UI :        \
-        data_type == DisplayDataType_RGBUShort ? GL_RGB16UI :        \
-        data_type == DisplayDataType_RGBAUShort ? GL_RGBA16UI :      \
-        data_type == DisplayDataType_RGBUInteger ? GL_RGB32UI :      \
-        data_type == DisplayDataType_RGBAUInteger ? GL_RGBA32UI : 10 \
+static constexpr int const _display_data_type_to_gl_internal_fmt_lut[10] = {
+    GL_RGB16F,
+    GL_RGBA16F,
+    GL_RGB32F,
+    GL_RGBA32F,
+    GL_RGB8UI,
+    GL_RGBA8UI,
+    GL_RGB16UI,
+    GL_RGBA16UI,
+    GL_RGB32UI,
+    GL_RGBA32UI
+};
+
+#define DISPLAY_DATA_TYPE_TO_GL_INTERNAL_FMT(data_type) _display_data_type_to_gl_internal_fmt_lut[(uint8_t)data_type]              
 
 #define DISPLAY_DATA_TYPE_TO_GL_FMT(data_type) data_type % 2 == 0 ? GL_RGB : GL_RGBA
 
-#define DISPLAY_DATA_TYPE_TO_GL_TYPE(data_type)                             \
-        data_type >= 0 && data_type < 2 ? GL_HALF_FLOAT :                   \
-        data_type >= 2 && data_type < 4 ? GL_FLOAT :                        \
-        data_type >= 4 && data_type < 6 ? GL_UNSIGNED_BYTE :                \
-        data_type >= 6 && data_type < 8 ? GL_UNSIGNED_SHORT :               \
-        data_type >= 8 && data_type < 10 ? GL_UNSIGNED_INT : GL_HALF_FLOAT  \
+static constexpr int const _display_data_type_to_gl_type_lut[10] = {
+    GL_HALF_FLOAT,
+    GL_HALF_FLOAT,
+    GL_FLOAT,
+    GL_FLOAT,
+    GL_UNSIGNED_BYTE,
+    GL_UNSIGNED_BYTE,
+    GL_UNSIGNED_SHORT,
+    GL_UNSIGNED_SHORT,
+    GL_UNSIGNED_INT,
+    GL_UNSIGNED_INT
+};
+
+#define DISPLAY_DATA_TYPE_TO_GL_TYPE(data_type) _display_data_type_to_gl_type_lut[(uint8_t)data_type]
 
 class LOV_API Display
 {
@@ -85,12 +98,18 @@ public:
 
     void run_shaders() const noexcept;
 
-    void set_data(void* data_ptr,
+    void set_data(const void* __restrict data_ptr,
                   const uint32_t data_width,
                   const uint32_t data_height,
                   const uint8_t data_type) noexcept;
 
     LOV_FORCEINLINE bool has_flag(const DisplayFlag flag) const noexcept { return LOVU_HAS_FLAG(this->m_flags, flag); }
+
+    LOV_FORCEINLINE void set_flag(const DisplayFlag flag) noexcept { LOVU_SET_FLAG(this->m_flags, flag); }
+
+    LOV_FORCEINLINE void unset_flag(const DisplayFlag flag) noexcept { LOVU_UNSET_FLAG(this->m_flags, flag); }
+
+    LOV_FORCEINLINE GLuint get_gl_texture() const noexcept { return this->m_gl_texture; }
 
 private:
     std::vector<DisplayShader> m_shaders;

@@ -109,152 +109,152 @@ void LOV_API ocio_convert(std::string& filename,
                           const std::string& ocio_view,
                           const bool autodetect_sequence) noexcept
 {
-    spdlog::debug("Starting OCIO Convert command");
+//     spdlog::debug("Starting OCIO Convert command");
     
-    Ocio ocio;
+//     Ocio ocio;
     
-    ocio.set_role_from_str(ocio_role.c_str());
-    ocio.set_display_from_str(ocio_display.c_str());
-    ocio.set_view_from_str(ocio_view.c_str());
+//     ocio.set_role_from_str(ocio_role.c_str());
+//     ocio.set_display_from_str(ocio_display.c_str());
+//     ocio.set_view_from_str(ocio_view.c_str());
 
-    ocio.update_processor();
+//     ocio.update_processor();
 
-    MediaPool media_pool;
+//     MediaPool media_pool;
 
-    media_pool.add_media(filename);
+//     media_pool.add_media(filename);
 
-    Media* media = media_pool.get_media(0);
-    media->debug();
+//     Media* media = media_pool.get_media(0);
+//     media->debug();
     
-    ocio.update_cpu_processor(media->get_ocio_bitdepth());
+//     ocio.update_cpu_processor(media->get_ocio_bitdepth());
 
-    Cache cache;
-    cache.resize(media->get_media_byte_size());
+//     Cache cache;
+//     cache.resize(media->get_media_byte_size());
 
-    const bool multithread = true;
+//     const bool multithread = true;
 
-    if(multithread)
-    {
-        static tbb::affinity_partitioner partitioner;
+//     if(multithread)
+//     {
+//         static tbb::affinity_partitioner partitioner;
 
-        tbb::parallel_for(tbb::blocked_range<size_t>(media->get_start_frame(), (media->get_end_frame() + 1)), [&](const tbb::blocked_range<size_t>& r)
-        {
-            for(size_t i = r.begin(), i_end = r.end(); i < i_end; i++)
-            {
-                try
-                {
-                    const std::string origin_path = media->make_path_at_frame(i);
+//         tbb::parallel_for(tbb::blocked_range<size_t>(media->get_start_frame(), (media->get_end_frame() + 1)), [&](const tbb::blocked_range<size_t>& r)
+//         {
+//             for(size_t i = r.begin(), i_end = r.end(); i < i_end; i++)
+//             {
+//                 try
+//                 {
+//                     const std::string origin_path = media->make_path_at_frame(i);
 
-                    if(!lovu::fs::exists(origin_path))
-                    {
-                        continue;
-                    }
+//                     if(!lovu::fs::exists(origin_path))
+//                     {
+//                         continue;
+//                     }
 
-                    if(!lovu::str::ends_with(origin_path, ".exr"))
-                    {
-                        spdlog::warn("File \"{}\" is not an OpenEXR file, discarding it", origin_path);
-                        continue;
-                    }
+//                     if(!lovu::str::ends_with(origin_path, ".exr"))
+//                     {
+//                         spdlog::warn("File \"{}\" is not an OpenEXR file, discarding it", origin_path);
+//                         continue;
+//                     }
 
-                    void* cache_address = cache.add(media, i);
+//                     void* cache_address = cache.add(media, i);
 
-                    media->load_frame_to_cache(cache_address, i);
+//                     media->load_frame_to_memory(cache_address, i);
 
-                    ocio.process_cpu(cache_address, 
-                                    media->get_width(), 
-                                    media->get_height(), 
-                                    media->get_nchannels(), 
-                                    media->get_type());
+//                     ocio.process_cpu(cache_address, 
+//                                     media->get_width(), 
+//                                     media->get_height(), 
+//                                     media->get_nchannels(), 
+//                                     media->get_type());
 
-                    OIIO::ImageSpec specs(media->get_width(), 
-                                        media->get_height(), 
-                                        media->get_nchannels(),
-                                        media->get_oiio_typedesc());
+//                     OIIO::ImageSpec specs(media->get_width(), 
+//                                         media->get_height(), 
+//                                         media->get_nchannels(),
+//                                         media->get_oiio_typedesc());
 
-                    OIIO::ImageBuf buffer(specs, cache_address);
+//                     OIIO::ImageBuf buffer(specs, cache_address);
 
-                    std::string file_name = std::filesystem::path(origin_path).filename().string();
+//                     std::string file_name = std::filesystem::path(origin_path).filename().string();
 
-                    lovu::str::re_replace(file_name, std::regex("\\.exr"), ".png");
+//                     lovu::str::re_replace(file_name, std::regex("\\.exr"), ".png");
 
-                    const std::string output_path = fmt::format("{}/aces_convert/{}", lovu::fs::get_parent_dir(origin_path), file_name);
+//                     const std::string output_path = fmt::format("{}/aces_convert/{}", lovu::fs::get_parent_dir(origin_path), file_name);
 
-                    if(!lovu::fs::exists(output_path))
-                    {
-                        lovu::fs::makedirs(output_path);
-                    }
+//                     if(!lovu::fs::exists(output_path))
+//                     {
+//                         lovu::fs::makedirs(output_path);
+//                     }
 
-                    if(!buffer.write(output_path))
-                    {
-                        spdlog::error("OIIO Error during file write : {}", buffer.geterror());
-                    }
-                }
-                catch(const std::exception& e)
-                {
-                    spdlog::error("Exception catched : {}", e.what());
-                }
-            }
-        }, partitioner);
-    }
-    else
-    {
-        for(size_t i = media->get_start_frame(); i < (media->get_end_frame() + 1); i++)
-        {
-            try
-            {
-                const std::string origin_path = media->make_path_at_frame(i);
+//                     if(!buffer.write(output_path))
+//                     {
+//                         spdlog::error("OIIO Error during file write : {}", buffer.geterror());
+//                     }
+//                 }
+//                 catch(const std::exception& e)
+//                 {
+//                     spdlog::error("Exception catched : {}", e.what());
+//                 }
+//             }
+//         }, partitioner);
+//     }
+//     else
+//     {
+//         for(size_t i = media->get_start_frame(); i < (media->get_end_frame() + 1); i++)
+//         {
+//             try
+//             {
+//                 const std::string origin_path = media->make_path_at_frame(i);
 
-                if(!lovu::fs::exists(origin_path))
-                {
-                    continue;
-                }
+//                 if(!lovu::fs::exists(origin_path))
+//                 {
+//                     continue;
+//                 }
 
-                if(!lovu::str::ends_with(origin_path, ".exr"))
-                {
-                    spdlog::warn("File \"{}\" is not an OpenEXR file, discarding it", origin_path);
-                    continue;
-                }
+//                 if(!lovu::str::ends_with(origin_path, ".exr"))
+//                 {
+//                     spdlog::warn("File \"{}\" is not an OpenEXR file, discarding it", origin_path);
+//                     continue;
+//                 }
 
-                void* cache_address = cache.add(media, i);
-                media->load_frame_to_cache(cache_address, i);
+//                 void* cache_address = cache.add(media, i);
+//                 media->load_frame_to_memory(cache_address, i);
 
-                ocio.process_cpu(cache_address, 
-                                 media->get_width(), 
-                                 media->get_height(), 
-                                 media->get_nchannels(), 
-                                 media->get_type());
+//                 ocio.process_cpu(cache_address, 
+//                                  media->get_width(), 
+//                                  media->get_height(), 
+//                                  media->get_nchannels(), 
+//                                  media->get_type());
 
-                OIIO::ImageSpec specs(media->get_width(), 
-                                      media->get_height(), 
-                                      media->get_nchannels(),
-                                      media->get_oiio_typedesc());
+//                 OIIO::ImageSpec specs(media->get_width(), 
+//                                       media->get_height(), 
+//                                       media->get_nchannels(),
+//                                       media->get_oiio_typedesc());
 
-                OIIO::ImageBuf buffer(specs, cache_address);
+//                 OIIO::ImageBuf buffer(specs, cache_address);
 
-                std::string file_name = std::filesystem::path(origin_path).filename().string();
+//                 std::string file_name = std::filesystem::path(origin_path).filename().string();
 
-                lovu::str::re_replace(file_name, std::regex("\\.exr"), ".png");
+//                 lovu::str::re_replace(file_name, std::regex("\\.exr"), ".png");
 
-                const std::string output_path = fmt::format("{}/aces_convert/{}", lovu::fs::get_parent_dir(origin_path), file_name);
+//                 const std::string output_path = fmt::format("{}/aces_convert/{}", lovu::fs::get_parent_dir(origin_path), file_name);
 
-                if(!lovu::fs::exists(output_path))
-                {
-                    lovu::fs::makedirs(output_path);
-                }
+//                 if(!lovu::fs::exists(output_path))
+//                 {
+//                     lovu::fs::makedirs(output_path);
+//                 }
 
-                if(!buffer.write(output_path))
-                {
-                    spdlog::error("OIIO Error during file write : {}", buffer.geterror());
-                }
-            }
-            catch(const std::exception& e)
-            {
-                spdlog::error("Exception catched : {}", e.what());
-            }
-        }
-    }
+//                 if(!buffer.write(output_path))
+//                 {
+//                     spdlog::error("OIIO Error during file write : {}", buffer.geterror());
+//                 }
+//             }
+//             catch(const std::exception& e)
+//             {
+//                 spdlog::error("Exception catched : {}", e.what());
+//             }
+//         }
+//     }
 
-    spdlog::debug("Finished OCIO Convert command");
+//     spdlog::debug("Finished OCIO Convert command");
 }
 
 void LOV_API make_thumbnail(std::string& filename,

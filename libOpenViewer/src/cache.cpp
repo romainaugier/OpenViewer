@@ -141,7 +141,7 @@ void* Cache::add(Media* media, const uint32_t frame) noexcept
         const uint32_t hash = media->get_hash_at_frame(frame);
         this->m_hash_to_items[hash] = this->m_current_index;
 
-        media->load_frame_to_cache(new_img_address, frame);
+        media->load_frame_to_memory(new_img_address, frame);
 
         spdlog::debug("[CACHE] : Loaded image \"{} - {}\" at index {}", 
                                   media->get_path_view(),
@@ -208,7 +208,7 @@ void* Cache::add(Media* media, const uint32_t frame) noexcept
 
                 const uint32_t hash = media->get_hash_at_frame(frame);
                 this->m_hash_to_items[hash] = traversing_index;
-                media->load_frame_to_cache(address, frame);
+                media->load_frame_to_memory(address, frame);
 
                 // Update cache infos
                 this->m_bytes_size += item_img_byte_size;
@@ -245,7 +245,7 @@ void* Cache::add(Media* media, const uint32_t frame) noexcept
                     const uint32_t hash = media->get_hash_at_frame(frame);
                     this->m_hash_to_items[hash] = clean_index;
 
-                    media->load_frame_to_cache(clean_address, frame);
+                    media->load_frame_to_memory(clean_address, frame);
 
                     this->m_current_traversing_index = clean_index;
                     this->m_current_index = traversing_index + 1;
@@ -363,6 +363,24 @@ cache_item* Cache::get_cache_item(const uint32_t hash) const noexcept
         if(item_it != this->m_items.end())
         {
             return const_cast<cache_item*>(&item_it.value());
+        }
+    }
+
+    return nullptr;
+}
+
+void* Cache::get_data_ptr(const uint32_t hash) const noexcept
+{
+    auto it = this->m_hash_to_items.find(hash);
+
+    if(it != this->m_hash_to_items.end())
+    {
+        const uint32_t item_index = it.value();
+        auto item_it = this->m_items.find(item_index);
+
+        if(item_it != this->m_items.end())
+        {
+            return item_it.value().m_data_ptr;
         }
     }
 

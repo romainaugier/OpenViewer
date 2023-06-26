@@ -107,8 +107,8 @@ public:
     // Returns the hashed filename corresponding to the current frame
     virtual uint32_t get_hash_at_frame(const uint32_t frame) const noexcept = 0;
 
-    // Loads the media content to the given cache address at the given frame
-    virtual void load_frame_to_cache(void* cache_address, const uint32_t frame) const noexcept = 0;
+    // Loads the media content to the given memory address (which must be allocated to the size of the image)
+    virtual void load_frame_to_memory(void* cache_address, const uint32_t frame) const noexcept = 0;
 
     // Returns true if the media is cached at the given frame
     virtual bool is_cached_at_frame(const uint32_t frame) const noexcept = 0;
@@ -249,7 +249,7 @@ public:
 
     virtual uint32_t get_hash_at_frame(const uint32_t frame) const noexcept override;
 
-    virtual void load_frame_to_cache(void* cache_address, const uint32_t frame) const noexcept override;
+    virtual void load_frame_to_memory(void* cache_address, const uint32_t frame) const noexcept override;
 
     virtual bool is_cached_at_frame(const uint32_t frame) const noexcept override;
 
@@ -280,7 +280,7 @@ public:
 
     virtual uint32_t get_hash_at_frame(const uint32_t frame) const noexcept override;
 
-    virtual void load_frame_to_cache(void* cache_address, const uint32_t frame) const noexcept override;
+    virtual void load_frame_to_memory(void* cache_address, const uint32_t frame) const noexcept override;
 
     virtual bool is_cached_at_frame(const uint32_t frame) const noexcept override;
 
@@ -308,7 +308,7 @@ public:
 
     virtual uint32_t get_hash_at_frame(const uint32_t frame) const noexcept override;
 
-    virtual void load_frame_to_cache(void* cache_address, const uint32_t frame) const noexcept override;
+    virtual void load_frame_to_memory(void* cache_address, const uint32_t frame) const noexcept override;
 
     virtual bool is_cached_at_frame(const uint32_t frame) const noexcept override;
 

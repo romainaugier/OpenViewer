@@ -69,6 +69,10 @@ public:
 
     // Returns a ptr to an item cache given a hash (return nullptr if the item is not in cache)
     cache_item* get_cache_item(const uint32_t hash) const noexcept;
+    
+    // Returns a ptr to the media data in memory, at the given hash (i.e media + frame)
+    // Returns nullptr if the hash is not found in the cache
+    void* get_data_ptr(const uint32_t hash) const noexcept;
 
 private:
     // Store the adresses to images (and some other informations)
