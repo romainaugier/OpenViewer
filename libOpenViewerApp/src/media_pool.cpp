@@ -32,6 +32,13 @@ void MediaPoolWidget::draw() noexcept
             for(const auto& [media_path, media] : lov::mediapool.get_medias())
             {
                 ImGui::Selectable(media_path.c_str(), selected);
+
+                if(ImGui::BeginDragDropSource())
+                {
+                    const void* drag_drop_media = (void*)lov::mediapool.get_media(media_path);
+                    ImGui::SetDragDropPayload("Media", &drag_drop_media, sizeof(void*), ImGuiCond_Once);
+                    ImGui::EndDragDropSource();
+                }
             }
         }
         ImGui::End();

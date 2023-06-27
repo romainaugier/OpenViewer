@@ -12,6 +12,7 @@ TimelineItem::TimelineItem(Media* media)
     this->m_media = media;
     this->m_start = media->get_start_frame();
     this->m_end = media->get_end_frame();
+    this->m_length = media->get_end_frame() - media->get_start_frame();
 }
 
 TimelineItem::~TimelineItem()
@@ -43,13 +44,15 @@ Timeline::~Timeline()
     this->set_flag(TimelineFlag_AboutToQuit);
 
     this->m_play_thread.join();
+
+    spdlog::debug("[TIMELINE] : Released  Timeline");
 }
 
-void Timeline::add_item(const TimelineItem item) noexcept
+void Timeline::add_item(Media* media) noexcept
 {
-    spdlog::debug("[TIMELINE] : Added a new item : {}", item.get_media()->make_path_at_frame(item.get_start_frame()));    
+    spdlog::debug("[TIMELINE] : Added a new item : {}", media->get_path());    
 
-    this->m_items.push_back(std::move(item));
+    this->m_items.emplace_back(media);
 }
 
 TimelineItem* Timeline::get_item_at_frame(const uint32_t frame) noexcept

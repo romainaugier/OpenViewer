@@ -3,6 +3,7 @@
 // All rights reserved.
 
 #include "OpenViewerApp/timeline.h"
+#include "OpenViewerUtils/random.h"
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "imgui_internal.h"
@@ -40,6 +41,19 @@ void TimelineWidget::draw() noexcept
     {
         ImGui::Begin("Timeline", &this->m_show, flags);
         {
+            if(ImGui::BeginDragDropTarget())
+            {
+                const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Media");
+
+                if(payload != nullptr)
+                {
+                    lov::Media* media = *(lov::Media**)(payload->Data);
+                    this->internal_timeline.add_item(media);
+                }
+
+                ImGui::EndDragDropTarget();
+            }
+
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
             const ImVec2 canvas_pos = ImGui::GetCursorScreenPos();
             const ImVec2 canvas_size = ImGui::GetContentRegionAvail();
@@ -103,29 +117,42 @@ void TimelineWidget::draw() noexcept
             draw_list->PushClipRect(items_canvas_x0, items_canvas_x1);
 
 #if defined(LOVA_TIMELINE_DEBUG)
-            const uint32_t items_canvas_debug_col = 0xFF88FF00;
+            constexpr uint32_t items_canvas_debug_col = 0xFF88FF00;
             draw_list->AddRect(items_canvas_x0, items_canvas_x1, items_canvas_debug_col);
             draw_list->AddText(items_canvas_x0, items_canvas_debug_col, "Items");
 #endif
 
-
-
-            const ImVec2 dummy_x0 = ImVec2(items_canvas_x0.x + 50.0f * frames_width, items_canvas_x0.y);
-            const ImVec2 dummy_x1 = ImVec2(items_canvas_x0.x + 100 * frames_width, items_canvas_x0.y + items_height);
-
-            draw_list->AddRectFilled(dummy_x0, dummy_x1, 0xFF884400);
-
-            const ImVec2 dummy_head_x0 = ImVec2(dummy_x0.x, dummy_x0.y);
-            const ImVec2 dummy_head_x1 = ImVec2(dummy_x0.x + handles_width, dummy_x1.y);
-
-            if(ImGui::IsMouseHoveringRect(dummy_head_x0, dummy_head_x1))
+            for(size_t i = 0; i < this->internal_timeline.get_items()->size(); i++)
             {
-                spdlog::debug("{} {}", ImGui::GetCursorPosX(), ImGui::GetCursorPosY());
-                spdlog::debug("Dummy item hovered");
-                draw_list->AddRectFilled(dummy_head_x0, dummy_head_x1, 0x44FFFFFF);
+                const lov::TimelineItem timeline_item = this->internal_timeline.get_items()->operator[](i);
 
-                float delta = ImGui::GetMouseDragDelta().x;
-                spdlog::debug("{}", delta);
+                const ImVec2 timeline_item_x0 = ImVec2(items_canvas_x0.x + timeline_item.get_start_frame() * frames_width,
+                                                       items_canvas_x0.y);
+                const ImVec2 timeline_item_x1 = ImVec2(items_canvas_x0.x + timeline_item.get_end_frame() * frames_width,
+                                                       items_canvas_x0.y + items_height);
+
+#if defined(LOVA_TIMELINE_DEBUG)
+                constexpr uint32_t timeline_items_debug_col = 0xFF88FF00;
+                draw_list->AddRect(timeline_item_x0, timeline_item_x1, timeline_items_debug_col);
+#endif
+
+                const uint32_t timeline_item_color = 0xFF000000 | lovu::wang_hash_sampler_32(i + 1);
+
+                draw_list->AddRectFilled(timeline_item_x0, timeline_item_x1, timeline_item_color);
+
+                const ImVec2 timeline_item_head_x0 = timeline_item_x0;
+                const ImVec2 timeline_item_head_x1 = ImVec2(timeline_item_x0.x + handles_width,
+                                                            timeline_item_x1.y);
+
+                if(ImGui::IsMouseHoveringRect(timeline_item_head_x0, timeline_item_head_x1))
+                {
+                    draw_list->AddRectFilled(timeline_item_head_x0,
+                                             timeline_item_head_x1,
+                                             0x44FFFFFF);
+
+                    float delta = ImGui::GetMouseDragDelta().x;
+                    const uint32_t frame_delta = (uint32_t)PIX_TO_FRAME(delta, frames_width);
+                }
             }
 
             draw_list->PopClipRect();

@@ -25,9 +25,18 @@ public:
 
     LOVU_FORCEINLINE uint32_t get_end_frame() const noexcept { return this->m_end; }
 
-    LOVU_FORCEINLINE void set_start_frame(const uint32_t frame) noexcept { this->m_start = frame; }
+    LOVU_FORCEINLINE void set_start_frame(const uint32_t frame) noexcept { this->m_start = frame >= this->m_end ? this->m_end - 1 : frame; }
 
-    LOVU_FORCEINLINE void set_end_frame(const uint32_t frame) noexcept { this->m_end = frame < this->m_start ? this->m_start : frame; }
+    LOVU_FORCEINLINE void set_end_frame(const uint32_t frame) noexcept { this->m_end = frame <= this->m_start ? this->m_start + 1 : frame; }
+
+    LOVU_FORCEINLINE void incr_start_frame() noexcept { this->set_start_frame(this->m_start + 1); }
+
+    LOVU_FORCEINLINE void decr_start_frame() noexcept { this->set_start_frame(this->m_start - 1); }
+
+    LOVU_FORCEINLINE void incr_end_frame() noexcept { this->set_end_frame(this->m_end + 1); }
+
+    LOVU_FORCEINLINE void decr_end_frame() noexcept { this->set_end_frame(this->m_end - 1); }
+
 
     LOVU_FORCEINLINE void set_active() noexcept { this->m_active = true; }
 
@@ -42,8 +51,9 @@ private:
 
     bool m_active = true;
 
-    uint32_t m_start;
-    uint32_t m_end;
+    uint32_t m_start = 0;
+    uint32_t m_end = 0;
+    uint32_t m_length = 0;
 };
 
 
@@ -92,10 +102,13 @@ public:
     ~Timeline();
 
     // Adds a new item to the timeline
-    void add_item(const TimelineItem item) noexcept;
+    void add_item(Media* media) noexcept;
 
     // Returns the item at the given frame, if no item is found return nullptr
     TimelineItem* get_item_at_frame(const uint32_t frame) noexcept;
+
+    // Returns the vector containing all the items
+    LOVU_FORCEINLINE std::vector<TimelineItem>* get_items() noexcept { return &this->m_items; }
 
     // Plays the timeline
     void play() noexcept;

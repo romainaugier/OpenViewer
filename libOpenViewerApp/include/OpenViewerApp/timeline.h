@@ -7,6 +7,8 @@
 
 LOVA_NAMESPACE_BEGIN
 
+#define PIX_TO_FRAME(delta, frame_width) ImFloor(delta / frame_width)
+
 class LOVA_API TimelineWidget
 {
 public:
