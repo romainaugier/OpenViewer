@@ -16,6 +16,19 @@
 
 LOVA_NAMESPACE_BEGIN
 
+enum TimelineWidgetMode_
+{
+    TimelineWidgetMode_Nav = 0,
+    TimelinewidgetMode_Cut = 1
+};
+
+enum TimelineWidgetDragSource_ 
+{
+    TimelineWidgetDragSource_Head = 0,
+    TimelineWidgetDragSource_Body = 1,
+    TimelineWidgetDragSource_Tail = 2
+};
+
 TimelineWidget::TimelineWidget()
 {
 
@@ -31,11 +44,15 @@ void TimelineWidget::draw() noexcept
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoScrollbar | 
                              ImGuiWindowFlags_NoCollapse;
 
-    const float frames_width = 5.0f;
+    constexpr float frames_width = 5.0f;
+    constexpr float items_height = 20.0f;
+    constexpr float handles_width = 5.0f;
 
-    const float items_height = 20.0f;
-
-    const float handles_width = 5.0f;
+    static int8_t drag_source = -1;
+    static lov::TimelineItem* drag_source_item = nullptr;
+    static ImVec2 drag_source_pos = ImVec2(0.0f, 0.0f);
+    static uint32_t drag_orig_start_frame = 0;
+    static uint32_t drag_orig_end_frame = 0;
 
     if(this->m_show)
     {
@@ -150,14 +167,98 @@ void TimelineWidget::draw() noexcept
                                              timeline_item_head_x1,
                                              0x44FFFFFF);
 
-                    float delta = ImGui::GetMouseDragDelta().x;
-                    const uint32_t frame_delta = (uint32_t)PIX_TO_FRAME(delta, frames_width);
+                    if(ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+                    {
+                        drag_source = TimelineWidgetDragSource_Head;
+                        drag_source_item = &this->internal_timeline.get_items()->at(i);
+                        drag_source_pos = ImGui::GetMousePos();
+                        drag_orig_start_frame = drag_source_item->get_start_frame();
+                        drag_orig_end_frame = drag_source_item->get_end_frame();
+                    }
+                }
+
+                const ImVec2 timeline_item_body_x0 = ImVec2(timeline_item_head_x1.x,
+                                                            timeline_item_head_x0.y);
+                const ImVec2 timeline_item_body_x1 = ImVec2(timeline_item_x1.x - handles_width,
+                                                            timeline_item_x1.y);
+
+                if(ImGui::IsMouseHoveringRect(timeline_item_body_x0, timeline_item_body_x1))
+                {
+                    draw_list->AddRectFilled(timeline_item_body_x0,
+                                             timeline_item_body_x1,
+                                             0x44FFFFFF);
+
+                    if(ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+                    {
+                        drag_source = TimelineWidgetDragSource_Body;
+                        drag_source_item = &this->internal_timeline.get_items()->at(i);
+                        drag_source_pos = ImGui::GetMousePos();
+                        drag_orig_start_frame = drag_source_item->get_start_frame();
+                        drag_orig_end_frame = drag_source_item->get_end_frame();
+                    }
+                }
+
+                ImGui::IsMouseDragging(ImGuiMouseButton_Left);
+
+                const ImVec2 timeline_item_tail_x0 = ImVec2(timeline_item_body_x1.x,
+                                                            timeline_item_body_x0.y);
+                const ImVec2 timeline_item_tail_x1 = ImVec2(timeline_item_x1);
+
+                if(ImGui::IsMouseHoveringRect(timeline_item_tail_x0, timeline_item_tail_x1))
+                {
+                    draw_list->AddRectFilled(timeline_item_tail_x0,
+                                             timeline_item_tail_x1,
+                                             0x44FFFFFF);
+
+                    if(ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+                    {
+                        drag_source = TimelineWidgetDragSource_Tail;
+                        drag_source_item = &this->internal_timeline.get_items()->at(i);
+                        drag_source_pos = ImGui::GetMousePos();
+                        drag_orig_start_frame = drag_source_item->get_start_frame();
+                        drag_orig_end_frame = drag_source_item->get_end_frame();
+                    }
                 }
             }
 
             draw_list->PopClipRect();
         }
         ImGui::End();
+    }
+
+    if(ImGui::IsMouseDragging(ImGuiMouseButton_Left) &&
+       drag_source > -1 &&
+       drag_source_item != nullptr)
+    {
+        const float delta = ImGui::GetMousePos().x - drag_source_pos.x;
+    
+        const uint32_t translate = PIX_TO_FRAME(delta, frames_width);
+
+        switch (drag_source)
+        {
+        case TimelineWidgetDragSource_Body:
+            drag_source_item->set_start_frame(drag_orig_start_frame + translate);
+            drag_source_item->set_end_frame(drag_orig_end_frame + translate);
+            break;
+        
+        case TimelineWidgetDragSource_Head:
+            drag_source_item->set_start_frame(drag_orig_start_frame + translate);
+            break;
+
+        case TimelineWidgetDragSource_Tail:
+            drag_source_item->set_end_frame(drag_orig_end_frame + translate);
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+    {
+        drag_source = -1;
+        drag_source_item = nullptr;
+        drag_source_pos = ImVec2(0.0f, 0.0f);
     }
 }
 

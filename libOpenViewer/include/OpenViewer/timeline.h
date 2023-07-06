@@ -37,6 +37,7 @@ public:
 
     LOVU_FORCEINLINE void decr_end_frame() noexcept { this->set_end_frame(this->m_end - 1); }
 
+    LOVU_FORCEINLINE void translate(const uint32_t tr) noexcept { this->set_start_frame(this->m_start + tr); this->set_end_frame(this->m_end + tr); }
 
     LOVU_FORCEINLINE void set_active() noexcept { this->m_active = true; }
 
