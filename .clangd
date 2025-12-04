@@ -1,0 +1,37 @@
+CompileFlags:
+  Add:
+    - -mavx
+    - -mavx2
+    - -msse4.2
+    - -std=c++17
+    - -Wall
+    - -Wextra
+    - -Werror
+    - -DDEBUG
+    - -DLOV_BUILD_EXPORT
+    - -DLOVA_BUILD_EXPORT
+    - -IlibOpenViewer/include
+    - -IlibOpenViewerApp/include
+    - -Istb/include
+    - -Ivcpkg/packages/expat_x64-windows/include
+    - -Ivcpkg/packages/glfw3_x64-windows/include
+    - -Ivcpkg/packages/imath_x64-windows/include
+    - -Ivcpkg/packages/imgui_x64-windows/include
+    - -Ivcpkg/packages/libdeflate_x64-windows/include
+    - -Ivcpkg/packages/minizip_x64-windows/include
+    - -Ivcpkg/packages/opencolorio_x64-windows/include
+    - -Ivcpkg/packages/openexr_x64-windows/include
+    - -Ivcpkg/packages/pystring_x64-windows/include
+    - -Ivcpkg/packages/yaml-cpp_x64-windows/include
+    - -Ivcpkg/packages/zlib_x64-windows/include
+    - -Iext/stdromano/install/include
+    - -Iext/nanobind/include
+
+Diagnostics:
+  ClangTidy:
+    Add:
+      - modernize-*
+      - performance-*
+      - readability-*
+
+  UnusedIncludes: Strict

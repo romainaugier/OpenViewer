@@ -1,10 +1,6 @@
-[submodule "pybind11"]
-    path = extern/pybind11
-    url = git://github.com/pybind/pybind11.git
-
-[submodule "pybind11_json"]
-    path = extern/pybind11_json
-    url = git://github.com/pybind/pybind11_json.git
-[submodule "extern/nlohmann_json"]
-	path = extern/nlohmann_json
-	url = https://github.com/nlohmann/json
+[submodule "ext/stdromano"]
+	path = ext/stdromano
+	url = https://github.com/romainaugier/stdromano.git
+[submodule "ext/nanobind"]
+	path = ext/nanobind
+	url = https://github.com/wjakob/nanobind.git

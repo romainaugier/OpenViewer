@@ -2,33 +2,48 @@
 # Copyright (c) 2022 - Present Romain Augier
 # All rights reserved.
 
-# libOpenViewer library #
+# libOpenViewer library
 
-file(GLOB_RECURSE src_files *.cpp)
+include(target_options)
+include(GNUInstallDirs)
 
-list(FILTER src_files EXCLUDE REGEX ".*python.cpp")
+file(GLOB_RECURSE SRC_FILES *.cpp)
 
-add_definitions(-DLOV_BUILD_EXPORT -DSPDLOG_FMT_EXTERNAL)
+list(FILTER SRC_FILES EXCLUDE REGEX ".*python.cpp")
 
-add_library(${OPENVIEWER_LIBS} SHARED ${src_files} ${h_files})
-set_target_properties(${OPENVIEWER_LIBS} PROPERTIES PREFIX "")
-target_link_libraries(${OPENVIEWER_LIBS} ${CONAN_LIBS} ${Python_LIBRARIES} ${OPENVIEWERUTILS_LIBS})
+add_library(${OPENVIEWER_LIBS} SHARED ${SRC_FILES})
 
-add_custom_command(
-    TARGET ${OPENVIEWER_LIBS}
-    POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy
-    $<TARGET_FILE:${OPENVIEWER_LIBS}> ${OUTPUT_BIN_DIR}
-)
+set_target_properties(${OPENVIEWER_LIBS} PROPERTIES PREFIX ""
+                                                    CXX_STANDARD 17
+                                                    DEBUG_POSTFIX "d"
+                                                    LINKER_LANGUAGE CXX
+                                                    EXPORT_LINK_INTERFACE_LANGUAGES CXX)
 
-set(PYOPENVIEWER_MODULE PyOpenViewer)
+set_target_options(${OPENVIEWER_LIBS})
 
-pybind11_add_module(${PYOPENVIEWER_MODULE} python.cpp)
-target_link_libraries(${PYOPENVIEWER_MODULE} PUBLIC ${OPENVIEWER_LIBS} nlohmann_json::nlohmann_json)
+target_compile_definitions(${OPENVIEWER_LIBS} PRIVATE "-DLOV_BUILD_SHARED")
 
-add_custom_command(
-    TARGET ${PYOPENVIEWER_MODULE}
-    POST_BUILD 
-    COMMAND ${CMAKE_COMMAND} -E copy
-    $<TARGET_FILE:${PYOPENVIEWER_MODULE}> ${OUTPUT_BIN_DIR}
-)
+target_link_libraries(${OPENVIEWER_LIBS} PUBLIC ${Python_LIBRARIES})
+target_link_libraries(${OPENVIEWER_LIBS} PUBLIC stdromano::stdromano)
+target_link_libraries(${OPENVIEWER_LIBS} PUBLIC OpenEXR::OpenEXR)
+target_link_libraries(${OPENVIEWER_LIBS} PUBLIC OpenColorIO::OpenColorIO)
+
+# Install
+
+install(CODE [[
+    file(GET_RUNTIME_DEPENDENCIES
+         EXECUTABLES $<TARGET_FILE:libOpenViewer>
+         RESOLVED_DEPENDENCIES_VAR RESOLVED_DEPS
+         UNRESOLVED_DEPENDENCIES_VAR UNRESOLVED_DEPS
+         PRE_EXCLUDE_REGEXES "api-ms-" "ext-ms-" "hvsifiletrust" "pdmutilities" "aclui"
+         POST_EXCLUDE_REGEXES ".*[Ss]ystem32/.*\\.dll")
+
+    foreach(FILE ${RESOLVED_DEPS})
+        file(INSTALL
+             DESTINATION "${CMAKE_INSTALL_PREFIX}/bin"
+             TYPE SHARED_LIBRARY
+             FOLLOW_SYMLINK_CHAIN
+             FILES "${FILE}")
+
+    endforeach()
+]])

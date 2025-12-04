@@ -1,0 +1,42 @@
+Language: Cpp
+IndentWidth: 4
+ColumnLimit: 100
+
+AlwaysBreakAfterReturnType: None
+AlwaysBreakAfterDefinitionReturnType: None
+AlwaysBreakTemplateDeclarations: true
+
+PointerAlignment: Left
+
+BreakBeforeBraces: Allman
+
+BinPackParameters: false
+BinPackArguments: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowAllArgumentsOnNextLine: false
+ExperimentalAutoDetectBinPacking: false
+
+AlignAfterOpenBracket: Align
+
+PenaltyBreakBeforeFirstCallParameter: 1
+PenaltyBreakOpenParenthesis: 0
+PenaltyExcessCharacter: 10000
+
+PenaltyReturnTypeOnItsOwnLine: 1000000
+
+SpaceBeforeParens: Never
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpaceInEmptyParentheses: false
+SpacesInContainerLiterals: false
+
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+BreakConstructorInitializers: BeforeColon
+PackConstructorInitializers: Never
+
+AccessModifierOffset: -4
+
+IndentCaseLabels: true
+IndentCaseBlocks: true

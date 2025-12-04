@@ -1,0 +1,20 @@
+{
+  "dependencies": [
+    {
+      "name": "imgui",
+      "features": ["glfw-binding", "docking-experimental"]
+    },
+    "openexr",
+    "tiff",
+    "glew",
+    {
+      "name": "opencolorio",
+      "default-features": false
+    },
+    {
+      "name": "minizip-ng",
+      "default-features": false,
+      "features": ["zlib"]
+    }
+  ]
+}
