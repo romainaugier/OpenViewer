@@ -14,6 +14,8 @@ set INSTALL=0
 set INSTALLDIR=%CD%\install
 set PYTHON_VERSION="3.11.4"
 set VCPKG_TARGET_TRIPLET=x64-windows
+set VCPKG_USE_EXISTING=0
+set VCPKG_PATH=vcpkg
 
 for %%x in (%*) do (
     call :ParseArg %%~x
@@ -33,6 +35,7 @@ if %HELP% equ 1 (
     echo       --version:^<version^>: specifies the version, defaults to %VERSION%
     echo       --pythonversion:^<version^>: specifies the version of python to use, defaults to %PYTHON_VERSION%
     echo       --pythonpath:^<path_to_python_dir^>: specifies the path to search Python executable, defaults to CMake FindPython script
+    echo       --vcpkgpath:^<path_to_vcpkg_dir^>: specifies the path to your vcpkg installation, defaults to %CD%/vcpkg
     echo       --help/-h: displays this message and exits
 
     exit /B 0
@@ -41,14 +44,19 @@ if %HELP% equ 1 (
 call :LogInfo "Building OpenViewer"
 
 if not exist vcpkg (
-    call :LogInfo "Vcpkg can't be found, cloning and preparing it"
-    git clone https://github.com/romainaugier/vcpkg.git
-    cd vcpkg
-    call bootstrap-vcpkg.bat
-    cd ..
+    if %VCPKG_USE_EXISTING% equ 1 (
+        call :LogInfo "Using existing vcpkg installation"
+        set VCPKG_ROOT=%VCPKG_PATH%
+    ) else (
+        call :LogInfo "Vcpkg can't be found, cloning and preparing it"
+        git clone https://github.com/romainaugier/vcpkg.git
+        cd vcpkg
+        call bootstrap-vcpkg.bat
+        cd ..
+        set VCPKG_ROOT=%CD%/vcpkg
+    )
 )
 
-set VCPKG_ROOT=%CD%/vcpkg
 set CMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%/scripts/buildsystems/vcpkg.cmake
 
 echo.!PATH! | findstr /C:"!VCPKG_ROOT!" 1>nul
@@ -162,6 +170,10 @@ echo "%~1" | find /I "pythonpath">nul && (
     call :ParsePythonPath %~1
 )
 
+echo "%~1" | find /I "vcpkgpath">nul && (
+    call :ParseVcpkgPath %~1
+)
+
 exit /B 0
 rem //////////////////////////////////
 
@@ -178,12 +190,25 @@ exit /B 0
 rem //////////////////////////////////
 
 rem //////////////////////////////////
-rem Parse the python version from the command line arg (ex: --pythonpath:C:\Python\3.11.4)
+rem Parse the python path from the command line arg (ex: --pythonpath:C:\Python\3.11.4)
 :ParsePythonPath
 
 for /f "tokens=1* delims=:" %%a in ("%~1") do (
     set "PATH=%%b;%PATH%"
     call :LogInfo "Python Path specified by the user: %%b"
+)
+
+exit /B 0
+rem //////////////////////////////////
+
+rem //////////////////////////////////
+rem Parse the vpckg path from the command line arg (ex: --vcpkgpath:C:\vcpkg)
+:ParseVcpkgPath
+
+for /f "tokens=1* delims=:" %%a in ("%~1") do (
+    set VCPKG_PATH=%%b
+    set VCPKG_USE_EXISTING=1
+    call :LogInfo "Vcpkg Path specified by the user: %%b"
 )
 
 exit /B 0

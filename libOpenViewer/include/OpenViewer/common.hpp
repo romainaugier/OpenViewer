@@ -186,7 +186,7 @@
 #endif /* defined(DEBUG_BUILD) */
 
 #define LOV_NAMESPACE_BEGIN                                                                        \
-    namespace LOV                                                                                  \
+    namespace lov                                                                                  \
     {
 #define LOV_NAMESPACE_END }
 

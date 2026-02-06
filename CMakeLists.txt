@@ -124,6 +124,15 @@ include_directories(${stdromano_INCLUDE_DIR})
 # STB
 include_directories(stb/include)
 
+# OpenEXR
+find_package(OpenEXR CONFIG REQUIRED)
+
+# OpenColorIO
+find_package(OpenColorIO CONFIG REQUIRED)
+
+# TIFF
+find_package(TIFF REQUIRED)
+
 # Library OpenViewer
 include_directories(libOpenViewer/include)
 add_subdirectory(libOpenViewer)

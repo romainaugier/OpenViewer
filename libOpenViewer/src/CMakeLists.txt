@@ -27,6 +27,8 @@ target_link_libraries(${OPENVIEWER_LIBS} PUBLIC ${Python_LIBRARIES})
 target_link_libraries(${OPENVIEWER_LIBS} PUBLIC stdromano::stdromano)
 target_link_libraries(${OPENVIEWER_LIBS} PUBLIC OpenEXR::OpenEXR)
 target_link_libraries(${OPENVIEWER_LIBS} PUBLIC OpenColorIO::OpenColorIO)
+target_link_libraries(${OPENVIEWER_LIBS} PUBLIC Imath::Imath)
+target_link_libraries(${OPENVIEWER_LIBS} PUBLIC TIFF::TIFF)
 
 # Install
 

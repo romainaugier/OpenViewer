@@ -2,9 +2,4 @@
 // Copyright (c) 2022 - Present Romain Augier
 // All rights reserved.
 
-#include "OpenViewer/common.hpp"
-
-int main(int argc, char** argv)
-{
-    return 0;
-}
+#include "OpenViewerApp/common.hpp"

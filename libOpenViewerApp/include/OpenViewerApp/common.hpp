@@ -7,4 +7,6 @@
 #if !defined(__LOVA)
 #define __LOVA
 
+#include "OpenViewer/common.hpp"
+
 #endif /* !defined(__LOVA) */

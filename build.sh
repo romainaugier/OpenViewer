@@ -1,21 +1,26 @@
 #!/bin/bash
 
-HELP=0
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2022 - Present Romain Augier
+# All rights reserved.
+
 BUILDTYPE="Release"
 RUNTESTS=0
 REMOVEOLDDIR=0
 EXPORTCOMPILECOMMANDS=0
 VERSION="0.0.0"
-INSTALL=0
 INSTALLDIR="$PWD/install"
-PYTHONVERSION="3.11.4"
+INSTALL=0
+THREADSAN=0
+UBSAN=0
+ADDRSAN=0
+LEAKSAN=0
+VCPKG_PATH="$PWD/vcpkg"
+VCPKG_USER_DEFINED=0
 
 # Little function to parse command line arguments
 parse_args()
 {
-    [ "$1" == "--help" ] && HELP=1
-    [ "$1" == "-h" ] && HELP=1
-
     [ "$1" == "--debug" ] && BUILDTYPE="Debug"
 
     [ "$1" == "--reldebug" ] && BUILDTYPE="RelWithDebInfo"
@@ -26,83 +31,110 @@ parse_args()
 
     [ "$1" == "--install" ] && INSTALL=1
 
+    [ "$1" == "--threadsan" ] && THREADSAN=1
+
+    [ "$1" == "--ubsan" ] && UBSAN=1
+
+    [ "$1" == "--addrsan" ] && ADDRSAN=1
+
+    [ "$1" == "--leaksan" ] && LEAKSAN=1
+
     [ "$1" == "--export-compile-commands" ] && EXPORTCOMPILECOMMANDS=1
 
     [ "$1" == *"version"* ] && parse_version $1
 
     [ "$1" == *"installdir"* ] && parse_install_dir $1
 
-    [ "$1" == *"pythonversion"* ] && parse_python_version $1
-
-    [ "$1" == *"pythonpath"* ] && parse_python_path $1
+    [ "$1" == *"vpckgpath"* ] && parse_vcpkg_path $1
 }
 
-# Show help message and exit
-show_help()
-{
-
-}
-
-# Parse the version from a command line argument
+# Little function to parse the version from a command line argument
 parse_version()
 {
     VERSION="$( cut -d ':' -f 2- <<< "$s" )"
     log_info "Version specified by user: $VERSION"
 }
 
-# Parse the installation dir from a command line argument
+# Little function to parse the installation dir from a command line argument
 parse_install_dir()
 {
     INSTALLDIR="$( cut -d ':' -f 2- <<< "$s" )"
     log_info "Install directory specified by user: $INSTALLDIR"
 }
 
-# Parse the python version from a command line argument
-parse_python_version()
+# Little function to parse the vcpkg path from a command line argument
+parse_vcpkg_path()
 {
-    PYTHONVERSION="$( cut -d ':' -f 2- <<< "$s" )"
-    log_info "Python version specified by user: $PYTHONVERSION"
+    VCPKG_PATH="$( cut -d ':' -f 2- <<< "$s" )"
+    log_info "Vcpkg path specified by user: $VCPKG_PATH"
 }
 
-# Parse the python path from a command line argument
-parse_python_path()
-{
-    PYTHONPATH="$( cut -d ':' -f 2- <<< "$s" )"
-    export PATH=$PATH:$PYTHONPATH
-    log_info "Python path specified by user: $PYTHONPATH"
-}
-
-# Log an information message to the console
+# Little function to log an information message to the console
 log_info()
 {
     echo "[INFO] : $1"
 }
 
-# Log a warning message to the console
+# Little function to log a warning message to the console
 log_warning()
 {
     echo "[WARNING] : $1"
 }
 
-# Log an error message to the console
+# Little function to log an error message to the console
 log_error()
 {
     echo "[ERROR] : $1"
+}
+
+# Wrap to avoid command line args propagation
+source_vcpkg_bootstrap()
+{
+    source bootstrap-vcpkg.sh
 }
 
 # Entry point
 
 log_info "Building OpenViewer"
 
-if [[ ! -d "vcpkg" ]]; then
-    log_info "Vcpkg can't be found, cloning and preparing it"
-    git clone https://github.com/romainaugier/vcpkg.git
-    cd vcpkg
-    source_vcpkg_bootstrap
-    cd ..
+for arg in "$@"
+do
+    parse_args "$arg"
+done
+
+if [[ $UBSAN -eq 1 ]]; then
+    if [[ $ADDRSAN -eq 1 ]]; then
+        log_error "Undefined Behavior Sanitizer and Address Sanitizer are not compatible"
+        exit 1
+    fi
+
+    if [[ $LEAKSAN -eq 1 ]]; then
+        log_error "Undefined Behavior Sanitizer and Leak Sanitizer are not compatible"
+        exit 1
+    fi
+
+    if [[ $THREADSAN -eq 1 ]]; then
+        log_error "Undefined Behavior Sanitizer and Thread Sanitizer are not compatible"
+        exit 1
+    fi
 fi
 
-export VCPKG_ROOT=$PWD/vcpkg
+if [[ ! -d "vcpkg" ]]; then
+    if [[ $VCPKG_USER_DEFINED -eq 1 ]]; then
+        log_info "Using existing vcpkg installation"
+        export VCPKG_ROOT=$VCPKG_PATH
+    else
+        log_info "Vcpkg can't be found, cloning and preparing it"
+        git clone https://github.com/romainaugier/vcpkg.git
+        cd vcpkg
+        source_vcpkg_bootstrap
+        cd ..
+        export VCPKG_ROOT=$PWD/vcpkg
+    fi
+fi
+
+log_info "Vcpkg root: $VCPKG_ROOT"
+
 export CMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
 
 if [[ $PATH != *$VCPKG_ROOT* ]]; then
@@ -110,15 +142,8 @@ if [[ $PATH != *$VCPKG_ROOT* ]]; then
     export PATH=$PATH:$VCPKG_ROOT
 fi
 
-for arg in "$@"
-do
-    parse_args "$arg"
-done
-
-if [[ $HELP -eq 1 ]]; then
-    show_help
-    exit 0
-fi
+# For OpenCL
+export ASAN_OPTIONS=protect_shadow_gap=0
 
 log_info "Build type: $BUILDTYPE"
 log_info "Build version: $VERSION"
@@ -133,7 +158,14 @@ if [[ -d "install" && $REMOVEOLDDIR -eq 1 ]]; then
     rm -rf install
 fi
 
-cmake -S . -B build -DRUN_TESTS=$RUNTESTS -DCMAKE_EXPORT_COMPILE_COMMANDS=$EXPORTCOMPILECOMMANDS -DCMAKE_BUILD_TYPE=$BUILDTYPE -DVERSION=$VERSION
+cmake -S . -B build -DRUN_TESTS=$RUNTESTS \
+                    -DCMAKE_EXPORT_COMPILE_COMMANDS=$EXPORTCOMPILECOMMANDS \
+                    -DCMAKE_BUILD_TYPE=$BUILDTYPE \
+                    -DVERSION=$VERSION \
+                    -DTHREADSAN=$THREADSAN \
+                    -DUBSAN=$UBSAN \
+                    -DADDRSAN=$ADDRSAN \
+                    -DLEAKSAN=$LEAKSAN
 
 if [[ $? -ne 0 ]]; then
     log_error "Error during CMake configuration"
