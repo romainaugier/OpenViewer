@@ -13,6 +13,8 @@ LOV_NAMESPACE_BEGIN
 
 LOG_NAMESPACE_BEGIN
 
+// TODO: use async logger in release for better performances
+
 void initialize(spdlog::level::level_enum level) noexcept
 {
     spdlog::set_pattern("[%T] [%^%l%$] [ov] %v");
@@ -24,6 +26,9 @@ void initialize(spdlog::level::level_enum level) noexcept
     tmp_file_path.appendc("/openviewer.log");
 
     auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(tmp_file_path.c_str());
+
+    auto media_log = std::make_shared<spdlog::logger>("media", spdlog::sinks_init_list{ console_sink, file_sink });
+    spdlog::register_logger(media_log);
 
     auto media_cache_log = std::make_shared<spdlog::logger>("media_cache", spdlog::sinks_init_list{ console_sink, file_sink });
     spdlog::register_logger(media_cache_log);

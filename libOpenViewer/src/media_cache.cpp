@@ -167,7 +167,9 @@ void* MediaCache::allocate(std::size_t data_sz, std::function<void()> dtor) noex
     this->_write_ptr += total_sz;
     this->_size += total_sz;
 
-    this->_logger->debug("Allocated a new block at {}", fmt::ptr(data_ptr));
+    this->_logger->debug("Allocated a new block ({} | {})",
+                         fmt::ptr(data_ptr),
+                         format_byte_size(data_sz));
     this->_logger->trace("Occupancy: {}/{}",
                          format_byte_size(this->_size),
                          format_byte_size(this->_capacity));
