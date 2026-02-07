@@ -6,7 +6,7 @@
 
 #include "stdromano/simd.hpp"
 
-#include <intrin.h>
+#include <immintrin.h>
 
 #include <type_traits>
 

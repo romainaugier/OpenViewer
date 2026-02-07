@@ -15,17 +15,21 @@ LOG_NAMESPACE_BEGIN
 
 void initialize(spdlog::level::level_enum level) noexcept
 {
-    auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-    console_sink->set_pattern("[%T] [%^%l%$] [%n] %v");
+    spdlog::set_pattern("[%T] [%^%l%$] [ov] %v");
 
-    auto tmp_file_path = stdromano::fs_tmp_dir();
-    tmp_file_path.appendc("{}/openviewer.log");
+    auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    console_sink->set_pattern("[%T] [%^%l%$] [ov::%n] %v");
+
+    auto tmp_file_path = stdromano::fs_tmp_dir().copy();
+    tmp_file_path.appendc("/openviewer.log");
 
     auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(tmp_file_path.c_str());
 
     auto media_cache_log = std::make_shared<spdlog::logger>("media_cache", spdlog::sinks_init_list{ console_sink, file_sink });
-
     spdlog::register_logger(media_cache_log);
+
+    auto media_pool_log = std::make_shared<spdlog::logger>("media_pool", spdlog::sinks_init_list{ console_sink, file_sink });
+    spdlog::register_logger(media_pool_log);
 
     spdlog::set_level(level);
 }

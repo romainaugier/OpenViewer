@@ -11,14 +11,17 @@ int main() noexcept
 
     lov::MediaCache cache(1024 * 1024 * 100); // 100MB cache
 
-    void* frame1 = cache.allocate(1920 * 1080 * 4);
+    void* frame1 = cache.allocate(1920 * 1080 * 4, []() -> void {
+        spdlog::debug("Freeing initial frame");
+    });
 
     for(std::size_t i = 0; i < 100; i++)
     {
-        void* frame2 = cache.allocate(1920 * 1080 * 3,
-            [=]() {
-                spdlog::debug("Freeing frame {}", i);
-            });
+        spdlog::debug("Adding frame {}", i);
+
+        void* frame2 = cache.allocate(1920 * 1080 * 3, [=]() -> void {
+            spdlog::debug("Freeing frame {}", i);
+        });
     }
 
     return 0;

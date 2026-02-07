@@ -23,7 +23,8 @@ class LOV_API MediaCache
 private:
     struct BlockHeader
     {
-        std::size_t data_size;
+        std::size_t data_sz;
+        std::size_t total_sz;
         std::function<void()> dtor;
         BlockHeader* next;
         std::size_t padding;
@@ -33,10 +34,11 @@ private:
 
     char* _buffer;
     std::size_t _capacity;
+    std::size_t _size;
     BlockHeader* _head;
     BlockHeader* _tail;
     char* _write_ptr;
-    mutable std::mutex _mutex;
+    mutable std::recursive_mutex _mutex;
 
     std::shared_ptr<spdlog::logger> _logger;
 
@@ -57,39 +59,9 @@ private:
     void make_space(std::size_t required_size) noexcept;
 
 public:
-    MediaCache(size_t capacity) : _capacity(capacity),
-                                  _head(nullptr),
-                                  _tail(nullptr),
-                                  _write_ptr(nullptr)
-    {
-        this->_buffer = static_cast<char*>(stdromano::mem_aligned_alloc(this->_capacity,
-                                                                        ALIGNMENT));
-        this->_write_ptr = _buffer;
+    MediaCache(std::size_t capacity);
 
-        this->_logger = spdlog::get("media_cache");
-
-        if(this->_logger == nullptr)
-        {
-            spdlog::error("Cannot get media_cache logger");
-        }
-
-        this->_logger->trace("Initialized with {} bytes", this->_capacity);
-    }
-
-    ~MediaCache()
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
-
-        while(this->_head != nullptr)
-            this->free_oldest_block();
-
-        if(this->_buffer != nullptr)
-        {
-            stdromano::mem_free(this->_buffer);
-        }
-
-        this->_logger->trace("Destroyed", this->_capacity);
-    }
+    ~MediaCache();
 
     MediaCache(const MediaCache&) = delete;
     MediaCache& operator=(const MediaCache&) = delete;
@@ -99,7 +71,7 @@ public:
 
     LOV_FORCE_INLINE std::size_t get_used_bytes() const noexcept
     {
-        std::lock_guard<std::mutex> lock(_mutex);
+        std::lock_guard<std::recursive_mutex> lock(_mutex);
         return this->_write_ptr - this->_buffer;
     }
 
@@ -108,10 +80,10 @@ public:
         return this->_capacity;
     }
 
-    LOV_FORCE_INLINE size_t get_free_bytes() const noexcept
+    LOV_FORCE_INLINE std::size_t get_free_bytes() const noexcept
     {
-        std::lock_guard<std::mutex> lock(this->_mutex);
-        return this->_capacity - (this->_write_ptr - this->_buffer);
+        std::lock_guard<std::recursive_mutex> lock(this->_mutex);
+        return this->_capacity - this->_size;
     }
 
     void clear() noexcept;
