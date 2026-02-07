@@ -36,7 +36,7 @@ function(set_target_options target_name)
             target_link_options(${target_name} PRIVATE $<$<CONFIG:Debug,RelWithDebInfo>:-fsanitize=thread>)
         endif()
 
-        set(COMPILE_OPTIONS -D_FORTIFY_SOURCES=2 -pipe -Wall -pedantic-errors $<$<CONFIG:Release,RelWithDebInfo>:-O3 -ftree-vectorizer-verbose=2> -mveclibabi=svml -mavx2 -mfma)
+        set(COMPILE_OPTIONS -D_FORTIFY_SOURCES=2 -pipe -Wall -pedantic-errors $<$<CONFIG:Release,RelWithDebInfo>:-O3 -ftree-vectorizer-verbose=2> -mveclibabi=svml -mavx2 -mfma -mf16c)
 
         target_compile_options(${target_name} PRIVATE ${COMPILE_OPTIONS})
     elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
