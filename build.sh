@@ -21,51 +21,52 @@ VCPKG_USER_DEFINED=0
 # Little function to parse command line arguments
 parse_args()
 {
-    [ "$1" == "--debug" ] && BUILDTYPE="Debug"
+    [[ "$1" == "--debug" ]] && BUILDTYPE="Debug"
 
-    [ "$1" == "--reldebug" ] && BUILDTYPE="RelWithDebInfo"
+    [[ "$1" == "--reldebug" ]] && BUILDTYPE="RelWithDebInfo"
 
-    [ "$1" == "--tests" ] && RUNTESTS=1
+    [[ "$1" == "--tests" ]] && RUNTESTS=1
 
-    [ "$1" == "--clean" ] && REMOVEOLDDIR=1
+    [[ "$1" == "--clean" ]] && REMOVEOLDDIR=1
 
-    [ "$1" == "--install" ] && INSTALL=1
+    [[ "$1" == "--install" ]] && INSTALL=1
 
-    [ "$1" == "--threadsan" ] && THREADSAN=1
+    [[ "$1" == "--threadsan" ]] && THREADSAN=1
 
-    [ "$1" == "--ubsan" ] && UBSAN=1
+    [[ "$1" == "--ubsan" ]] && UBSAN=1
 
-    [ "$1" == "--addrsan" ] && ADDRSAN=1
+    [[ "$1" == "--addrsan" ]] && ADDRSAN=1
 
-    [ "$1" == "--leaksan" ] && LEAKSAN=1
+    [[ "$1" == "--leaksan" ]] && LEAKSAN=1
 
-    [ "$1" == "--export-compile-commands" ] && EXPORTCOMPILECOMMANDS=1
+    [[ "$1" == "--export-compile-commands" ]] && EXPORTCOMPILECOMMANDS=1
 
-    [ "$1" == *"version"* ] && parse_version $1
+    [[ "$1" == *"version"* ]] && parse_version $1
 
-    [ "$1" == *"installdir"* ] && parse_install_dir $1
+    [[ "$1" == *"installdir"* ]] && parse_install_dir $1
 
-    [ "$1" == *"vpckgpath"* ] && parse_vcpkg_path $1
+    [[ "$1" == *"vcpkgpath"* ]] && parse_vcpkg_path $1
 }
 
 # Little function to parse the version from a command line argument
 parse_version()
 {
-    VERSION="$( cut -d ':' -f 2- <<< "$s" )"
+    VERSION="$( cut -d ':' -f 2- <<< "$1" )"
     log_info "Version specified by user: $VERSION"
 }
 
 # Little function to parse the installation dir from a command line argument
 parse_install_dir()
 {
-    INSTALLDIR="$( cut -d ':' -f 2- <<< "$s" )"
+    INSTALLDIR="$( cut -d ':' -f 2- <<< "$1" )"
     log_info "Install directory specified by user: $INSTALLDIR"
 }
 
 # Little function to parse the vcpkg path from a command line argument
 parse_vcpkg_path()
 {
-    VCPKG_PATH="$( cut -d ':' -f 2- <<< "$s" )"
+    VCPKG_PATH="$(eval echo "$( cut -d ':' -f 2- <<< "$1" )")"
+    VCPKG_USER_DEFINED=1
     log_info "Vcpkg path specified by user: $VCPKG_PATH"
 }
 
