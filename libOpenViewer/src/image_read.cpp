@@ -2,7 +2,7 @@
 // Copyright (c) 2022 - Present Romain Augier
 // All rights reserved.
 
-#include "OpenViewer/image.hpp"
+#include "OpenViewer/media.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_MALLOC stdromano::mem_alloc
@@ -28,8 +28,8 @@ LOV_NAMESPACE_BEGIN
 
 /* JPEG */
 
-bool image_read_metadata_jpeg(const stdromano::StringD& path,
-                              Image& img) noexcept
+bool image_read_info_jpeg(const stdromano::StringD& path,
+                          MediaInfo& info) noexcept
 {
     int x, y, n;
 
@@ -39,48 +39,44 @@ bool image_read_metadata_jpeg(const stdromano::StringD& path,
         return false;
     }
 
-    img.get_layers().emplace(std::make_pair(Image::MAIN_LAYER_NAME,
-                                            Layer(std::addressof(img),
-                                                  LayerDepth_U8,
-                                                  static_cast<std::uint32_t>(n))));
+    info = MediaInfo(Imath::Box2i(Imath::V2i(0, 0), Imath::V2i(x - 1, y - 1)),
+                     Imath::Box2i(Imath::V2i(0, 0), Imath::V2i(x - 1, y - 1)),
+                     static_cast<float>(x) / static_cast<float>(y));
 
-    img.data_window() = Imath::Box2i(Imath::V2i(0, 0), Imath::V2i(x - 1, y - 1));
-    img.display_window() = Imath::Box2i(Imath::V2i(0, 0), Imath::V2i(x - 1, y - 1));
-    img.aspect_ratio() = static_cast<float>(x) / static_cast<float>(y);
-
-    stdromano::log_debug("Loaded jpg file {} (w: {}, h:{}, l:{})",
-                         stdromano::fs_filename(path),
-                         img.get_data_width(),
-                         img.get_data_height(),
-                         img.get_layers().size());
+    info.create_layer(MediaInfo::MAIN_LAYER_NAME,
+                      static_cast<MediaFormat>(n - 1),
+                      MediaDepth_U8);
 
     return true;
 }
 
-bool layer_pixel_read_jpeg(const stdromano::StringD& path,
-                           const stdromano::StringD& layer_name,
-                           Layer& layer) noexcept
+bool pixels_read_jpeg(const stdromano::StringD& path,
+                      const stdromano::StringD& layer_name,
+                      const MediaLayer& layer,
+                      void* data) noexcept
 {
+    // TODO
+
     int x, y, n;
 
-    layer.set_data(static_cast<void*>(stbi_load(path.c_str(), &x, &y, &n, 0)));
+    // void* data = static_cast<void*>(stbi_load(path.c_str(), &x, &y, &n, 0));
 
-    if(layer.data<unsigned char>() == nullptr)
-    {
-        stdromano::log_error("Error while loading layer \"{}\" from image: \"{}\"",
-                             layer_name,
-                             path);
+    // if(data == nullptr)
+    // {
+    //     stdromano::log_error("Error while loading layer \"{}\" from image: \"{}\"",
+    //                          layer_name,
+    //                          path);
 
-        return false;
-    }
+    //     return false;
+    // }
 
     return true;
 }
 
 /* PNG */
 
-bool image_read_metadata_png(const stdromano::StringD& path,
-                             Image& img) noexcept
+bool image_read_info_png(const stdromano::StringD& path,
+                         MediaInfo& info) noexcept
 {
     int x, y, n;
 
@@ -90,48 +86,42 @@ bool image_read_metadata_png(const stdromano::StringD& path,
         return false;
     }
 
-    img.get_layers().emplace(std::make_pair(Image::MAIN_LAYER_NAME,
-                                            Layer(std::addressof(img),
-                                                  LayerDepth_U8,
-                                                  static_cast<std::uint32_t>(n))));
+    info = MediaInfo(Imath::Box2i(Imath::V2i(0, 0), Imath::V2i(x - 1, y - 1)),
+                     Imath::Box2i(Imath::V2i(0, 0), Imath::V2i(x - 1, y - 1)),
+                     static_cast<float>(x) / static_cast<float>(y));
 
-    img.data_window() = Imath::Box2i(Imath::V2i(0, 0), Imath::V2i(x - 1, y - 1));
-    img.display_window() = Imath::Box2i(Imath::V2i(0, 0), Imath::V2i(x - 1, y - 1));
-    img.aspect_ratio() = static_cast<float>(x) / static_cast<float>(y);
-
-    stdromano::log_debug("Loaded png file {} (w: {}, h:{}, l:{})",
-                         stdromano::fs_filename(path),
-                         img.get_data_width(),
-                         img.get_data_height(),
-                         img.get_layers().size());
+    info.create_layer(MediaInfo::MAIN_LAYER_NAME,
+                        static_cast<MediaFormat>(n - 1),
+                        MediaDepth_U8);
 
     return true;
 }
 
-bool layer_pixel_read_png(const stdromano::StringD& path,
-                          const stdromano::StringD& layer_name,
-                          Layer& layer) noexcept
+bool pixels_read_png(const stdromano::StringD& path,
+                     const stdromano::StringD& layer_name,
+                     const MediaLayer& layer,
+                     void* data) noexcept
 {
     int x, y, n;
 
-    layer.set_data(static_cast<void*>(stbi_load(path.c_str(), &x, &y, &n, 0)));
+    // void* data = stbi_load(path.c_str(), &x, &y, &n, 0);
 
-    if(layer.data<unsigned char>() == nullptr)
-    {
-        stdromano::log_error("Error while loading layer \"{}\" from image: \"{}\"",
-                             layer_name,
-                             path);
+    // if(data == nullptr)
+    // {
+    //     stdromano::log_error("Error while loading layer \"{}\" from image: \"{}\"",
+    //                          layer_name,
+    //                          path);
 
-        return false;
-    }
+    //     return false;
+    // }
 
     return true;
 }
 
 /* HDR */
 
-bool image_read_metadata_hdr(const stdromano::StringD& path,
-                             Image& img) noexcept
+bool image_read_info_hdr(const stdromano::StringD& path,
+                         MediaInfo& info) noexcept
 {
     int x, y, n;
 
@@ -141,33 +131,29 @@ bool image_read_metadata_hdr(const stdromano::StringD& path,
         return false;
     }
 
-    img.get_layers().emplace(std::make_pair(Image::MAIN_LAYER_NAME,
-                                            Layer(std::addressof(img),
-                                                  LayerDepth_F32,
-                                                  static_cast<std::uint32_t>(n))));
+    info = MediaInfo(Imath::Box2i(Imath::V2i(0, 0), Imath::V2i(x - 1, y - 1)),
+                     Imath::Box2i(Imath::V2i(0, 0), Imath::V2i(x - 1, y - 1)),
+                     static_cast<float>(x) / static_cast<float>(y));
 
-    img.data_window() = Imath::Box2i(Imath::V2i(0, 0), Imath::V2i(x - 1, y - 1));
-    img.display_window() = Imath::Box2i(Imath::V2i(0, 0), Imath::V2i(x - 1, y - 1));
-    img.aspect_ratio() = static_cast<float>(x) / static_cast<float>(y);
-
-    stdromano::log_debug("Loaded hdr file {} (w: {}, h:{}, l:{})",
-                         stdromano::fs_filename(path),
-                         img.get_data_width(),
-                         img.get_data_height(),
-                         img.get_layers().size());
+    info.create_layer(MediaInfo::MAIN_LAYER_NAME,
+                      static_cast<MediaFormat>(n - 1),
+                      MediaDepth_F32);
 
     return true;
 }
 
-bool layer_pixel_read_hdr(const stdromano::StringD& path,
-                          const stdromano::StringD& layer_name,
-                          Layer& layer) noexcept
+bool pixels_read_hdr(const stdromano::StringD& path,
+                     const stdromano::StringD& layer_name,
+                     const MediaLayer& layer,
+                     void* data) noexcept
 {
+    // TODO
+
     int x, y, n;
 
-    layer.set_data(static_cast<void*>(stbi_loadf(path.c_str(), &x, &y, &n, 0)));
+    float* img_data = stbi_loadf(path.c_str(), &x, &y, &n, 0);
 
-    if(layer.data<unsigned char>() == nullptr)
+    if(img_data == nullptr)
     {
         stdromano::log_error("Error while loading layer \"{}\" from image: \"{}\"",
                              layer_name,
@@ -180,28 +166,34 @@ bool layer_pixel_read_hdr(const stdromano::StringD& path,
 
 /* Tiff */
 
+#define TIFF_HANDLER_BUF_SIZE 1024
+
 void tiff_error_handler(const char* module, const char* fmt, va_list ap)
 {
-    char buf[1024];
+    LOV_UNUSED(module);
+
+    char buf[TIFF_HANDLER_BUF_SIZE];
     std::memset(buf, 0, sizeof(buf));
 
-    vsnprintf(buf, 1024, fmt, ap);
+    vsnprintf(buf, TIFF_HANDLER_BUF_SIZE, fmt, ap);
 
     stdromano::log_error("{}", buf);
 }
 
 void tiff_warning_handler(const char* module, const char* fmt, va_list ap)
 {
-    char buf[1024];
+    LOV_UNUSED(module);
+
+    char buf[TIFF_HANDLER_BUF_SIZE];
     std::memset(buf, 0, sizeof(buf));
 
-    vsnprintf(buf, 1024, fmt, ap);
+    vsnprintf(buf, TIFF_HANDLER_BUF_SIZE, fmt, ap);
 
     stdromano::log_warn("{}", buf);
 }
 
-bool image_read_metadata_tiff(const stdromano::StringD& path,
-                              Image& img) noexcept
+bool image_read_info_tiff(const stdromano::StringD& path,
+                          MediaInfo& info) noexcept
 {
     TIFFSetErrorHandler(tiff_error_handler);
     TIFFSetWarningHandler(tiff_warning_handler);
@@ -219,16 +211,12 @@ bool image_read_metadata_tiff(const stdromano::StringD& path,
     TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
     TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
 
-    img.data_window() = Imath::Box2i(Imath::V2i(0, 0), Imath::V2i(width, height));
-    img.display_window() = Imath::Box2i(Imath::V2i(0, 0), Imath::V2i(width, height));
-    img.aspect_ratio() = static_cast<float>(width) / static_cast<float>(height);
-
     std::uint16_t n_channels = 1, bits_per_sample = 1, sample_format = SAMPLEFORMAT_UINT;
     TIFFGetFieldDefaulted(tif, TIFFTAG_SAMPLESPERPIXEL, &n_channels);
     TIFFGetFieldDefaulted(tif, TIFFTAG_BITSPERSAMPLE, &bits_per_sample);
     TIFFGetFieldDefaulted(tif, TIFFTAG_SAMPLEFORMAT, &sample_format);
 
-    std::uint8_t depth;
+    MediaDepth depth;
 
     switch(sample_format)
     {
@@ -236,13 +224,13 @@ bool image_read_metadata_tiff(const stdromano::StringD& path,
             switch(bits_per_sample)
             {
                 case 8:
-                    depth = LayerDepth_U8;
+                    depth = MediaDepth_U8;
                     break;
                 case 16:
-                    depth = LayerDepth_U16;
+                    depth = MediaDepth_U16;
                     break;
                 case 32:
-                    depth = LayerDepth_U32;
+                    depth = MediaDepth_U32;
                     break;
                 default:
                     stdromano::log_error("Unknown uint bit depth: {}", bits_per_sample);
@@ -255,10 +243,10 @@ bool image_read_metadata_tiff(const stdromano::StringD& path,
             switch(bits_per_sample)
             {
                 case 16:
-                    depth = LayerDepth_F16;
+                    depth = MediaDepth_F16;
                     break;
                 case 32:
-                    depth = LayerDepth_F32;
+                    depth = MediaDepth_F32;
                     break;
                 default:
                     stdromano::log_error("Unknown float bit depth: {}", bits_per_sample);
@@ -272,28 +260,37 @@ bool image_read_metadata_tiff(const stdromano::StringD& path,
             return false;
     }
 
-    img.get_layers().emplace(std::make_pair(Image::MAIN_LAYER_NAME,
-                                            Layer(std::addressof(img),
-                                                  depth,
-                                                  static_cast<std::uint8_t>(n_channels))));
+    info = MediaInfo(Imath::Box2i(Imath::V2i(0, 0), Imath::V2i(width - 1, height - 1)),
+                     Imath::Box2i(Imath::V2i(0, 0), Imath::V2i(width - 1, height - 1)),
+                     static_cast<float>(width) / static_cast<float>(height));
+
+    info.create_layer(MediaInfo::MAIN_LAYER_NAME,
+                      static_cast<MediaFormat>(n_channels - 1),
+                      depth);
 
     TIFFClose(tif);
 
     return true;
 }
 
-bool layer_pixel_read_tiff(const stdromano::StringD& path,
-                           const stdromano::StringD& layer_name,
-                           Layer& layer) noexcept
+bool pixels_read_tiff(const stdromano::StringD& path,
+                      const stdromano::StringD& layer_name,
+                      const MediaLayer& layer,
+                      void* data) noexcept
 {
+    LOV_UNUSED(layer);
+
     TIFF* tif = TIFFOpen(path.c_str(), "r");
 
-    layer.allocate(layer.nbytes());
+    std::uint32_t width, height;
+
+    TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
+    TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
 
     if(!TIFFReadRGBAImage(tif,
-                          layer.parent()->get_data_width(),
-                          layer.parent()->get_data_height(),
-                          layer.data<uint32_t>(),
+                          width,
+                          height,
+                          static_cast<std::uint32_t*>(data),
                           0))
     {
         TIFFClose(tif);
@@ -342,7 +339,7 @@ EXRLayerNames image_get_layer_names_exr(const Imf::ChannelList& channels) noexce
                       return lhs[0] > rhs[0];
                   });
 
-        layer_names[Image::MAIN_LAYER_NAME] = std::move(layer_names["default"]);
+        layer_names[MediaInfo::MAIN_LAYER_NAME] = std::move(layer_names["default"]);
         layer_names.erase("default");
     }
     else
@@ -353,8 +350,8 @@ EXRLayerNames image_get_layer_names_exr(const Imf::ChannelList& channels) noexce
     return layer_names;
 }
 
-bool image_read_metadata_exr(const stdromano::StringD& path,
-                             Image& img) noexcept
+bool image_read_info_exr(const stdromano::StringD& path,
+                         MediaInfo& info) noexcept
 {
     try
     {
@@ -362,11 +359,15 @@ bool image_read_metadata_exr(const stdromano::StringD& path,
         const Imf::Header& header = file.header();
         const Imf::ChannelList& channels = header.channels();
 
-        img.data_window() = file.header().dataWindow();
-        img.display_window() = file.header().displayWindow();
-        img.aspect_ratio() = file.header().pixelAspectRatio();
+        Imath::Box2i data_window = file.header().dataWindow();
+        Imath::Box2i display_window = file.header().displayWindow();
+        float aspect_ratio = file.header().pixelAspectRatio();
 
         EXRLayerNames layers = image_get_layer_names_exr(channels);
+
+        info = MediaInfo(data_window,
+                         display_window,
+                         aspect_ratio);
 
         for(const auto& exr_layer : layers)
         {
@@ -378,21 +379,12 @@ bool image_read_metadata_exr(const stdromano::StringD& path,
             }
 
             const Imf::PixelType channel_type = channels.find(layer_channels[0].c_str()).channel().type;
-            const std::uint8_t depth = (channel_type == Imf::HALF) ? LayerDepth_F16 : LayerDepth_F32;
-            const std::size_t channel_size = layer_depth_as_byte_size(depth);
+            const MediaDepth depth = (channel_type == Imf::HALF) ? MediaDepth_F16 : MediaDepth_F32;
 
-            Layer layer(std::addressof(img),
-                        depth,
-                        static_cast<std::uint8_t>(layer_channels.size()));
-
-            img.get_layers().emplace(std::make_pair(exr_layer.first.copy(), std::move(layer)));
+            info.create_layer(exr_layer.first.copy(),
+                              static_cast<MediaFormat>(layer_channels.size() - 1),
+                              depth);
         }
-
-        stdromano::log_debug("Loaded exr file {} (w: {}, h:{}, l:{})",
-                             stdromano::fs_filename(path),
-                             img.get_data_width(),
-                             img.get_data_height(),
-                             img.get_layers().size());
     }
     catch(const std::exception& e)
     {
@@ -404,9 +396,10 @@ bool image_read_metadata_exr(const stdromano::StringD& path,
     return true;
 }
 
-bool layer_pixel_read_exr(const stdromano::StringD& path,
-                          const stdromano::StringD& layer_name,
-                          Layer& layer) noexcept
+bool pixels_read_exr(const stdromano::StringD& path,
+                     const stdromano::StringD& layer_name,
+                     const MediaLayer& layer,
+                     void* data) noexcept
 {
     try
     {
@@ -440,7 +433,7 @@ bool layer_pixel_read_exr(const stdromano::StringD& path,
         {
             frame_buffer.insert(channel.c_str(),
                                 Imf::Slice(channel_type,
-                                           layer.data<char>() + offset,
+                                           static_cast<char*>(data) + offset,
                                            channel_size * layer_channels.size(),
                                            channel_size * layer_channels.size() * layer.parent()->get_data_width()));
 
@@ -466,40 +459,41 @@ bool layer_pixel_read_exr(const stdromano::StringD& path,
 
 /* Registry */
 
-using ImageMetadataReadFunc = bool(*)(const stdromano::StringD&, Image&) noexcept;
-using LayerPixelsReadFunc = bool(*)(const stdromano::StringD&,
-                                    const stdromano::StringD&,
-                                    Layer&) noexcept;
+using ImageReadInfoFunc = bool(*)(const stdromano::StringD& /* path */, MediaInfo& /* info */) noexcept;
+using ImageReadPixelsFunc = bool(*)(const stdromano::StringD& /* path */,
+                                    const stdromano::StringD& /* layer name */,
+                                    const MediaLayer& /* layer */,
+                                    void* /* data */) noexcept;
 
-static stdromano::HashMap<stdromano::StringD, ImageMetadataReadFunc> g_read_funcs_table = {
-    { "jpg", image_read_metadata_jpeg },
-    { "jpeg", image_read_metadata_jpeg },
-    { "png", image_read_metadata_png },
-    { "hdr", image_read_metadata_hdr },
-    { "exr", image_read_metadata_exr },
-    { "tiff", image_read_metadata_tiff },
-    { "tif", image_read_metadata_tiff },
+static stdromano::HashMap<stdromano::StringD, ImageReadInfoFunc> g_read_funcs_table = {
+    { "jpg", image_read_info_jpeg },
+    { "jpeg", image_read_info_jpeg },
+    { "png", image_read_info_png },
+    { "hdr", image_read_info_hdr },
+    { "exr", image_read_info_exr },
+    { "tiff", image_read_info_tiff },
+    { "tif", image_read_info_tiff },
 };
 
-static stdromano::HashMap<stdromano::StringD, LayerPixelsReadFunc> g_pix_read_funcs_table = {
-    { "jpg", layer_pixel_read_jpeg },
-    { "jpeg", layer_pixel_read_jpeg },
-    { "png", layer_pixel_read_png },
-    { "hdr", layer_pixel_read_hdr },
-    { "exr", layer_pixel_read_exr },
-    { "tiff", layer_pixel_read_tiff },
-    { "tif", layer_pixel_read_tiff },
+static stdromano::HashMap<stdromano::StringD, ImageReadPixelsFunc> g_pix_read_funcs_table = {
+    { "jpg", pixels_read_jpeg },
+    { "jpeg", pixels_read_jpeg },
+    { "png", pixels_read_png },
+    { "hdr", pixels_read_hdr },
+    { "exr", pixels_read_exr },
+    { "tiff", pixels_read_tiff },
+    { "tif", pixels_read_tiff },
 };
 
 /* Returns nullptr if the read function can't be found */
-ImageMetadataReadFunc get_image_read_metadata(const stdromano::StringD& ext) noexcept
+ImageReadInfoFunc get_image_read_info(const stdromano::StringD& ext) noexcept
 {
     auto it = g_read_funcs_table.find(ext);
 
     return it == g_read_funcs_table.end() ? nullptr : it->second;
 }
 
-LayerPixelsReadFunc get_layer_pixels_read(const stdromano::StringD& ext) noexcept
+ImageReadPixelsFunc get_layer_pixels_read(const stdromano::StringD& ext) noexcept
 {
     auto it = g_pix_read_funcs_table.find(ext);
 
@@ -508,12 +502,12 @@ LayerPixelsReadFunc get_layer_pixels_read(const stdromano::StringD& ext) noexcep
 
 /* Generic image read static function */
 
-bool Image::read_image_metadata(const stdromano::StringD& path,
-                                Image& image) noexcept
+bool image_read_info(const stdromano::StringD& path,
+                     MediaInfo& info) noexcept
 {
     const stdromano::StringD ext = path.rsplit(".");
 
-    ImageMetadataReadFunc func = get_image_read_metadata(ext);
+    ImageReadInfoFunc func = get_image_read_info(ext);
 
     if(func == nullptr)
     {
@@ -521,16 +515,16 @@ bool Image::read_image_metadata(const stdromano::StringD& path,
         return false;
     }
 
-    return func(path, image);
+    return func(path, info);
 }
 
-bool Image::read_layer_pixels(const stdromano::StringD& path,
-                              const stdromano::StringD& layer_name,
-                              Layer& layer) noexcept
+bool image_read_pixels(const stdromano::StringD& path,
+                       const stdromano::StringD& layer_name,
+                       void* data) noexcept
 {
     const stdromano::StringD ext = path.rsplit(".");
 
-    LayerPixelsReadFunc func = get_layer_pixels_read(ext);
+    ImageReadPixelsFunc func = get_layer_pixels_read(ext);
 
     if(func == nullptr)
     {
@@ -538,7 +532,7 @@ bool Image::read_layer_pixels(const stdromano::StringD& path,
         return false;
     }
 
-    return func(path, layer_name, layer);
+    return func(path, layer_name, data);
 }
 
 LOV_NAMESPACE_END
