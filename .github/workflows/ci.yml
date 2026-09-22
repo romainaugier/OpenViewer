@@ -1,0 +1,105 @@
+# SPDX-License-Identifier: BSD-3-Clause
+# Copyright (c) 2022 - Present Romain Augier
+# All rights reserved.
+
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+  # Binary caching, so the four jobs do not rebuild OpenEXR, OCIO ... from source on every run
+  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x86_64
+            os: ubuntu-24.04
+            triplet: x64-linux
+          - name: Linux aarch64
+            os: ubuntu-24.04-arm
+            triplet: arm64-linux
+          - name: macOS arm64
+            os: macos-14
+            triplet: arm64-osx
+          - name: Windows x86_64
+            os: windows-2022
+            triplet: x64-windows
+
+    env:
+      VCPKG_DEFAULT_TRIPLET: ${{ matrix.triplet }}
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Export GitHub Actions cache variables for vcpkg
+      uses: actions/github-script@v7
+      with:
+        script: |
+          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
+          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
+
+    - uses: lukka/get-cmake@latest
+
+    # vcpkg has no prebuilt tools for arm64 linux and has to use the system ones.
+    - name: Linux dependencies
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y pkg-config libgtk2.0-dev ninja-build
+        if [ "$(uname -m)" = "x86_64" ]; then sudo apt-get install -y nasm; fi
+        if [ "$(uname -m)" = "aarch64" ]; then echo "VCPKG_FORCE_SYSTEM_BINARIES=1" >> $GITHUB_ENV; fi
+
+    - name: macOS dependencies
+      if: runner.os == 'macOS'
+      run: brew install pkg-config ninja
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - uses: lukka/run-vcpkg@v11
+      with:
+        vcpkgJsonGlob: 'vcpkg.json'
+
+    # stdromano is built and installed into ext/stdromano/install, which is where the root CMakeLists looks for it (stdromano_DIR)
+    - name: Build stdromano
+      shell: bash
+      run: |
+        cmake -S ext/stdromano -B ext/stdromano/build \
+              -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+              -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
+              -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} \
+              -DVERSION=0.0.0
+        cmake --build ext/stdromano/build --config ${{ env.BUILD_TYPE }} --parallel
+        cmake --install ext/stdromano/build --config ${{ env.BUILD_TYPE }} --prefix ext/stdromano/install
+
+    - name: Configure
+      shell: bash
+      run: |
+        cmake -S . -B build \
+              -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+              -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
+              -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} \
+              -DRUN_TESTS=1
+
+    - name: Build
+      run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel
+
+    - name: Test
+      working-directory: build
+      run: ctest --output-on-failure -C ${{ env.BUILD_TYPE }}

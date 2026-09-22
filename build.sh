@@ -175,7 +175,14 @@ fi
 
 cd build
 
-cmake --build . -- -j $(nproc)
+# nproc does not exist on macOS and on the bsds
+if command -v nproc > /dev/null 2>&1; then
+    NUM_PROCS=$(nproc)
+else
+    NUM_PROCS=$(sysctl -n hw.ncpu)
+fi
+
+cmake --build . --parallel ${NUM_PROCS}
 
 if [[ $? -ne 0 ]]; then
     log_error "Error during CMake build"

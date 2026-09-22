@@ -4,55 +4,48 @@ The goal of OpenViewer is to provide a lightweight and optimized C++ library to 
 
 Disclaimer : it is currently a work in progress, so do not expect everything to be stable and working perfectly. I (Romain Augier) learned to code on my own , so any suggestion on how to improve the code, the design of the library/application or anything else is welcome!
 
-## Installation
+## Platforms
 
-To manage its dependencies, OpenViewer uses [Conan 1.57](https://conan.io/).
+| OS | Architecture | Compiler | CI |
+| --- | --- | --- | --- |
+| Linux | x86_64, aarch64 | gcc 11+, clang 14+ | yes |
+| macOS 12+ | arm64 (Apple silicon), x86_64 | AppleClang 14+ | arm64 |
+| Windows 10+ | x86_64 | MSVC 2022 | yes |
 
-You can install it in a virtual python environment directly in this directory 
-```bash
-python -m venv conan_env
-source conan_env/bin/activate
-pip install conan==1.57
-```
+32 bits targets are not supported.
 
-You'll need to first build the recipes for OpenColorIO and OpenImageIO (OpenImageIO will soon be removed as it is a huge dependency with too much stuff we do not need).
+## Building
 
-```bash
-source conan_env/bin/activate
-cd conan/recipes/opencolorio
-conan create . opencolorio/2.1.0@openviewer/1.0 --build missing
-```
+Dependencies come from [vcpkg](https://github.com/microsoft/vcpkg) in manifest
+mode (`vcpkg.json`), except [stdromano](https://github.com/romainaugier/stdromano),
+which is a submodule built first and installed into `ext/stdromano/install`.
+stdromano also provides spdlog: do not install another one.
 
-```bash
-source conan_env/bin/activate
-cd conan/recipes/openimageio
-conan create . openimageio/2.4@openviewer/1.0 -o with_ffmpeg=False -o boost*:shared=True -o openexr*:shared=True -o openjpeg*:shared=True --build missing
-```
+System packages:
 
-If you encounter any error during the recipes building, mentionning the libstdcxx is not the good version, you can update your conan profile :
-```bash
-source conan_env/bin/activate
-conan profile update settings.compiler.libcxx=libstdc++11 default
-```
-
-Once you've built the custom recipes, you can install the conanfile that is in the root directory
+- Linux: `cmake`, `ninja`, `pkg-config`, `nasm` (x86_64 only), `libgtk2.0-dev` (optional, file dialogs)
+- macOS: Xcode command line tools, then `brew install cmake ninja pkg-config`
+- Windows: Visual Studio 2022 with the C++ workload
 
 ```bash
-source conan_env/bin/activate
-conan install . --build missing
+git clone --recursive https://github.com/romainaugier/OpenViewer.git
+cd OpenViewer
+
+# 1. stdromano, installed where OpenViewer looks for it
+cd ext/stdromano && ./build.sh --install --installdir:$PWD/install && cd ../..
+
+# 2. OpenViewer, with the tests
+./build.sh --tests
 ```
 
-Then, to build the project, there are utility script : 
-- `--debug` turn on debug build
-- `--tests` build the tests for all the libraries and run them
-- `--clean` remove the previous build folder, if existing
-- `--export-compile-commands` export the json file containing compile commands for each file (useful for clangd, not working on windows though)
-- `--sanitize` enables instrumentation of the code (in debug only) to sanitize memory addresses and leaks
+On Windows use `build.bat` with the same arguments.
 
-```bash
-source conan_env/bin/activate
-./build.sh --debug --tests --clean --export-compile-commands --sanitize
-```
+`build.sh` options: `--debug`, `--reldebug`, `--tests`, `--clean`, `--install`,
+`--installdir:<path>`, `--vcpkgpath:<path>`, `--addrsan`, `--ubsan`, `--leaksan`,
+`--threadsan`, `--export-compile-commands`.
+
+To build x86_64 binaries on an Apple silicon mac, configure with
+`-DCMAKE_OSX_ARCHITECTURES=x86_64`; the architecture specific flags follow it.
 
 ## Acknowledgement
 

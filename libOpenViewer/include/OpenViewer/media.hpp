@@ -7,114 +7,126 @@
 #if !defined(__LOV_MEDIA)
 #define __LOV_MEDIA
 
-#include "OpenViewer/media_cache.hpp"
 #include "OpenViewer/media_info.hpp"
-
-#include "Imath/ImathBox.h"
 
 LOV_NAMESPACE_BEGIN
 
-// A media represents anything that OpenViewer can read, i.e a video, an image or an image sequence
-// It holds informations such as the dimensions, the number of channels, the start/end frames, the pixel type
-// We assume those informations will be consistent for image sequences
+enum class MediaType : std::uint8_t
+{
+    Image,
+    ImageSequence,
+    Video,
+};
+
+// Anything OpenViewer can play: a still, an image sequence, or a video.
+//
+// A Media knows what it is, where its frames live, and what they look like. It
+// does not know about the cache, and read_frame() writes into memory the caller
+// owns. The previous interface took a MediaCache& on every read, which meant
+// every media implementation had to understand eviction, every test had to
+// build a cache, and the cache could not be changed without touching every
+// reader. The scheduler above owns that relationship now.
 class LOV_API Media
 {
 protected:
+    // For a sequence this is the pattern ("render.####.exr"), not a real file.
     stdromano::StringD _path;
 
+    // Inclusive frame range: a single image is [0, 0].
     std::uint32_t _start = 0;
     std::uint32_t _end = 0;
 
     MediaInfo _info;
 
+    MediaType _type = MediaType::Image;
+
 public:
-    // Constructs an empty media
     Media() = default;
 
-    // Destructs a media
     virtual ~Media() = default;
 
-    // Returns a void* to the block of data corresponding to the frame and layer (if given).
-    // If the data is not available, load it in cache and then return the pointer to the data.
-    virtual void* get_data_at_frame(std::uint32_t frame,
-                                    MediaCache& cache,
-                                    const stdromano::StringD& layer = stdromano::StringD::make_ref("main")) noexcept = 0;
+    // Path of the file backing `frame`. Empty when the frame is out of range or
+    // when the media has no per-frame file (video).
+    virtual stdromano::StringD frame_path(std::uint32_t frame) const noexcept = 0;
 
-    // True if the media is in the media cache
-    virtual bool is_cached_at_frame(std::uint32_t frame) const noexcept = 0;
+    // Decodes one layer of one frame into `dst`. Re-entrant: several worker
+    // threads may call it on the same Media at the same time. Returns false and
+    // logs on failure.
+    virtual bool read_frame(std::uint32_t frame,
+                            const stdromano::StringD& layer_name,
+                            void* dst,
+                            std::size_t dst_size) const noexcept;
 
-    // Debugging purpose, print the media to the console
-    virtual void debug() const noexcept = 0;
+    // Byte size one frame of the given layer needs. 0 when the layer is unknown.
+    std::size_t frame_size(const stdromano::StringD& layer_name) const noexcept;
 
-    // ** Media info **
-    LOV_FORCE_INLINE const MediaInfo& get_info() const noexcept { return this->_info; }
+    // Populates _info from the first frame. Must be called once after
+    // construction; returns false when the media cannot be opened.
+    virtual bool open() noexcept;
 
-    // ** Media path **
+    void debug() const noexcept;
 
-    // Returns the path of the media
-    LOV_FORCE_INLINE const stdromano::StringD& get_path() const noexcept { return this->_path; }
+    LOV_FORCE_INLINE MediaType type() const noexcept { return this->_type; }
 
-    // ** Media time caracteristics **
+    LOV_FORCE_INLINE const MediaInfo& info() const noexcept { return this->_info; }
 
-    // Returns the length of the media in frames
-    LOV_FORCE_INLINE std::uint32_t get_length() const noexcept { return this->_end - this->_start; }
+    LOV_FORCE_INLINE const stdromano::StringD& path() const noexcept { return this->_path; }
 
-    LOV_FORCE_INLINE std::uint32_t get_start_frame() const noexcept { return this->_start; }
+    LOV_FORCE_INLINE std::uint32_t start_frame() const noexcept { return this->_start; }
 
-    LOV_FORCE_INLINE std::uint32_t get_end_frame() const noexcept { return this->_end; }
+    LOV_FORCE_INLINE std::uint32_t end_frame() const noexcept { return this->_end; }
+
+    // Inclusive range, so a single image has a length of 1.
+    LOV_FORCE_INLINE std::uint32_t length() const noexcept
+    {
+        return this->_end - this->_start + 1;
+    }
+
+    LOV_FORCE_INLINE bool contains_frame(std::uint32_t frame) const noexcept
+    {
+        return frame >= this->_start && frame <= this->_end;
+    }
 };
 
 class LOV_API ImageMedia : public Media
 {
 public:
-    ImageMedia(stdromano::StringD& path);
+    explicit ImageMedia(stdromano::StringD path) noexcept;
 
-    ~ImageMedia() override;
-
-    void* get_data_at_frame(std::uint32_t frame,
-                            MediaCache& cache,
-                            const stdromano::StringD& layer = stdromano::StringD::make_ref("main")) noexcept override;
-
-    bool is_cached_at_frame(std::uint32_t frame) const noexcept override;
-
-    void debug() const noexcept override;
+    stdromano::StringD frame_path(std::uint32_t frame) const noexcept override;
 };
 
 class LOV_API ImageSequenceMedia : public Media
 {
-private:
-
 public:
-    ImageSequenceMedia(stdromano::StringD& path,
+    // `pattern` holds either a run of '#' (render.####.exr) or a printf
+    // conversion (render.%04d.exr).
+    ImageSequenceMedia(stdromano::StringD pattern,
                        std::uint32_t start,
-                       std::uint32_t end);
+                       std::uint32_t end) noexcept;
 
-    ~ImageSequenceMedia() override;
-
-    void* get_data_at_frame(std::uint32_t frame,
-                            MediaCache& cache,
-                            const stdromano::StringD& layer = stdromano::StringD::make_ref("main")) noexcept override;
-
-    bool is_cached_at_frame(std::uint32_t frame) const noexcept override;
-
-    void debug() const noexcept override;
+    stdromano::StringD frame_path(std::uint32_t frame) const noexcept override;
 };
 
 class LOV_API VideoMedia : public Media
 {
 public:
-    VideoMedia(stdromano::StringD& path);
+    explicit VideoMedia(stdromano::StringD path) noexcept;
 
-    ~VideoMedia() override;
+    stdromano::StringD frame_path(std::uint32_t frame) const noexcept override;
 
-    void* get_data_at_frame(std::uint32_t frame,
-                            MediaCache& cache,
-                            const stdromano::StringD& layer = stdromano::StringD::make_ref("main")) noexcept override;
+    bool read_frame(std::uint32_t frame,
+                    const stdromano::StringD& layer_name,
+                    void* dst,
+                    std::size_t dst_size) const noexcept override;
 
-    bool is_cached_at_frame(std::uint32_t frame) const noexcept override;
-
-    void debug() const noexcept override;
+    bool open() noexcept override;
 };
+
+// Substitutes `frame` into a sequence pattern. Supports '####' and '%04d'.
+// Returns a copy of the pattern when it holds neither.
+LOV_API stdromano::StringD format_sequence_path(const stdromano::StringD& pattern,
+                                                std::uint32_t frame) noexcept;
 
 LOV_NAMESPACE_END
 

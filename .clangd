@@ -1,8 +1,5 @@
 CompileFlags:
   Add:
-    - -mavx
-    - -mavx2
-    - -msse4.2
     - -std=c++17
     - -Wall
     - -Wextra
@@ -11,6 +8,7 @@ CompileFlags:
     - -DLOV_BUILD_EXPORT
     - -DLOVA_BUILD_EXPORT
     - -IlibOpenViewer/include
+    - -IlibOpenViewer/src
     - -IlibOpenViewerApp/include
     - -Istb/include
     - -Ivcpkg/packages/expat_x64-windows/include
@@ -24,14 +22,30 @@ CompileFlags:
     - -Ivcpkg/packages/pystring_x64-windows/include
     - -Ivcpkg/packages/yaml-cpp_x64-windows/include
     - -Ivcpkg/packages/zlib_x64-windows/include
+    - -Ivcpkg/packages/expat_x64-linux/include
+    - -Ivcpkg/packages/glfw3_x64-linux/include
+    - -Ivcpkg/packages/imath_x64-linux/include
+    - -Ivcpkg/packages/imgui_x64-linux/include
+    - -Ivcpkg/packages/libdeflate_x64-linux/include
+    - -Ivcpkg/packages/minizip_x64-linux/include
+    - -Ivcpkg/packages/opencolorio_x64-linux/include
+    - -Ivcpkg/packages/openexr_x64-linux/include
+    - -Ivcpkg/packages/pystring_x64-linux/include
+    - -Ivcpkg/packages/yaml-cpp_x64-linux/include
+    - -Ivcpkg/packages/zlib_x64-linux/include
+    - -Ivcpkg/packages/expat_arm64-osx/include
+    - -Ivcpkg/packages/glfw3_arm64-osx/include
+    - -Ivcpkg/packages/imath_arm64-osx/include
+    - -Ivcpkg/packages/imgui_arm64-osx/include
+    - -Ivcpkg/packages/libdeflate_arm64-osx/include
+    - -Ivcpkg/packages/minizip_arm64-osx/include
+    - -Ivcpkg/packages/opencolorio_arm64-osx/include
+    - -Ivcpkg/packages/openexr_arm64-osx/include
+    - -Ivcpkg/packages/pystring_arm64-osx/include
+    - -Ivcpkg/packages/yaml-cpp_arm64-osx/include
+    - -Ivcpkg/packages/zlib_arm64-osx/include
     - -Iext/stdromano/install/include
     - -Iext/nanobind/include
 
 Diagnostics:
-  ClangTidy:
-    Add:
-      - modernize-*
-      - performance-*
-      - readability-*
-
   UnusedIncludes: Strict
