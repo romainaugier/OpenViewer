@@ -47,7 +47,10 @@ stdromano::StringD format_sequence_path(const stdromano::StringD& pattern,
         if(written > 0 && static_cast<std::size_t>(written) < sizeof(buffer))
             return stdromano::StringD::make_from_c_str(buffer, static_cast<std::size_t>(written));
 
-        log_error("Could not expand sequence pattern \"{}\" for frame {}", pattern, frame);
+        log_error(LogCategory::Media,
+                  "Could not expand sequence pattern \"{}\" for frame {}",
+                  pattern,
+                  frame);
     }
 
     return pattern.copy();
@@ -63,7 +66,11 @@ bool Media::open() noexcept
 
     if(path.size() == 0)
     {
-        log_error("Cannot resolve frame {} of \"{}\"", this->_start, this->_path);
+        log_error(LogCategory::Media,
+                  "Cannot resolve frame {} of \"{}\"",
+                  this->_start,
+                  this->_path);
+
         return false;
     }
 
@@ -77,7 +84,8 @@ bool Media::read_frame(std::uint32_t frame,
 {
     if(!this->contains_frame(frame))
     {
-        log_error("Frame {} is outside the range [{}, {}] of \"{}\"",
+        log_error(LogCategory::Media,
+                  "Frame {} is outside the range [{}, {}] of \"{}\"",
                   frame,
                   this->_start,
                   this->_end,
@@ -90,7 +98,7 @@ bool Media::read_frame(std::uint32_t frame,
 
     if(layer == nullptr)
     {
-        log_error("\"{}\" has no layer named \"{}\"", this->_path, layer_name);
+        log_error(LogCategory::Media, "\"{}\" has no layer named \"{}\"", this->_path, layer_name);
         return false;
     }
 
@@ -108,7 +116,8 @@ std::size_t Media::frame_size(const stdromano::StringD& layer_name) const noexce
 
 void Media::debug() const noexcept
 {
-    log_info("Media \"{}\" [{} - {}], {}x{} (display {}x{}), {} layer(s)",
+    log_info(LogCategory::Media,
+             "Media \"{}\" [{} - {}], {}x{} (display {}x{}), {} layer(s)",
              this->_path,
              this->_start,
              this->_end,
@@ -120,7 +129,8 @@ void Media::debug() const noexcept
 
     for(const auto& entry : this->_info.layers())
     {
-        log_info("  layer \"{}\": {} {}, {} bytes/frame",
+        log_info(LogCategory::Media,
+                 "  layer \"{}\": {} {}, {} bytes/frame",
                  entry.first,
                  format_to_string(entry.second.format()),
                  depth_to_string(entry.second.depth()),
@@ -198,14 +208,14 @@ bool VideoMedia::read_frame(std::uint32_t frame,
     LOV_UNUSED(dst_size);
 
     // TODO: libav demux + decode
-    log_error("Video decoding is not implemented yet (\"{}\")", this->_path);
+    log_error(LogCategory::Media, "Video decoding is not implemented yet (\"{}\")", this->_path);
 
     return false;
 }
 
 bool VideoMedia::open() noexcept
 {
-    log_error("Video decoding is not implemented yet (\"{}\")", this->_path);
+    log_error(LogCategory::Media, "Video decoding is not implemented yet (\"{}\")", this->_path);
 
     return false;
 }

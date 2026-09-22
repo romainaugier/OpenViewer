@@ -15,12 +15,12 @@ int main(int argc, char** argv)
 
     if(argc < 2)
     {
-        lov::log_info("usage: {} <image>", argv[0]);
-        lov::log_info("supported extensions:");
+        lov::log_info(lov::LogCategory::App, "usage: {} <image>", argv[0]);
+        lov::log_info(lov::LogCategory::App, "supported extensions:");
 
         for(const auto& ext : lov::ImageReaderRegistry::get_instance().supported_extensions())
         {
-            lov::log_info("  .{}", ext);
+            lov::log_info(lov::LogCategory::App, "  .{}", ext);
         }
 
         return 0;

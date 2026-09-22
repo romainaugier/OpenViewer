@@ -154,4 +154,29 @@ LOV_TEST(randomized_ring_integrity)
     }
 }
 
+// Sizes are formatted lazily, only when a message is written
+LOV_TEST(logs_sizes_in_readable_units)
+{
+    log::set_level(LogCategory::MediaCache, spdlog::level::trace);
+
+    {
+        MediaCache cache(4 * MB);
+        LOV_REQUIRE(cache.allocate(1536 * 1024) != nullptr);
+    }
+
+    log::set_level(LogCategory::MediaCache, spdlog::level::warn);
+
+    const std::string log = lov_test::read_log_file();
+
+    LOV_CHECK(lov_test::log_has_line(log, "[ov::media_cache]", "| 1.57 Mb)"));
+
+    // Trace calls are compiled out of release builds (LOV_LOG_ACTIVE_LEVEL)
+#if LOV_LOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
+    LOV_CHECK(lov_test::log_has_line(log, "[ov::media_cache]", "Requested a 1.57 Mb block"));
+    LOV_CHECK(lov_test::log_has_line(log, "[ov::media_cache]", "Initialized with 4.19 Mb"));
+#else
+    LOV_CHECK(log.find("Requested a 1.57 Mb block") == std::string::npos);
+#endif // LOV_LOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
+}
+
 LOV_TEST_MAIN()

@@ -29,9 +29,11 @@
 
 #include <cmath>
 #include <cstdio>
-#include <cstring>
 #include <cstdlib>
+#include <cstring>
 #include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <string>
 #include <vector>
 
@@ -121,6 +123,40 @@ public:
         return (this->_path / name).string();
     }
 };
+
+// Flushes every logger and returns the whole log file, for tests that check what
+// was written
+inline std::string read_log_file()
+{
+    lov::log::flush();
+
+    std::ifstream file(lov::log::file_path().c_str(), std::ios::binary);
+
+    return std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+}
+
+// True if one line of the log holds both strings
+inline bool log_has_line(const std::string& log, const std::string& a, const std::string& b)
+{
+    std::size_t start = 0;
+
+    while(start < log.size())
+    {
+        std::size_t end = log.find('\n', start);
+
+        if(end == std::string::npos)
+            end = log.size();
+
+        const std::string line = log.substr(start, end - start);
+
+        if(line.find(a) != std::string::npos && line.find(b) != std::string::npos)
+            return true;
+
+        start = end + 1;
+    }
+
+    return false;
+}
 
 // LOV_TEST_FILTER=<substring> runs only the cases whose name contains it,
 // e.g. LOV_TEST_FILTER=ring ./test_media_cache

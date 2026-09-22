@@ -19,13 +19,18 @@ bool check_dst_size(const char* reader_name,
 {
     if(dst == nullptr)
     {
-        log_error("[{}] Null destination buffer while reading \"{}\"", reader_name, path);
+        log_error(LogCategory::ImageReader,
+                  "[{}] Null destination buffer while reading \"{}\"",
+                  reader_name,
+                  path);
+
         return false;
     }
 
     if(!layer.is_valid())
     {
-        log_error("[{}] Invalid layer description while reading \"{}\" ({}x{}, {}, {})",
+        log_error(LogCategory::ImageReader,
+                  "[{}] Invalid layer description while reading \"{}\" ({}x{}, {}, {})",
                   reader_name,
                   path,
                   layer.width(),
@@ -40,7 +45,8 @@ bool check_dst_size(const char* reader_name,
 
     if(dst_size < needed)
     {
-        log_error("[{}] Destination buffer too small while reading \"{}\": {} bytes given, "
+        log_error(LogCategory::ImageReader,
+                  "[{}] Destination buffer too small while reading \"{}\": {} bytes given, "
                   "{} needed ({}x{} {} {})",
                   reader_name,
                   path,
@@ -104,7 +110,9 @@ void ImageReaderRegistry::register_reader(const stdromano::StringD& ext,
 {
     if(reader == nullptr || reader->read_info == nullptr || reader->read_layer == nullptr)
     {
-        log_error("Refusing to register an incomplete reader for extension \"{}\"", ext);
+        log_error(LogCategory::ImageReader,
+                  "Refusing to register an incomplete reader for extension \"{}\"",
+                  ext);
         return;
     }
 
@@ -144,7 +152,8 @@ bool image_read_info(const stdromano::StringD& path, MediaInfo& info) noexcept
 
     if(reader == nullptr)
     {
-        log_error("No reader registered for \"{}\" (extension: \"{}\")",
+        log_error(LogCategory::ImageReader,
+                  "No reader registered for \"{}\" (extension: \"{}\")",
                   path,
                   path.rsplit(stdromano::StringD::make_ref(".")));
 
@@ -156,7 +165,8 @@ bool image_read_info(const stdromano::StringD& path, MediaInfo& info) noexcept
 
     if(!info.is_valid())
     {
-        log_error("[{}] Produced an invalid MediaInfo for \"{}\": no usable main layer",
+        log_error(LogCategory::ImageReader,
+                  "[{}] Produced an invalid MediaInfo for \"{}\": no usable main layer",
                   reader->name,
                   path);
 
@@ -176,7 +186,8 @@ bool image_read_layer(const stdromano::StringD& path,
 
     if(reader == nullptr)
     {
-        log_error("No reader registered for \"{}\" (extension: \"{}\")",
+        log_error(LogCategory::ImageReader,
+                  "No reader registered for \"{}\" (extension: \"{}\")",
                   path,
                   path.rsplit(stdromano::StringD::make_ref(".")));
 

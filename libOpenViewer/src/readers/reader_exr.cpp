@@ -225,7 +225,8 @@ static bool exr_read_info(const stdromano::StringD& path, MediaInfo& info) noexc
 
             if(!format_from_nchannels(layer_channels.size(), format))
             {
-                log_warn("[{}] Skipping layer \"{}\" of \"{}\": {} channels, at most 4 supported",
+                log_warn(LogCategory::ImageReader,
+                         "[{}] Skipping layer \"{}\" of \"{}\": {} channels, at most 4 supported",
                          EXR_READER_NAME,
                          entry.first,
                          path,
@@ -244,7 +245,8 @@ static bool exr_read_info(const stdromano::StringD& path, MediaInfo& info) noexc
 
         if(info.main() == nullptr)
         {
-            log_warn("[{}] \"{}\" has no unprefixed channel set, so no main layer",
+            log_warn(LogCategory::ImageReader,
+                     "[{}] \"{}\" has no unprefixed channel set, so no main layer",
                      EXR_READER_NAME,
                      path);
 
@@ -253,7 +255,11 @@ static bool exr_read_info(const stdromano::StringD& path, MediaInfo& info) noexc
     }
     catch(const std::exception& e)
     {
-        log_error("[{}] Failed to read info from \"{}\": {}", EXR_READER_NAME, path, e.what());
+        log_error(LogCategory::ImageReader,
+                  "[{}] Failed to read info from \"{}\": {}",
+                  EXR_READER_NAME,
+                  path,
+                  e.what());
         return false;
     }
 
@@ -271,7 +277,8 @@ static bool exr_read_layer(const stdromano::StringD& path,
 
     if(layer.channels().size() != layer.nchannels())
     {
-        log_error("[{}] Layer \"{}\" of \"{}\" describes {} channels but its format is {}",
+        log_error(LogCategory::ImageReader,
+                  "[{}] Layer \"{}\" of \"{}\" describes {} channels but its format is {}",
                   EXR_READER_NAME,
                   layer_name,
                   path,
@@ -285,7 +292,8 @@ static bool exr_read_layer(const stdromano::StringD& path,
 
     if(!pixel_type_from_depth(layer.depth(), pixel_type))
     {
-        log_error("[{}] Depth {} cannot be read from an exr",
+        log_error(LogCategory::ImageReader,
+                  "[{}] Depth {} cannot be read from an exr",
                   EXR_READER_NAME,
                   depth_to_string(layer.depth()));
 
@@ -303,7 +311,8 @@ static bool exr_read_layer(const stdromano::StringD& path,
 
         if(width != layer.width() || height != layer.height())
         {
-            log_error("[{}] \"{}\" is {}x{} but the layer expects {}x{}",
+            log_error(LogCategory::ImageReader,
+                      "[{}] \"{}\" is {}x{} but the layer expects {}x{}",
                       EXR_READER_NAME,
                       path,
                       width,
@@ -348,7 +357,8 @@ static bool exr_read_layer(const stdromano::StringD& path,
     }
     catch(const std::exception& e)
     {
-        log_error("[{}] Failed to read layer \"{}\" from \"{}\": {}",
+        log_error(LogCategory::ImageReader,
+                  "[{}] Failed to read layer \"{}\" from \"{}\": {}",
                   EXR_READER_NAME,
                   layer_name,
                   path,

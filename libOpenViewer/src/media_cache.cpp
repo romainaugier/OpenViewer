@@ -12,30 +12,52 @@
 
 LOV_NAMESPACE_BEGIN
 
-constexpr const char* const units[4] = { "Bytes", "Gb", "Mb", "Kb" };
-
-stdromano::StringD format_byte_size(float size) noexcept
+// Formatted only when a message is actually written: log arguments are evaluated even
+// when the level filters the message out, and allocate() runs once per cached frame
+struct ByteSize
 {
-    std::size_t unit = 0;
+    std::size_t bytes;
+};
 
-    if(size > 1e9)
+LOV_NAMESPACE_END
+
+template <>
+struct fmt::formatter<lov::ByteSize>
+{
+    constexpr auto parse(fmt::format_parse_context& ctx)
     {
-        unit = 1;
-        size = size / 1e9;
-    }
-    else if(size > 1e6)
-    {
-        unit = 2;
-        size = size / 1e6;
-    }
-    else if(size > 1e3)
-    {
-        unit = 3;
-        size = size / 1e3;
+        return ctx.begin();
     }
 
-    return stdromano::StringD("{:.02f} {}", size, units[unit]);
-}
+    template <typename FormatContext>
+    auto format(const lov::ByteSize& size, FormatContext& ctx) const -> decltype(ctx.out())
+    {
+        constexpr const char* const units[4] = {"Bytes", "Gb", "Mb", "Kb"};
+
+        double value = static_cast<double>(size.bytes);
+        std::size_t unit = 0;
+
+        if(value > 1e9)
+        {
+            unit = 1;
+            value /= 1e9;
+        }
+        else if(value > 1e6)
+        {
+            unit = 2;
+            value /= 1e6;
+        }
+        else if(value > 1e3)
+        {
+            unit = 3;
+            value /= 1e3;
+        }
+
+        return fmt::format_to(ctx.out(), "{:.02f} {}", value, units[unit]);
+    }
+};
+
+LOV_NAMESPACE_BEGIN
 
 MediaCache::MediaCache(std::size_t capacity) : _capacity(capacity),
                                                _size(0),
@@ -47,7 +69,7 @@ MediaCache::MediaCache(std::size_t capacity) : _capacity(capacity),
                                                                     ALIGNMENT));
     this->_write_ptr = _buffer;
 
-    log_trace("Initialized with {}", format_byte_size(this->_capacity));
+    log_trace(LogCategory::MediaCache, "Initialized with {}", ByteSize{this->_capacity});
 }
 
 MediaCache::~MediaCache()
@@ -60,7 +82,7 @@ MediaCache::~MediaCache()
     if(this->_buffer != nullptr)
         stdromano::mem_free(this->_buffer);
 
-    log_trace("Destroyed a cache of {} bytes", this->_capacity);
+    log_trace(LogCategory::MediaCache, "Destroyed a cache of {} bytes", this->_capacity);
 }
 
 std::size_t MediaCache::compute_total_size(std::size_t data_size) const noexcept
@@ -70,7 +92,7 @@ std::size_t MediaCache::compute_total_size(std::size_t data_size) const noexcept
 
 void MediaCache::free_oldest_block() noexcept
 {
-    log_trace("Freeing oldest block");
+    log_trace(LogCategory::MediaCache, "Freeing oldest block");
 
     BlockHeader* header = this->_head;
 
@@ -109,7 +131,7 @@ void MediaCache::make_space(std::size_t total_sz) noexcept
             if(static_cast<std::size_t>(buffer_end - this->_write_ptr) >= total_sz)
                 return;
 
-            log_trace("Wrapping the write position around");
+            log_trace(LogCategory::MediaCache, "Wrapping the write position around");
 
             this->_write_ptr = this->_buffer;
             continue;
@@ -131,17 +153,20 @@ void* MediaCache::allocate(std::size_t data_sz, std::function<void()> dtor) noex
 
     if(data_sz == 0)
     {
-        log_trace("Requested a 0 bytes block size, discarding");
+        log_trace(LogCategory::MediaCache, "Requested a 0 bytes block size, discarding");
         return nullptr;
     }
 
     const std::size_t total_sz = this->compute_total_size(data_sz);
 
-    log_trace("Requested a {} block", format_byte_size(data_sz));
+    log_trace(LogCategory::MediaCache, "Requested a {} block", ByteSize{data_sz});
 
     if(total_sz > this->_capacity)
     {
-        log_error("Requested block is too large ({} > {})", total_sz, this->_capacity);
+        log_error(LogCategory::MediaCache,
+                  "Requested block is too large ({} > {})",
+                  total_sz,
+                  this->_capacity);
         return nullptr;
     }
 
@@ -168,8 +193,15 @@ void* MediaCache::allocate(std::size_t data_sz, std::function<void()> dtor) noex
     this->_write_ptr += total_sz;
     this->_size += total_sz;
 
-    log_debug("Allocated a new block ({} | {})", fmt::ptr(data_ptr), format_byte_size(data_sz));
-    log_trace("Occupancy: {}/{}", format_byte_size(this->_size), format_byte_size(this->_capacity));
+    log_debug(LogCategory::MediaCache,
+              "Allocated a new block ({} | {})",
+              fmt::ptr(data_ptr),
+              ByteSize{data_sz});
+
+    log_trace(LogCategory::MediaCache,
+              "Occupancy: {}/{}",
+              ByteSize{this->_size},
+              ByteSize{this->_capacity});
 
     return data_ptr;
 }
@@ -183,7 +215,7 @@ void MediaCache::clear() noexcept
 
     this->_write_ptr = this->_buffer;
 
-    log_trace("Cleared");
+    log_trace(LogCategory::MediaCache, "Cleared");
 }
 
 LOV_NAMESPACE_END

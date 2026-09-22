@@ -25,7 +25,7 @@ static void tiff_error_handler(const char* module, const char* fmt, va_list ap)
     char buf[TIFF_HANDLER_BUF_SIZE];
     std::vsnprintf(buf, TIFF_HANDLER_BUF_SIZE, fmt, ap);
 
-    log_error("[{}] {}", TIFF_READER_NAME, buf);
+    log_error(LogCategory::ImageReader, "[{}] {}", TIFF_READER_NAME, buf);
 }
 
 static void tiff_warning_handler(const char* module, const char* fmt, va_list ap)
@@ -35,7 +35,7 @@ static void tiff_warning_handler(const char* module, const char* fmt, va_list ap
     char buf[TIFF_HANDLER_BUF_SIZE];
     std::vsnprintf(buf, TIFF_HANDLER_BUF_SIZE, fmt, ap);
 
-    log_warn("[{}] {}", TIFF_READER_NAME, buf);
+    log_warn(LogCategory::ImageReader, "[{}] {}", TIFF_READER_NAME, buf);
 }
 
 static void install_tiff_handlers() noexcept
@@ -75,7 +75,10 @@ static bool describe(TIFF* tif, const stdromano::StringD& path, TiffDescription&
     if(!TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width) ||
        !TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height))
     {
-        log_error("[{}] \"{}\" has no dimensions", TIFF_READER_NAME, path);
+        log_error(LogCategory::ImageReader,
+                  "[{}] \"{}\" has no dimensions",
+                  TIFF_READER_NAME,
+                  path);
         return false;
     }
 
@@ -150,7 +153,8 @@ static bool describe(TIFF* tif, const stdromano::StringD& path, TiffDescription&
     else
     {
         // TODO: tiled and planar tiffs are worth a direct path
-        log_warn("[{}] \"{}\" uses a layout without a direct path "
+        log_warn(LogCategory::ImageReader,
+                 "[{}] \"{}\" uses a layout without a direct path "
                  "(planar={}, photometric={}, tiled={}, {} bits, {} samples); "
                  "falling back to 8-bit RGBA",
                  TIFF_READER_NAME,
@@ -178,7 +182,7 @@ static bool tiff_read_info(const stdromano::StringD& path, MediaInfo& info) noex
 
     if(tif == nullptr)
     {
-        log_error("[{}] Cannot open \"{}\"", TIFF_READER_NAME, path);
+        log_error(LogCategory::ImageReader, "[{}] Cannot open \"{}\"", TIFF_READER_NAME, path);
         return false;
     }
 
@@ -196,7 +200,8 @@ static bool tiff_read_info(const stdromano::StringD& path, MediaInfo& info) noex
 
     if(!format_from_nchannels(desc.nchannels, format))
     {
-        log_error("[{}] \"{}\" has {} channels, at most 4 supported",
+        log_error(LogCategory::ImageReader,
+                  "[{}] \"{}\" has {} channels, at most 4 supported",
                   TIFF_READER_NAME,
                   path,
                   desc.nchannels);
@@ -228,7 +233,8 @@ static bool tiff_read_scanlines(TIFF* tif,
 
     if(scanline_size < 0 || static_cast<std::size_t>(scanline_size) != y_stride)
     {
-        log_error("[{}] \"{}\" reports a {} byte scanline, {} expected",
+        log_error(LogCategory::ImageReader,
+                  "[{}] \"{}\" reports a {} byte scanline, {} expected",
                   TIFF_READER_NAME,
                   path,
                   static_cast<std::int64_t>(scanline_size),
@@ -245,7 +251,11 @@ static bool tiff_read_scanlines(TIFF* tif,
 
         if(TIFFReadScanline(tif, base + static_cast<std::size_t>(dst_row) * y_stride, row) < 0)
         {
-            log_error("[{}] Failed to read scanline {} of \"{}\"", TIFF_READER_NAME, row, path);
+            log_error(LogCategory::ImageReader,
+                      "[{}] Failed to read scanline {} of \"{}\"",
+                      TIFF_READER_NAME,
+                      row,
+                      path);
             return false;
         }
     }
@@ -266,7 +276,8 @@ static bool tiff_read_rgba_fallback(TIFF* tif,
                                   ORIENTATION_TOPLEFT,
                                   0))
     {
-        log_error("[{}] Failed to read \"{}\" through the RGBA path",
+        log_error(LogCategory::ImageReader,
+                  "[{}] Failed to read \"{}\" through the RGBA path",
                   TIFF_READER_NAME,
                   path);
 
@@ -295,7 +306,7 @@ static bool tiff_read_layer(const stdromano::StringD& path,
 
     if(tif == nullptr)
     {
-        log_error("[{}] Cannot open \"{}\"", TIFF_READER_NAME, path);
+        log_error(LogCategory::ImageReader, "[{}] Cannot open \"{}\"", TIFF_READER_NAME, path);
         return false;
     }
 
@@ -309,7 +320,8 @@ static bool tiff_read_layer(const stdromano::StringD& path,
 
     if(desc.width != layer.width() || desc.height != layer.height())
     {
-        log_error("[{}] \"{}\" is {}x{} but the layer expects {}x{}",
+        log_error(LogCategory::ImageReader,
+                  "[{}] \"{}\" is {}x{} but the layer expects {}x{}",
                   TIFF_READER_NAME,
                   path,
                   desc.width,

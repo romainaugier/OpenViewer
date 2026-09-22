@@ -37,7 +37,11 @@ static bool stb_read_info_impl(const char* reader_name,
 
     if(stbi_info(path.c_str(), &width, &height, &nchannels) == 0)
     {
-        log_error("[{}] Cannot read \"{}\": {}", reader_name, path, stbi_failure_reason());
+        log_error(LogCategory::ImageReader,
+                  "[{}] Cannot read \"{}\": {}",
+                  reader_name,
+                  path,
+                  stbi_failure_reason());
         return false;
     }
 
@@ -45,7 +49,8 @@ static bool stb_read_info_impl(const char* reader_name,
 
     if(!format_from_nchannels(static_cast<std::size_t>(nchannels), format))
     {
-        log_error("[{}] \"{}\" has {} channels, at most 4 supported",
+        log_error(LogCategory::ImageReader,
+                  "[{}] \"{}\" has {} channels, at most 4 supported",
                   reader_name,
                   path,
                   nchannels);
@@ -101,7 +106,8 @@ static bool stb_ldr_read_layer(const stdromano::StringD& path,
 
     if(pixels == nullptr)
     {
-        log_error("[{}] Cannot decode \"{}\": {}",
+        log_error(LogCategory::ImageReader,
+                  "[{}] Cannot decode \"{}\": {}",
                   STB_LDR_READER_NAME,
                   path,
                   stbi_failure_reason());
@@ -112,7 +118,8 @@ static bool stb_ldr_read_layer(const stdromano::StringD& path,
     if(static_cast<std::uint32_t>(width) != layer.width() ||
        static_cast<std::uint32_t>(height) != layer.height())
     {
-        log_error("[{}] \"{}\" is {}x{} but the layer expects {}x{}",
+        log_error(LogCategory::ImageReader,
+                  "[{}] \"{}\" is {}x{} but the layer expects {}x{}",
                   STB_LDR_READER_NAME,
                   path,
                   width,
@@ -154,7 +161,8 @@ static bool stb_hdr_read_layer(const stdromano::StringD& path,
 
     if(pixels == nullptr)
     {
-        log_error("[{}] Cannot decode \"{}\": {}",
+        log_error(LogCategory::ImageReader,
+                  "[{}] Cannot decode \"{}\": {}",
                   STB_HDR_READER_NAME,
                   path,
                   stbi_failure_reason());
@@ -165,7 +173,8 @@ static bool stb_hdr_read_layer(const stdromano::StringD& path,
     if(static_cast<std::uint32_t>(width) != layer.width() ||
        static_cast<std::uint32_t>(height) != layer.height())
     {
-        log_error("[{}] \"{}\" is {}x{} but the layer expects {}x{}",
+        log_error(LogCategory::ImageReader,
+                  "[{}] \"{}\" is {}x{} but the layer expects {}x{}",
                   STB_HDR_READER_NAME,
                   path,
                   width,

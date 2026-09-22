@@ -1,12 +1,7 @@
 {
   "dependencies": [
-    {
-      "name": "imgui",
-      "features": ["glfw-binding", "docking-experimental"]
-    },
     "openexr",
     "tiff",
-    "glew",
     {
       "name": "opencolorio",
       "default-features": false
