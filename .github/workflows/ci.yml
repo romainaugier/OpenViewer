@@ -144,4 +144,12 @@ jobs:
 
     - name: Test
       working-directory: build
-      run: ctest --output-on-failure -C ${{ env.BUILD_TYPE }}
+      run: ctest --output-on-failure --timeout 300 -C ${{ env.BUILD_TYPE }}
+
+    # A test binary that cannot load a DLL never starts: show what is next to the tests
+    - name: List runtime DLLs on failure
+      if: failure() && runner.os == 'Windows'
+      shell: pwsh
+      run: |
+        Write-Host "== next to the tests =="
+        Get-ChildItem -Recurse build/bin -Filter *.dll | Select-Object -ExpandProperty FullName

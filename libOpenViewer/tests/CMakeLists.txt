@@ -49,4 +49,7 @@ foreach(test_file ${OPENVIEWER_TESTS})
     add_test(NAME ${TESTNAME}
              COMMAND ${TESTNAME}
              WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+    # A hang must fail the run, not block it until the CI job limit
+    set_tests_properties(${TESTNAME} PROPERTIES TIMEOUT 120)
 endforeach()
