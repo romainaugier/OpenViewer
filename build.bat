@@ -43,21 +43,49 @@ if %HELP% equ 1 (
 
 call :LogInfo "Building OpenViewer"
 
-if not exist vcpkg (
-    if %VCPKG_USE_EXISTING% equ 1 (
-        call :LogInfo "Using existing vcpkg installation"
-        set VCPKG_ROOT=%VCPKG_PATH%
-    ) else (
-        call :LogInfo "Vcpkg can't be found, cloning and preparing it"
-        git clone https://github.com/romainaugier/vcpkg.git
-        cd vcpkg
-        call bootstrap-vcpkg.bat
-        cd ..
-        set VCPKG_ROOT=%CD%/vcpkg
+set VCPKG_REPOSITORY=https://github.com/romainaugier/vcpkg.git
+set /p VCPKG_COMMIT=<vcpkg.commit
+
+if %VCPKG_USE_EXISTING% equ 1 (
+    call :LogInfo "Using the vcpkg installation given with --vcpkgpath"
+    set VCPKG_ROOT=%VCPKG_PATH%
+) else (
+    set VCPKG_ROOT=%CD%\vcpkg
+
+    if not exist "!VCPKG_ROOT!" (
+        call :LogInfo "Vcpkg can't be found, cloning it at !VCPKG_COMMIT:~0,12!"
+        git clone --filter=blob:none %VCPKG_REPOSITORY% "!VCPKG_ROOT!"
+        git -C "!VCPKG_ROOT!" checkout -q !VCPKG_COMMIT!
+
+        if errorlevel 1 (
+            call :LogError "Could not clone vcpkg at !VCPKG_COMMIT!"
+            exit /B 1
+        )
     )
 )
 
-set CMAKE_TOOLCHAIN_FILE=%VCPKG_ROOT%/scripts/buildsystems/vcpkg.cmake
+if not exist "!VCPKG_ROOT!\vcpkg.exe" (
+    call :LogInfo "Bootstrapping vcpkg"
+    call "!VCPKG_ROOT!\bootstrap-vcpkg.bat" -disableMetrics
+
+    if errorlevel 1 (
+        call :LogError "Could not bootstrap vcpkg in !VCPKG_ROOT!"
+        exit /B 1
+    )
+)
+
+set VCPKG_CURRENT=
+
+for /f %%i in ('git -C "!VCPKG_ROOT!" rev-parse HEAD 2^>nul') do set VCPKG_CURRENT=%%i
+
+if defined VCPKG_CURRENT (
+    if not "!VCPKG_CURRENT!"=="!VCPKG_COMMIT!" (
+        call :LogWarning "vcpkg is at !VCPKG_CURRENT:~0,12! but vcpkg.commit pins !VCPKG_COMMIT:~0,12!, which CI uses"
+        call :LogWarning "To match: git -C !VCPKG_ROOT! fetch origin !VCPKG_COMMIT! && git -C !VCPKG_ROOT! checkout !VCPKG_COMMIT!"
+    )
+)
+
+set CMAKE_TOOLCHAIN_FILE=!VCPKG_ROOT!/scripts/buildsystems/vcpkg.cmake
 
 echo.!PATH! | findstr /C:"!VCPKG_ROOT!" 1>nul
 

@@ -13,8 +13,13 @@ on:
 
 env:
   BUILD_TYPE: Release
-  # Binary caching, so the four jobs do not rebuild OpenEXR, OCIO ... from source on every run
-  VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
+
+  VCPKG_REPOSITORY: https://github.com/romainaugier/vcpkg.git
+  VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}/.vcpkg-cache
+  VCPKG_BINARY_SOURCES: "clear;files,${{ github.workspace }}/.vcpkg-cache,readwrite"
+  VCPKG_DISABLE_METRICS: 1
 
 jobs:
   build:
@@ -46,22 +51,15 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Export GitHub Actions cache variables for vcpkg
-      uses: actions/github-script@v7
-      with:
-        script: |
-          core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
-          core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
-
     - uses: lukka/get-cmake@latest
 
-    # vcpkg has no prebuilt tools for arm64 linux and has to use the system ones.
     - name: Linux dependencies
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
         sudo apt-get install -y pkg-config libgtk2.0-dev ninja-build
         if [ "$(uname -m)" = "x86_64" ]; then sudo apt-get install -y nasm; fi
+        # No prebuilt vcpkg tools for arm64 linux: use the system cmake/ninja.
         if [ "$(uname -m)" = "aarch64" ]; then echo "VCPKG_FORCE_SYSTEM_BINARIES=1" >> $GITHUB_ENV; fi
 
     - name: macOS dependencies
@@ -72,11 +70,46 @@ jobs:
       with:
         python-version: '3.11'
 
-    - uses: lukka/run-vcpkg@v11
-      with:
-        vcpkgJsonGlob: 'vcpkg.json'
+    # vcpkg
 
-    # stdromano is built and installed into ext/stdromano/install, which is where the root CMakeLists looks for it (stdromano_DIR)
+    - name: Read the pinned vcpkg commit
+      shell: bash
+      run: echo "VCPKG_COMMIT=$(tr -d '[:space:]' < vcpkg.commit)" >> $GITHUB_ENV
+
+    - name: Fetch vcpkg
+      shell: bash
+      run: |
+        git init -q "$VCPKG_ROOT"
+        git -C "$VCPKG_ROOT" remote add origin "$VCPKG_REPOSITORY"
+        git -C "$VCPKG_ROOT" fetch -q --depth 1 origin "$VCPKG_COMMIT"
+        git -C "$VCPKG_ROOT" checkout -q FETCH_HEAD
+
+    - name: Bootstrap vcpkg
+      if: runner.os != 'Windows'
+      shell: bash
+      run: '"$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics'
+
+    - name: Bootstrap vcpkg (Windows)
+      if: runner.os == 'Windows'
+      shell: cmd
+      run: '"%VCPKG_ROOT%\bootstrap-vcpkg.bat" -disableMetrics'
+
+    - name: Restore the vcpkg binary cache
+      id: vcpkg-cache
+      uses: actions/cache/restore@v4
+      with:
+        path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+        key: vcpkg-${{ matrix.triplet }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-${{ env.VCPKG_COMMIT }}-${{ hashFiles('vcpkg.json', 'ext/stdromano/vcpkg.json') }}
+        restore-keys: |
+          vcpkg-${{ matrix.triplet }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-${{ env.VCPKG_COMMIT }}-
+          vcpkg-${{ matrix.triplet }}-${{ env.ImageOS }}-${{ env.ImageVersion }}-
+          vcpkg-${{ matrix.triplet }}-
+
+    - name: Create the vcpkg binary cache directory
+      run: cmake -E make_directory "${{ env.VCPKG_DEFAULT_BINARY_CACHE }}"
+
+    # stdromano
+
     - name: Build stdromano
       shell: bash
       run: |
@@ -88,6 +121,8 @@ jobs:
         cmake --build ext/stdromano/build --config ${{ env.BUILD_TYPE }} --parallel
         cmake --install ext/stdromano/build --config ${{ env.BUILD_TYPE }} --prefix ext/stdromano/install
 
+    # OpenViewer
+
     - name: Configure
       shell: bash
       run: |
@@ -96,6 +131,13 @@ jobs:
               -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
               -DVCPKG_TARGET_TRIPLET=${{ matrix.triplet }} \
               -DRUN_TESTS=1
+
+    - name: Save the vcpkg binary cache
+      if: steps.vcpkg-cache.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ env.VCPKG_DEFAULT_BINARY_CACHE }}
+        key: ${{ steps.vcpkg-cache.outputs.cache-primary-key }}
 
     - name: Build
       run: cmake --build build --config ${{ env.BUILD_TYPE }} --parallel

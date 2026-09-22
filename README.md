@@ -16,10 +16,15 @@ Disclaimer : it is currently a work in progress, so do not expect everything to 
 
 ## Building
 
-Dependencies come from [vcpkg](https://github.com/microsoft/vcpkg) in manifest
-mode (`vcpkg.json`), except [stdromano](https://github.com/romainaugier/stdromano),
-which is a submodule built first and installed into `ext/stdromano/install`.
-stdromano also provides spdlog: do not install another one.
+Dependencies come from vcpkg in manifest mode (`vcpkg.json`), using our fork
+[romainaugier/vcpkg](https://github.com/romainaugier/vcpkg), which carries port
+fixes (OpenColorIO among them). `vcpkg.commit` pins the fork's commit: `build.sh`,
+`build.bat` and CI all use it, and the scripts warn when an existing `./vcpkg`
+checkout is elsewhere. To move to a newer fork commit, update `vcpkg.commit`.
+
+[stdromano](https://github.com/romainaugier/stdromano) is a submodule, built
+first and installed into `ext/stdromano/install`. It also provides spdlog: do
+not install another one.
 
 System packages:
 

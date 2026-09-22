@@ -1,18 +1,20 @@
 bin
 build
-conan.lock
-conan_imports_manifest.txt
-conaninfo.txt
-conanbuildinfo.txt
-conanbuildinfo.cmake
 py_env
-graph_info.json
 .vscode
 test
 env
 settings.json
 .cache
-conan_env
 compile_commands.json
 imgui.ini
+
+# vcpkg: the fork checkout build.sh/build.bat create, its manifest installs,
+# and the CI binary cache
+vcpkg/
+vcpkg_installed/
+.vcpkg-cache/
+install/
+
+# vcpkg link
 vcpkg

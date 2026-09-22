@@ -88,10 +88,11 @@ log_error()
     echo "[ERROR] : $1"
 }
 
-# Wrap to avoid command line args propagation
-source_vcpkg_bootstrap()
+# Runs vcpkg's bootstrap in its own process. It used to be sourced, which ran
+# it inside this shell, where any exit in it ends the whole build.
+bootstrap_vcpkg()
 {
-    source bootstrap-vcpkg.sh
+    "$1/bootstrap-vcpkg.sh" -disableMetrics
 }
 
 # Entry point
@@ -120,18 +121,43 @@ if [[ $UBSAN -eq 1 ]]; then
     fi
 fi
 
-if [[ ! -d "vcpkg" ]]; then
-    if [[ $VCPKG_USER_DEFINED -eq 1 ]]; then
-        log_info "Using existing vcpkg installation"
-        export VCPKG_ROOT=$VCPKG_PATH
-    else
-        log_info "Vcpkg can't be found, cloning and preparing it"
-        git clone https://github.com/romainaugier/vcpkg.git
-        cd vcpkg
-        source_vcpkg_bootstrap
-        cd ..
-        export VCPKG_ROOT=$PWD/vcpkg
+VCPKG_REPOSITORY="https://github.com/romainaugier/vcpkg.git"
+VCPKG_COMMIT="$(tr -d '[:space:]' < vcpkg.commit)"
+
+if [[ $VCPKG_USER_DEFINED -eq 1 ]]; then
+    log_info "Using the vcpkg installation given with --vcpkgpath"
+
+    export VCPKG_ROOT="$VCPKG_PATH"
+else
+    export VCPKG_ROOT="$PWD/vcpkg"
+
+    if [[ ! -d "$VCPKG_ROOT" ]]; then
+        log_info "Vcpkg can't be found, cloning it at ${VCPKG_COMMIT:0:12}"
+
+        git clone --filter=blob:none "$VCPKG_REPOSITORY" "$VCPKG_ROOT" &&
+            git -C "$VCPKG_ROOT" checkout -q "$VCPKG_COMMIT"
+
+        if [[ $? -ne 0 ]]; then
+            log_error "Could not clone vcpkg at $VCPKG_COMMIT"
+            exit 1
+        fi
     fi
+fi
+
+if [[ ! -x "$VCPKG_ROOT/vcpkg" ]]; then
+    log_info "Bootstrapping vcpkg"
+
+    if ! bootstrap_vcpkg "$VCPKG_ROOT"; then
+        log_error "Could not bootstrap vcpkg in $VCPKG_ROOT"
+        exit 1
+    fi
+fi
+
+VCPKG_CURRENT="$(git -C "$VCPKG_ROOT" rev-parse HEAD 2> /dev/null)"
+
+if [[ -n "$VCPKG_CURRENT" && "$VCPKG_CURRENT" != "$VCPKG_COMMIT" ]]; then
+    log_warning "vcpkg is at ${VCPKG_CURRENT:0:12} but vcpkg.commit pins ${VCPKG_COMMIT:0:12}, which CI uses"
+    log_warning "To match: git -C \"$VCPKG_ROOT\" fetch origin $VCPKG_COMMIT && git -C \"$VCPKG_ROOT\" checkout $VCPKG_COMMIT"
 fi
 
 log_info "Vcpkg root: $VCPKG_ROOT"
