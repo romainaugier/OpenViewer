@@ -12,7 +12,7 @@
 
 using namespace lov;
 
-LOV_TEST(calls_below_the_active_level_are_compiled_out)
+STDROMANO_TEST_CASE(calls_below_the_active_level_are_compiled_out)
 {
     log::set_level(spdlog::level::trace);
 
@@ -22,9 +22,9 @@ LOV_TEST(calls_below_the_active_level_are_compiled_out)
 
     const std::string log = lov_test::read_log_file();
 
-    LOV_CHECK(log.find("compiled_out_trace_marker") == std::string::npos);
-    LOV_CHECK(log.find("compiled_out_debug_marker") == std::string::npos);
-    LOV_CHECK(lov_test::log_has_line(log, "[ov::media]", "kept_info_marker"));
+    STDROMANO_CHECK(log.find("compiled_out_trace_marker") == std::string::npos);
+    STDROMANO_CHECK(log.find("compiled_out_debug_marker") == std::string::npos);
+    STDROMANO_CHECK(lov_test::log_has_line(log, "[ov::media]", "kept_info_marker"));
 }
 
 LOV_TEST_MAIN()

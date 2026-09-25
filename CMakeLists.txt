@@ -37,6 +37,7 @@ message(STATUS "OpenViewer target: ${CMAKE_SYSTEM_NAME} ${OPENVIEWER_TARGET_ARCH
 # deprecated framework, and on Windows the fallback below rewrites vcpkg.json
 # at configure time, which should not happen to a tracked file by accident.
 option(OPENVIEWER_ENABLE_OPENCL "Look for OpenCL (unused by libOpenViewer for now)" OFF)
+option(OPENVIEWER_BUILD_FUZZERS "Builds the libFuzzer executables in libOpenViewer/tests/fuzz (Clang only)" OFF)
 
 # Every binary and shared library in one place. On Windows an executable only
 # finds DLLs in its own directory or on PATH, so without this the tests cannot

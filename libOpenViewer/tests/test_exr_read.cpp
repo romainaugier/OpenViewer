@@ -11,12 +11,6 @@
 
 using namespace lov;
 
-static lov_test::ScratchDir& scratch() noexcept
-{
-    static lov_test::ScratchDir dir("exr");
-    return dir;
-}
-
 // Reads one channel of one pixel, in absolute (data-window) coordinates.
 template <typename T>
 static float sample(const std::vector<char>& buffer,
@@ -38,84 +32,84 @@ static float sample(const std::vector<char>& buffer,
     return static_cast<float>(value);
 }
 
-LOV_TEST(read_info_rgba_half)
+STDROMANO_TEST_CASE(read_info_rgba_half)
 {
-    const std::string path = scratch().file("rgba_half.exr");
+    const std::string path = lov_test::temp_path("rgba_half.exr");
 
     lov_test::write_exr(path, 64, 32, {"R", "G", "B", "A"}, Imf::HALF);
 
     MediaInfo info;
-    LOV_REQUIRE(image_read_info(stdromano::StringD::make_from_c_str(path.c_str()), info));
+    STDROMANO_REQUIRE(image_read_info(stdromano::StringD::make_from_c_str(path.c_str()), info));
 
-    LOV_CHECK_EQ(info.data_width(), std::uint32_t(64));
-    LOV_CHECK_EQ(info.data_height(), std::uint32_t(32));
-    LOV_CHECK(!info.has_overscan());
-    LOV_CHECK_EQ(info.nlayers(), std::size_t(1));
+    STDROMANO_CHECK_EQ(info.data_width(), std::uint32_t(64));
+    STDROMANO_CHECK_EQ(info.data_height(), std::uint32_t(32));
+    STDROMANO_CHECK(!info.has_overscan());
+    STDROMANO_CHECK_EQ(info.nlayers(), std::size_t(1));
 
     const MediaLayer* layer = info.main();
-    LOV_REQUIRE(layer != nullptr);
+    STDROMANO_REQUIRE_NE(layer, nullptr);
 
-    LOV_CHECK_EQ(static_cast<int>(layer->format()), static_cast<int>(MediaFormat_RGBA));
-    LOV_CHECK_EQ(static_cast<int>(layer->depth()), static_cast<int>(MediaDepth_F16));
-    LOV_CHECK_EQ(layer->nbytes(), std::size_t(64) * 32 * 4 * 2);
+    STDROMANO_CHECK_EQ(layer->format(), MediaFormat_RGBA);
+    STDROMANO_CHECK_EQ(layer->depth(), MediaDepth_F16);
+    STDROMANO_CHECK_EQ(layer->nbytes(), std::size_t(64) * 32 * 4 * 2);
 }
 
 // Channels come out in canonical order whatever order the file stores them in.
 // The previous implementation sorted by descending first character, which gives
 // RGBA by accident and reverses XYZ.
-LOV_TEST(channels_are_ordered_canonically)
+STDROMANO_TEST_CASE(channels_are_ordered_canonically)
 {
-    const std::string path = scratch().file("shuffled.exr");
+    const std::string path = lov_test::temp_path("shuffled.exr");
 
     lov_test::write_exr(path, 8, 8, {"B", "A", "R", "G"}, Imf::HALF);
 
     MediaInfo info;
-    LOV_REQUIRE(image_read_info(stdromano::StringD::make_from_c_str(path.c_str()), info));
+    STDROMANO_REQUIRE(image_read_info(stdromano::StringD::make_from_c_str(path.c_str()), info));
 
     const MediaLayer* layer = info.main();
-    LOV_REQUIRE(layer != nullptr);
-    LOV_REQUIRE(layer->channels().size() == 4);
+    STDROMANO_REQUIRE_NE(layer, nullptr);
+    STDROMANO_REQUIRE_EQ(layer->channels().size(), std::size_t(4));
 
-    LOV_CHECK_EQ(std::string(layer->channels()[0].c_str()), std::string("R"));
-    LOV_CHECK_EQ(std::string(layer->channels()[1].c_str()), std::string("G"));
-    LOV_CHECK_EQ(std::string(layer->channels()[2].c_str()), std::string("B"));
-    LOV_CHECK_EQ(std::string(layer->channels()[3].c_str()), std::string("A"));
+    STDROMANO_CHECK_EQ(std::string(layer->channels()[0].c_str()), std::string("R"));
+    STDROMANO_CHECK_EQ(std::string(layer->channels()[1].c_str()), std::string("G"));
+    STDROMANO_CHECK_EQ(std::string(layer->channels()[2].c_str()), std::string("B"));
+    STDROMANO_CHECK_EQ(std::string(layer->channels()[3].c_str()), std::string("A"));
 }
 
-LOV_TEST(xyz_layers_are_not_reversed)
+STDROMANO_TEST_CASE(xyz_layers_are_not_reversed)
 {
-    const std::string path = scratch().file("normals.exr");
+    const std::string path = lov_test::temp_path("normals.exr");
 
     lov_test::write_exr(path, 8, 8, {"R", "G", "B", "N.X", "N.Y", "N.Z"}, Imf::FLOAT);
 
     MediaInfo info;
-    LOV_REQUIRE(image_read_info(stdromano::StringD::make_from_c_str(path.c_str()), info));
+    STDROMANO_REQUIRE(image_read_info(stdromano::StringD::make_from_c_str(path.c_str()), info));
 
     const MediaLayer* normals = info.find_layer(stdromano::StringD::make_ref("N"));
-    LOV_REQUIRE(normals != nullptr);
-    LOV_REQUIRE(normals->channels().size() == 3);
+    STDROMANO_REQUIRE_NE(normals, nullptr);
+    STDROMANO_REQUIRE_EQ(normals->channels().size(), std::size_t(3));
 
-    LOV_CHECK_EQ(std::string(normals->channels()[0].c_str()), std::string("N.X"));
-    LOV_CHECK_EQ(std::string(normals->channels()[1].c_str()), std::string("N.Y"));
-    LOV_CHECK_EQ(std::string(normals->channels()[2].c_str()), std::string("N.Z"));
+    STDROMANO_CHECK_EQ(std::string(normals->channels()[0].c_str()), std::string("N.X"));
+    STDROMANO_CHECK_EQ(std::string(normals->channels()[1].c_str()), std::string("N.Y"));
+    STDROMANO_CHECK_EQ(std::string(normals->channels()[2].c_str()), std::string("N.Z"));
 }
 
-LOV_TEST(read_pixels_half_is_exact)
+STDROMANO_TEST_CASE(read_pixels_half_is_exact)
 {
-    const std::string path = scratch().file("pixels_half.exr");
+    const std::string path = lov_test::temp_path("pixels_half.exr");
     const stdromano::StringD spath = stdromano::StringD::make_from_c_str(path.c_str());
 
     lov_test::write_exr(path, 37, 19, {"R", "G", "B", "A"}, Imf::HALF);
 
     MediaInfo info;
-    LOV_REQUIRE(image_read_info(spath, info));
+    STDROMANO_REQUIRE(image_read_info(spath, info));
 
     const MediaLayer* layer = info.main();
-    LOV_REQUIRE(layer != nullptr);
+    STDROMANO_REQUIRE_NE(layer, nullptr);
 
     std::vector<char> buffer(layer->nbytes(), 0);
 
-    LOV_REQUIRE(image_read_layer(spath,
+    STDROMANO_REQUIRE(image_read_layer(spath,
                                  stdromano::StringD::make_ref(MediaInfo::MAIN_LAYER_NAME),
                                  *layer,
                                  buffer.data(),
@@ -127,7 +121,7 @@ LOV_TEST(read_pixels_half_is_exact)
         {
             for(int c = 0; c < 4; ++c)
             {
-                LOV_CHECK_EQ(sample<half>(buffer, *layer, info.data_window(), x, y, c),
+                STDROMANO_CHECK_EQ(sample<half>(buffer, *layer, info.data_window(), x, y, c),
                              lov_test::expected_pixel(x, y, c));
             }
         }
@@ -138,9 +132,9 @@ LOV_TEST(read_pixels_half_is_exact)
 // the origin, the Imf slice base has to be shifted back by the window origin.
 // Without the shift the reader writes outside the buffer and the values land in
 // the wrong pixels.
-LOV_TEST(read_pixels_with_overscan)
+STDROMANO_TEST_CASE(read_pixels_with_overscan)
 {
-    const std::string path = scratch().file("overscan.exr");
+    const std::string path = lov_test::temp_path("overscan.exr");
     const stdromano::StringD spath = stdromano::StringD::make_from_c_str(path.c_str());
 
     const Imath::Box2i data_window(Imath::V2i(-7, -5), Imath::V2i(40, 26));
@@ -149,24 +143,24 @@ LOV_TEST(read_pixels_with_overscan)
     lov_test::write_exr(path, data_window, display_window, {"R", "G", "B"}, Imf::FLOAT);
 
     MediaInfo info;
-    LOV_REQUIRE(image_read_info(spath, info));
+    STDROMANO_REQUIRE(image_read_info(spath, info));
 
-    LOV_CHECK(info.has_overscan());
-    LOV_CHECK_EQ(info.data_width(), std::uint32_t(48));
-    LOV_CHECK_EQ(info.data_height(), std::uint32_t(32));
-    LOV_CHECK_EQ(info.display_width(), std::uint32_t(32));
-    LOV_CHECK_EQ(info.display_height(), std::uint32_t(18));
+    STDROMANO_CHECK(info.has_overscan());
+    STDROMANO_CHECK_EQ(info.data_width(), std::uint32_t(48));
+    STDROMANO_CHECK_EQ(info.data_height(), std::uint32_t(32));
+    STDROMANO_CHECK_EQ(info.display_width(), std::uint32_t(32));
+    STDROMANO_CHECK_EQ(info.display_height(), std::uint32_t(18));
 
     const MediaLayer* layer = info.main();
-    LOV_REQUIRE(layer != nullptr);
-    LOV_CHECK_EQ(layer->nbytes(), std::size_t(48) * 32 * 3 * 4);
+    STDROMANO_REQUIRE_NE(layer, nullptr);
+    STDROMANO_CHECK_EQ(layer->nbytes(), std::size_t(48) * 32 * 3 * 4);
 
     // Guard bytes on both sides: if the reader addresses outside the buffer,
     // this catches it even in a build without sanitizers.
     const std::size_t guard = 4096;
     std::vector<char> buffer(layer->nbytes() + 2 * guard, char(0xAB));
 
-    LOV_REQUIRE(image_read_layer(spath,
+    STDROMANO_REQUIRE(image_read_layer(spath,
                                  stdromano::StringD::make_ref(MediaInfo::MAIN_LAYER_NAME),
                                  *layer,
                                  buffer.data() + guard,
@@ -174,8 +168,8 @@ LOV_TEST(read_pixels_with_overscan)
 
     for(std::size_t i = 0; i < guard; ++i)
     {
-        LOV_REQUIRE(buffer[i] == char(0xAB));
-        LOV_REQUIRE(buffer[buffer.size() - 1 - i] == char(0xAB));
+        STDROMANO_REQUIRE(buffer[i] == char(0xAB));
+        STDROMANO_REQUIRE(buffer[buffer.size() - 1 - i] == char(0xAB));
     }
 
     std::vector<char> pixels(buffer.begin() + guard, buffer.end() - guard);
@@ -186,16 +180,16 @@ LOV_TEST(read_pixels_with_overscan)
         {
             for(int c = 0; c < 3; ++c)
             {
-                LOV_CHECK_EQ(sample<float>(pixels, *layer, data_window, x, y, c),
+                STDROMANO_CHECK_EQ(sample<float>(pixels, *layer, data_window, x, y, c),
                              lov_test::expected_pixel(x, y, c));
             }
         }
     }
 }
 
-LOV_TEST(multilayer)
+STDROMANO_TEST_CASE(multilayer)
 {
-    const std::string path = scratch().file("multilayer.exr");
+    const std::string path = lov_test::temp_path("multilayer.exr");
     const stdromano::StringD spath = stdromano::StringD::make_from_c_str(path.c_str());
 
     lov_test::write_exr(path,
@@ -205,17 +199,17 @@ LOV_TEST(multilayer)
                         Imf::HALF);
 
     MediaInfo info;
-    LOV_REQUIRE(image_read_info(spath, info));
+    STDROMANO_REQUIRE(image_read_info(spath, info));
 
-    LOV_CHECK_EQ(info.nlayers(), std::size_t(2));
+    STDROMANO_CHECK_EQ(info.nlayers(), std::size_t(2));
 
     const MediaLayer* diffuse = info.find_layer(stdromano::StringD::make_ref("diffuse"));
-    LOV_REQUIRE(diffuse != nullptr);
-    LOV_CHECK_EQ(static_cast<int>(diffuse->format()), static_cast<int>(MediaFormat_RGB));
+    STDROMANO_REQUIRE_NE(diffuse, nullptr);
+    STDROMANO_CHECK_EQ(diffuse->format(), MediaFormat_RGB);
 
     std::vector<char> buffer(diffuse->nbytes(), 0);
 
-    LOV_REQUIRE(image_read_layer(spath,
+    STDROMANO_REQUIRE(image_read_layer(spath,
                                  stdromano::StringD::make_ref("diffuse"),
                                  *diffuse,
                                  buffer.data(),
@@ -226,16 +220,16 @@ LOV_TEST(multilayer)
     // is the mistake the full channel names exist to prevent.
     for(int c = 0; c < 3; ++c)
     {
-        LOV_CHECK_EQ(sample<half>(buffer, *diffuse, info.data_window(), 3, 5, c),
+        STDROMANO_CHECK_EQ(sample<half>(buffer, *diffuse, info.data_window(), 3, 5, c),
                      lov_test::expected_pixel(3, 5, c + 4));
     }
 }
 
 // A frame missing a channel the rest of the sequence has must not fail the
 // read: Imf fills it, alpha with 1.0 and everything else with 0.
-LOV_TEST(missing_channels_are_filled)
+STDROMANO_TEST_CASE(missing_channels_are_filled)
 {
-    const std::string path = scratch().file("rgb_only.exr");
+    const std::string path = lov_test::temp_path("rgb_only.exr");
     const stdromano::StringD spath = stdromano::StringD::make_from_c_str(path.c_str());
 
     lov_test::write_exr(path, 8, 8, {"R", "G", "B"}, Imf::HALF);
@@ -250,39 +244,39 @@ LOV_TEST(missing_channels_are_filled)
 
     const Imath::Box2i data_window(Imath::V2i(0, 0), Imath::V2i(7, 7));
 
-    LOV_REQUIRE(image_read_layer(spath,
+    STDROMANO_REQUIRE(image_read_layer(spath,
                                  stdromano::StringD::make_ref(MediaInfo::MAIN_LAYER_NAME),
                                  layer,
                                  buffer.data(),
                                  buffer.size()));
 
-    LOV_CHECK_EQ(sample<half>(buffer, layer, data_window, 2, 2, 0),
+    STDROMANO_CHECK_EQ(sample<half>(buffer, layer, data_window, 2, 2, 0),
                  lov_test::expected_pixel(2, 2, 0));
-    LOV_CHECK_EQ(sample<half>(buffer, layer, data_window, 2, 2, 3), 1.0f);
+    STDROMANO_CHECK_EQ(sample<half>(buffer, layer, data_window, 2, 2, 3), 1.0f);
 }
 
-LOV_TEST(undersized_destination_is_refused)
+STDROMANO_TEST_CASE(undersized_destination_is_refused)
 {
-    const std::string path = scratch().file("small.exr");
+    const std::string path = lov_test::temp_path("small.exr");
     const stdromano::StringD spath = stdromano::StringD::make_from_c_str(path.c_str());
 
     lov_test::write_exr(path, 16, 16, {"R", "G", "B", "A"}, Imf::HALF);
 
     MediaInfo info;
-    LOV_REQUIRE(image_read_info(spath, info));
+    STDROMANO_REQUIRE(image_read_info(spath, info));
 
     const MediaLayer* layer = info.main();
-    LOV_REQUIRE(layer != nullptr);
+    STDROMANO_REQUIRE_NE(layer, nullptr);
 
     std::vector<char> buffer(layer->nbytes(), 0);
 
-    LOV_CHECK(!image_read_layer(spath,
+    STDROMANO_CHECK(!image_read_layer(spath,
                                 stdromano::StringD::make_ref(MediaInfo::MAIN_LAYER_NAME),
                                 *layer,
                                 buffer.data(),
                                 buffer.size() - 1));
 
-    LOV_CHECK(!image_read_layer(spath,
+    STDROMANO_CHECK(!image_read_layer(spath,
                                 stdromano::StringD::make_ref(MediaInfo::MAIN_LAYER_NAME),
                                 *layer,
                                 nullptr,
@@ -291,23 +285,23 @@ LOV_TEST(undersized_destination_is_refused)
 
 // A sequence where one frame was rendered at a different resolution must be
 // caught, not read into a buffer sized for another frame.
-LOV_TEST(resolution_mismatch_is_refused)
+STDROMANO_TEST_CASE(resolution_mismatch_is_refused)
 {
-    const std::string small_path = scratch().file("res_small.exr");
-    const std::string big_path = scratch().file("res_big.exr");
+    const std::string small_path = lov_test::temp_path("res_small.exr");
+    const std::string big_path = lov_test::temp_path("res_big.exr");
 
     lov_test::write_exr(small_path, 16, 16, {"R", "G", "B", "A"}, Imf::HALF);
     lov_test::write_exr(big_path, 32, 32, {"R", "G", "B", "A"}, Imf::HALF);
 
     MediaInfo info;
-    LOV_REQUIRE(image_read_info(stdromano::StringD::make_from_c_str(small_path.c_str()), info));
+    STDROMANO_REQUIRE(image_read_info(stdromano::StringD::make_from_c_str(small_path.c_str()), info));
 
     const MediaLayer* layer = info.main();
-    LOV_REQUIRE(layer != nullptr);
+    STDROMANO_REQUIRE_NE(layer, nullptr);
 
     std::vector<char> buffer(layer->nbytes(), 0);
 
-    LOV_CHECK(!image_read_layer(stdromano::StringD::make_from_c_str(big_path.c_str()),
+    STDROMANO_CHECK(!image_read_layer(stdromano::StringD::make_from_c_str(big_path.c_str()),
                                 stdromano::StringD::make_ref(MediaInfo::MAIN_LAYER_NAME),
                                 *layer,
                                 buffer.data(),

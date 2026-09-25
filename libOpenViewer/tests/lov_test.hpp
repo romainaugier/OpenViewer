@@ -2,23 +2,22 @@
 // Copyright (c) 2022 - Present Romain Augier
 // All rights reserved.
 //
-// Minimal test harness shared by every libOpenViewer test.
-//
-// Deliberately small: no dependency, no build system integration beyond one
-// executable per file, and a failure prints the file, the line and both values.
-// If this ever needs fixtures or parameterised cases, replace it with doctest
-// rather than growing it.
-//
-// Usage:
+// Fixtures shared by every libOpenViewer test, on top of the stdromano harness
+// (stdromano/test.hpp) and fuzzer (stdromano/fuzz.hpp).
 //
 //     #include "lov_test.hpp"
 //
-//     LOV_TEST(my_case)
+//     STDROMANO_TEST_CASE(my_case)
 //     {
-//         LOV_CHECK_EQ(2 + 2, 4);
+//         STDROMANO_CHECK_EQ(2 + 2, 4);
 //     }
 //
 //     LOV_TEST_MAIN()
+//
+// ./test_media_cache ring     runs the cases whose name contains "ring"
+// ./test_media_cache --list   lists the cases
+// STDROMANO_TEST_FILTER=ring  same filter, for ctest
+// ROMANO_FUZZ_SCALE=100       runs the fuzz cases 100 times longer
 
 #pragma once
 
@@ -27,11 +26,11 @@
 
 #include "OpenViewer/log.hpp"
 
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <filesystem>
+#include "stdromano/fuzz.hpp"
+#include "stdromano/test.hpp"
+
+#include <array>
+#include <cstdint>
 #include <fstream>
 #include <iterator>
 #include <string>
@@ -40,89 +39,69 @@
 namespace lov_test
 {
 
-struct TestCase
+inline std::string temp_path(const char* name)
 {
-    const char* name;
-    void (*func)();
-};
-
-inline std::vector<TestCase>& registry() noexcept
-{
-    static std::vector<TestCase> cases;
-    return cases;
+    const stdromano::StringD path = stdromano::test::temp_path(name);
+    return std::string(path.c_str(), path.size());
 }
 
-inline int& failure_count() noexcept
+inline stdromano::fuzz::Options fuzz_options(const char* name, std::uint64_t iterations)
 {
-    static int count = 0;
-    return count;
+    stdromano::fuzz::Options options;
+    options.name = name;
+    options.iterations = iterations;
+
+#if !defined(NDEBUG)
+    options.iterations = iterations / 4 + 1;
+#endif // !defined(NDEBUG)
+
+    return options;
 }
 
-struct Registrar
+// Fuzzed inputs are mostly invalid, and every one of them is logged by the code
+// under test
+class QuietLogs
 {
-    Registrar(const char* name, void (*func)())
-    {
-        registry().push_back(TestCase{name, func});
-    }
-};
+    static constexpr std::size_t NUM_CATEGORIES = static_cast<std::size_t>(lov::LogCategory::Count);
 
-// Thrown by LOV_REQUIRE to abandon the current case while letting the rest run.
-struct Abort
-{
-};
-
-inline void report_failure(const char* file, int line, const std::string& message) noexcept
-{
-    std::fprintf(stderr, "  FAILED %s:%d\n    %s\n", file, line, message.c_str());
-    ++failure_count();
-}
-
-template <typename T>
-inline std::string to_display(const T& value)
-{
-    if constexpr(std::is_convertible_v<T, std::string>)
-    {
-        return std::string(value);
-    }
-    else if constexpr(std::is_floating_point_v<T> || std::is_integral_v<T>)
-    {
-        return std::to_string(value);
-    }
-    else
-    {
-        return "<value>";
-    }
-}
-
-// Unique temporary directory for one test binary, removed on exit.
-class ScratchDir
-{
-private:
-    std::filesystem::path _path;
+    std::array<spdlog::level::level_enum, NUM_CATEGORIES> _previous;
 
 public:
-    explicit ScratchDir(const char* tag)
+    QuietLogs()
     {
-        this->_path = std::filesystem::temp_directory_path() /
-                      (std::string("openviewer_tests_") + tag + "_" +
-                       std::to_string(static_cast<unsigned long long>(
-                           std::hash<std::string>{}(std::string(tag)))));
-
-        std::filesystem::remove_all(this->_path);
-        std::filesystem::create_directories(this->_path);
+        for(std::size_t i = 0; i < NUM_CATEGORIES; ++i)
+        {
+            const lov::LogCategory category = static_cast<lov::LogCategory>(i);
+            this->_previous[i] = lov::log::get(category).level();
+            lov::log::set_level(category, spdlog::level::off);
+        }
     }
 
-    ~ScratchDir()
+    ~QuietLogs()
     {
-        std::error_code ec;
-        std::filesystem::remove_all(this->_path, ec);
+        for(std::size_t i = 0; i < NUM_CATEGORIES; ++i)
+            lov::log::set_level(static_cast<lov::LogCategory>(i), this->_previous[i]);
     }
 
-    std::string file(const char* name) const
-    {
-        return (this->_path / name).string();
-    }
+    QuietLogs(const QuietLogs&) = delete;
+    QuietLogs& operator=(const QuietLogs&) = delete;
 };
+
+inline std::vector<std::uint8_t> read_file_bytes(const std::string& path)
+{
+    std::ifstream file(path, std::ios::binary);
+
+    return std::vector<std::uint8_t>(std::istreambuf_iterator<char>(file),
+                                     std::istreambuf_iterator<char>());
+}
+
+inline bool write_file_bytes(const std::string& path, const std::uint8_t* data, std::size_t size)
+{
+    std::ofstream file(path, std::ios::binary | std::ios::trunc);
+    file.write(reinterpret_cast<const char*>(data), static_cast<std::streamsize>(size));
+
+    return static_cast<bool>(file);
+}
 
 // Flushes every logger and returns the whole log file, for tests that check what
 // was written
@@ -158,117 +137,15 @@ inline bool log_has_line(const std::string& log, const std::string& a, const std
     return false;
 }
 
-// LOV_TEST_FILTER=<substring> runs only the cases whose name contains it,
-// e.g. LOV_TEST_FILTER=ring ./test_media_cache
-inline int run_all(const char* binary_name) noexcept
-{
-    const char* filter = std::getenv("LOV_TEST_FILTER");
-
-    std::fprintf(stderr, "== %s: %zu case(s) ==\n", binary_name, registry().size());
-
-    for(const auto& test_case : registry())
-    {
-        if(filter != nullptr && std::strstr(test_case.name, filter) == nullptr)
-        {
-            continue;
-        }
-
-        const int before = failure_count();
-
-        std::fprintf(stderr, "-- %s\n", test_case.name);
-
-        try
-        {
-            test_case.func();
-        }
-        catch(const Abort&)
-        {
-            // Already reported by LOV_REQUIRE.
-        }
-        catch(const std::exception& e)
-        {
-            report_failure(__FILE__, __LINE__, std::string("unexpected exception: ") + e.what());
-        }
-
-        if(failure_count() == before)
-        {
-            std::fprintf(stderr, "   ok\n");
-        }
-    }
-
-    if(failure_count() > 0)
-    {
-        std::fprintf(stderr, "== %s: %d failure(s) ==\n", binary_name, failure_count());
-        return 1;
-    }
-
-    std::fprintf(stderr, "== %s: all passed ==\n", binary_name);
-
-    return 0;
-}
-
 } // namespace lov_test
 
-#define LOV_TEST(name)                                                                             \
-    static void name();                                                                            \
-    static lov_test::Registrar CONCAT(registrar_, name)(#name, name);                              \
-    static void name()
-
-#define LOV_CHECK(expr)                                                                            \
-    do                                                                                             \
-    {                                                                                              \
-        if(!(expr))                                                                                \
-        {                                                                                          \
-            lov_test::report_failure(__FILE__, __LINE__, "expected: " #expr);                      \
-        }                                                                                          \
-    } while(0)
-
-#define LOV_REQUIRE(expr)                                                                          \
-    do                                                                                             \
-    {                                                                                              \
-        if(!(expr))                                                                                \
-        {                                                                                          \
-            lov_test::report_failure(__FILE__, __LINE__, "required: " #expr);                      \
-            throw lov_test::Abort{};                                                               \
-        }                                                                                          \
-    } while(0)
-
-#define LOV_CHECK_EQ(lhs, rhs)                                                                     \
-    do                                                                                             \
-    {                                                                                              \
-        const auto lov_lhs = (lhs);                                                                \
-        const auto lov_rhs = (rhs);                                                                \
-        if(!(lov_lhs == lov_rhs))                                                                  \
-        {                                                                                          \
-            lov_test::report_failure(__FILE__,                                                     \
-                                     __LINE__,                                                     \
-                                     std::string(#lhs " == " #rhs " (") +                          \
-                                         lov_test::to_display(lov_lhs) + " vs " +                  \
-                                         lov_test::to_display(lov_rhs) + ")");                     \
-        }                                                                                          \
-    } while(0)
-
-#define LOV_CHECK_NEAR(lhs, rhs, epsilon)                                                          \
-    do                                                                                             \
-    {                                                                                              \
-        const double lov_lhs = static_cast<double>(lhs);                                           \
-        const double lov_rhs = static_cast<double>(rhs);                                           \
-        if(std::fabs(lov_lhs - lov_rhs) > static_cast<double>(epsilon))                            \
-        {                                                                                          \
-            lov_test::report_failure(__FILE__,                                                     \
-                                     __LINE__,                                                     \
-                                     std::string(#lhs " ~= " #rhs " (") +                          \
-                                         std::to_string(lov_lhs) + " vs " +                        \
-                                         std::to_string(lov_rhs) + ")");                           \
-        }                                                                                          \
-    } while(0)
+#define LOV_REQUIRE_PROPERTY(report) STDROMANO_REQUIRE_MSG((report).passed(), (report).describe())
 
 #define LOV_TEST_MAIN()                                                                            \
     int main(int argc, char** argv)                                                                \
     {                                                                                              \
-        LOV_UNUSED(argc);                                                                          \
         lov::log::initialize(spdlog::level::warn);                                                 \
-        return lov_test::run_all(argv[0]);                                                         \
+        return stdromano::test::default_runner().run(argc, argv);                                  \
     }
 
 #endif // !defined(__LOV_TEST)

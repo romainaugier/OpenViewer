@@ -17,6 +17,7 @@ set(OPENVIEWER_TESTS
     test_media_cache.cpp
     test_log.cpp
     test_log_compiled_out.cpp
+    test_image_fuzz.cpp
 )
 
 foreach(test_file ${OPENVIEWER_TESTS})

@@ -7,9 +7,9 @@
 #include "OpenViewer/image_reader.hpp"
 #include "OpenViewer/log.hpp"
 
-#include <cstdio>
-
 LOV_NAMESPACE_BEGIN
+
+static constexpr int MAX_SEQUENCE_PADDING = 32;
 
 stdromano::StringD format_sequence_path(const stdromano::StringD& pattern,
                                         std::uint32_t frame) noexcept
@@ -37,21 +37,43 @@ stdromano::StringD format_sequence_path(const stdromano::StringD& pattern,
         return result;
     }
 
-    // '%04d'
-    if(pattern.find(stdromano::StringD::make_ref("%")) >= 0)
+    // '%04d', '%4d', '%d'
+    for(std::size_t i = 0; i < size; ++i)
     {
-        char buffer[2048];
+        if(data[i] != '%')
+            continue;
 
-        const int written = std::snprintf(buffer, sizeof(buffer), pattern.c_str(), frame);
+        std::size_t end = i + 1;
 
-        if(written > 0 && static_cast<std::size_t>(written) < sizeof(buffer))
-            return stdromano::StringD::make_from_c_str(buffer, static_cast<std::size_t>(written));
+        const bool zero_padded = end < size && data[end] == '0';
 
-        log_error(LogCategory::Media,
-                  "Could not expand sequence pattern \"{}\" for frame {}",
-                  pattern,
-                  frame);
+        if(zero_padded)
+            ++end;
+
+        int padding = 0;
+
+        while(end < size && data[end] >= '0' && data[end] <= '9' && padding <= MAX_SEQUENCE_PADDING)
+            padding = padding * 10 + (data[end++] - '0');
+
+        if(end >= size || data[end] != 'd' || padding > MAX_SEQUENCE_PADDING)
+            break;
+
+        stdromano::StringD result = stdromano::StringD::make_from_c_str(data, i);
+
+        if(zero_padded)
+            result.appendf("{:0{}d}", frame, padding);
+        else
+            result.appendf("{:{}d}", frame, padding);
+
+        result.appendc(data + end + 1);
+
+        return result;
     }
+
+    if(pattern.find(stdromano::StringD::make_ref("%")) >= 0)
+        log_error(LogCategory::Media,
+                  "Could not expand sequence pattern \"{}\": expected %d, %Nd or %0Nd",
+                  pattern);
 
     return pattern.copy();
 }

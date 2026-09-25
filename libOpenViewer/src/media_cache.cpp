@@ -157,9 +157,19 @@ void* MediaCache::allocate(std::size_t data_sz, std::function<void()> dtor) noex
         return nullptr;
     }
 
-    const std::size_t total_sz = this->compute_total_size(data_sz);
-
     log_trace(LogCategory::MediaCache, "Requested a {} block", ByteSize{data_sz});
+
+    if(data_sz > this->_capacity)
+    {
+        log_error(LogCategory::MediaCache,
+                  "Requested block is too large ({} > {})",
+                  data_sz,
+                  this->_capacity);
+
+        return nullptr;
+    }
+
+    const std::size_t total_sz = this->compute_total_size(data_sz);
 
     if(total_sz > this->_capacity)
     {
@@ -167,6 +177,7 @@ void* MediaCache::allocate(std::size_t data_sz, std::function<void()> dtor) noex
                   "Requested block is too large ({} > {})",
                   total_sz,
                   this->_capacity);
+
         return nullptr;
     }
 
